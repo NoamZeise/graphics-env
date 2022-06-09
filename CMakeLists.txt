@@ -23,6 +23,7 @@ if (GFX_ENV_VULKAN)
 endif()
 
 if (UNIX)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
     if (GFX_ENV_VULKAN)
       add_definitions(-DVK_USE_PLATFORM_XLIB_KHR)
     endif()
