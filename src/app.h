@@ -29,7 +29,7 @@
 
 #ifdef GFX_ENV_VULKAN
   #include "vulkan-render/render.h"
-  #include "vulkan-render/resources.h"
+  #include "vulkan-render/resources/resources.h"
 #endif
 
 #ifdef GFX_ENV_OPENGL

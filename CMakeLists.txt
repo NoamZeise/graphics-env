@@ -33,11 +33,17 @@ endif()
 
 #add executables
 file(GLOB SOURCES src/*)
+list(FILTER SOURCES EXCLUDE REGEX ".*#+")
 if(GFX_ENV_VULKAN)
-  file(GLOB GRAPHICS-RENDER src/vulkan-render/*)
+  file(GLOB GRAPHICS-RENDER src/vulkan-render/*
+                            src/vulkan-render/resources/*
+                            src/vulkan-render/resources/model/*
+                            src/vulkan-render/parts/*)
+  list(FILTER GRAPHICS-RENDER EXCLUDE REGEX ".*#+")
   add_executable(${ProjectName} ${SOURCES}
                               ${GRAPHICS-RENDER}
                               ${PROJ_INCLUDE})
+                    
 elseif(GFX_ENV_OPENGL)
   file(GLOB OGL_RENDER src/opengl-render/*)
   file(GLOB OGL_RENDER_RESOURCES src/opengl-render/resources/*)

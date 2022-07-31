@@ -36,8 +36,9 @@ Model ModelLoader::LoadModel(std::string path, TextureLoader* texLoader)
 	ldModel->directory = path.substr(0, path.find_last_of('/'));
 
 	//correct for blender's orientation
-	glm::mat4 transform = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
-	transform = glm::scale(transform, glm::vec3(0.02f));
+    glm::mat4 transform = glm::mat4(1.0f);
+    //	glm::mat4 transform = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
+	//transform = glm::scale(transform, glm::vec3(0.02f));
 	aiMatrix4x4 aiTransform = aiMatrix4x4(
 		transform[0][0], transform[0][1], transform[0][2], transform[0][3],
 		transform[1][0], transform[1][1], transform[1][2], transform[1][3],

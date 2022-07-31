@@ -20,17 +20,22 @@
 
 #include <glmhelper.h>
 
-#include "descriptor_sets.h"
-#include "model_loader.h"
+#include "parts/primary.h"
+#include "parts/swapchain.h"
+#include "parts/render_style.h"
+#include "parts/descriptors.h"
+#include "parts/images.h"
+#include "descriptor_structs.h"
+#include "resources/model/model_render.h"
 #include "pipeline.h"
 #include "render_structs.h"
-#include "texfont.h"
-#include "texture_loader.h"
+#include "resources/font_loader.h"
+#include "resources/texture_loader.h"
 #include "vkhelper.h"
-#include "vkinit.h"
 
-const size_t MAX_3D_INSTANCE = 100;
-const size_t MAX_2D_INSTANCE = 300;
+const size_t MAX_ANIMATIONS_PER_FRAME = 10;
+const int MAX_3D_INSTANCE = 20;
+const int MAX_2D_INSTANCE = 20;
 
 class Render {
 public:
@@ -40,90 +45,112 @@ public:
   static void SetGLFWWindowHints() {
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
   }
-  void set3DViewMatrixAndFov(glm::mat4 view, float fov);
+  void set3DViewMatrixAndFov(glm::mat4 view, float fov, glm::vec4 camPos);
+  void set2DViewMatrixAndScale(glm::mat4 view, float scale);
+  void setLightDirection(glm::vec4 lightDir);
   void restartResourceLoad();
+
   Resource::Texture LoadTexture(std::string filepath);
   Resource::Font LoadFont(std::string filepath);
   Resource::Model LoadModel(std::string filepath);
+  Resource::Model LoadAnimatedModel(std::string filepath, std::vector<Resource::ModelAnimation> *pGetAnimations);
+
   void EndResourceLoad();
 
   void Begin3DDraw();
+  void BeginAnim3DDraw();
   void Begin2DDraw();
-  void DrawModel(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMatrix);
+  void DrawModel(    Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMatrix);
+  void DrawAnimModel(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMatrix, Resource::ModelAnimation *animation);
   void DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix, glm::vec4 colour, glm::vec4 texOffset);
   void DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix, glm::vec4 colour);
   void DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix);
   void DrawString(Resource::Font font, std::string text, glm::vec2 position, float size, float depth, glm::vec4 colour, float rotate);
   void DrawString(Resource::Font font, std::string text, glm::vec2 position, float size, float depth, glm::vec4 colour);
+  float MeasureString(Resource::Font font, std::string text, float size);
   void EndDraw(std::atomic<bool> &submit);
 
   void FramebufferResize();
 
 private:
-  bool mFramebufferResized = false;
+  bool _framebufferResized = false;
 
-  GLFWwindow *mWindow;
-  glm::vec2 targetResolution;
-  VkInstance mInstance;
-  VkSurfaceKHR mSurface;
-  Base mBase;
-  FrameData mFrame;
-  SwapChain mSwapchain;
-  VkRenderPass mRenderPass;
-  VkRenderPass mFinalRenderPass;
+  GLFWwindow *_window;
+  glm::vec2 _targetResolution;
+  VkInstance _instance;
+  VkSurfaceKHR _surface;
+  Base _base;
+  FrameData _frame;
+  SwapChain _swapchain;
+  VkRenderPass _renderPass;
+  VkRenderPass _finalRenderPass;
 
-  VkCommandPool mGeneralCommandPool;
-  VkCommandBuffer mTransferCommandBuffer;
+  VkCommandPool _generalCommandPool;
+  VkCommandBuffer _transferCommandBuffer;
 
-  Pipeline mPipeline3D;
-  Pipeline mPipeline2D;
-  Pipeline mPipelineFinal;
+  Pipeline _pipeline3D;
+  Pipeline _pipelineAnim3D;
+  Pipeline _pipeline2D;
+  Pipeline _pipelineFinal;
 
   // descriptor set members
-  VkDeviceMemory mShaderMemory;
-  VkBuffer mShaderBuffer;
+  VkDeviceMemory _shaderMemory;
+  VkBuffer _shaderBuffer;
 
-  DS::DescriptorSet mVP3Dds;
-  DS::DescriptorSet mVP2Dds;
-  DS::DescriptorSet mPerInstance3Dds;
-  DS::DescriptorSet mPer2DVertds;
-  DS::DescriptorSet mLightingds;
-  DS::DescriptorSet mTexturesds;
-  DS::DescriptorSet mPer2Dfragds;
-  DS::DescriptorSet mOffscreends;
+  VkDescriptorPool _descPool;
 
-  DS::BindingAndData<DS::ShaderStructs::viewProjection> mVP3D;
-  DS::BindingAndData<DS::ShaderStructs::viewProjection> mVP2D;
-  DS::BindingAndData<DS::ShaderStructs::Per3DInstance> mPerInstance;
-  DS::BindingAndData<DS::ShaderStructs::Per2DVert> mPer2Dvert;
-  DS::BindingAndData<bool> mTextureViews;
-  DS::BindingAndData<bool> mTextureSampler;
-  DS::BindingAndData<DS::ShaderStructs::Per2DFrag> mPer2Dfrag;
-  DS::BindingAndData<DS::ShaderStructs::lighting> mLighting;
-  DS::BindingAndData<bool> mOffscreenSampler;
-  DS::BindingAndData<bool> mOffscreenView;
-  VkSampler offscreenSampler;
+  DS::DescriptorSet _VP3Dds;
+  DS::DescriptorSet _VP2Dds;
+  DS::DescriptorSet _perInstance3Dds;
+  DS::DescriptorSet _bonesds;
+  DS::DescriptorSet _per2DVertds;
+  DS::DescriptorSet _lightingds;
+  DS::DescriptorSet _texturesds;
+  DS::DescriptorSet _per2Dfragds;
+  DS::DescriptorSet _offscreends;
 
-  Resource::TextureLoader *mTextureLoader;
-  Resource::ModelLoader *mModelLoader;
-  Resource::FontLoader *mFontLoader;
+  DS::BindingAndData<DS::ShaderStructs::viewProjection> _VP3D;
+  DS::BindingAndData<DS::ShaderStructs::viewProjection> _VP2D;
+  DS::BindingAndData<DS::ShaderStructs::PerFrame3D> _perInstance;
+  DS::BindingAndData<DS::ShaderStructs::Bones> _bones;
+  DS::BindingAndData<glm::mat4> _per2Dvert;
+  DS::BindingAndData<bool> _textureViews;
+  DS::BindingAndData<bool> _textureSampler;
+  DS::BindingAndData<DS::ShaderStructs::Frag2DData> _per2Dfrag;
+  DS::BindingAndData<DS::ShaderStructs::lighting> _lighting;
+  DS::BindingAndData<bool> _offscreenSampler;
+  DS::BindingAndData<bool> _offscreenView;
+  VkSampler _offscreenTextureSampler;
 
-  bool mBegunDraw = false;
-  bool mFinishedLoadingResources = false;
-  bool m3DRender = true;
-  uint32_t mImg;
-  VkSemaphore mImgAquireSem;
-  float mProjectionFov = 45.0f;
+  Resource::TextureLoader *_textureLoader;
+  Resource::ModelRender *_modelLoader;
+  Resource::FontLoader *_fontLoader;
 
-  unsigned int modelRuns = 0;
-  unsigned int current3DInstanceIndex = 0;
-  Resource::Model currentModel;
-  Resource::Texture currentTexture;
-  glm::vec4 currentTexOffset = glm::vec4(0, 0, 1, 1);
-  glm::vec4 currentColour = glm::vec4(1, 1, 1, 1);
+  enum class RenderState
+  {
+    Draw2D,
+    Draw3D,
+    DrawAnim3D,
+  };
 
-  unsigned int instance2Druns = 0;
-  unsigned int current2DInstanceIndex = 0;
+  bool _begunDraw = false;
+  bool _finishedLoadingResources = false;
+  RenderState _renderState;
+  uint32_t _frameI;
+  VkSemaphore _imgAquireSem;
+  float _projectionFov = 45.0f;
+  float _scale2D = 1.0f;
+  glm::vec4 _lightDirection = glm::vec4(0.3f, 0.3f, -0.5f, 0.0f);
+
+  unsigned int _modelRuns = 0;
+  unsigned int _current3DInstanceIndex = 0;
+  Resource::Model _currentModel;
+  Resource::Texture _currentTexture;
+  glm::vec4 _currentTexOffset = glm::vec4(0, 0, 1, 1);
+  glm::vec4 _currentColour = glm::vec4(1, 1, 1, 1);
+
+  unsigned int _instance2Druns = 0;
+  unsigned int _current2DInstanceIndex = 0;
 
   void _initRender(GLFWwindow *window);
   void _initFrameResources();
@@ -134,7 +161,7 @@ private:
   void _drawBatch();
 
 #ifndef NDEBUG
-  VkDebugUtilsMessengerEXT mDebugMessenger;
+  VkDebugUtilsMessengerEXT _debugMessenger;
 #endif
 };
 

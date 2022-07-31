@@ -40,11 +40,31 @@ public:
   	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   }
-	void set3DViewMatrixAndFov(glm::mat4 view, float fov);
-
+  void set3DViewMatrixAndFov(glm::mat4 view, float fov, glm::vec4 camPos);
+  void setLightDirection(glm::vec4 lightDir) {
+    lighting.direction = lightDir;
+  }
 	Resource::Texture LoadTexture(std::string filepath);
   Resource::Model LoadModel(std::string filepath);
 	Resource::Font LoadFont(std::string filepath);
+  
+  Resource::Model LoadAnimatedModel(std::string filepath, std::vector<Resource::ModelAnimation> *pGetAnimations) {
+    std::cout << "skeletal animation not supported in ogl\n";
+    
+  }
+
+    void BeginAnim3DDraw()
+  {
+std::cout << "skeletal animation not supported in ogl\n";
+  }
+
+  void DrawAnimModel(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMatrix, Resource::ModelAnimation *animation)
+
+  {
+std::cout << "skeletal animation not supported in ogl\n";
+  }
+
+  
 	void EndResourceLoad() { }
 
   void Begin2DDraw();
@@ -68,17 +88,21 @@ private:
 	{
 		LightingParameters()
 		{
-			ambient = glm::vec4(1.0f, 1.0f, 1.0f, 0.6f);
-    	diffuse = glm::vec4(1.0f, 1.0f, 1.0f, 0.7f);
-    	specular = glm::vec4(0.1f, 0.1f, 0.1f, 5.0f);
+			ambient = glm::vec4(1.0f, 1.0f, 1.0f, 0.35f);
+    	diffuse = glm::vec4(1.0f, 1.0f, 1.0f, 0.8f);
+    	specular = glm::vec4(1.0f, 1.0f, 1.0f, 8.0f);
     	direction = glm::vec4(0.3f, -0.3f, -0.5f, 0.0f);
+        camPos = glm::vec4(0.0f);
 		}
 
 		alignas(16) glm::vec4 ambient;
 		alignas(16) glm::vec4 diffuse;
 		alignas(16) glm::vec4 specular;
 		alignas(16) glm::vec4 direction;
+      alignas(16) glm::vec4 camPos;
 	};
+
+    LightingParameters lighting;
 
 	GLFWwindow* window;
 	glm::vec2 targetResolution;

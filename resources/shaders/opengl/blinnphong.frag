@@ -16,6 +16,7 @@ struct LightingParams
   vec4 diffuse;
   vec4 specular;
   vec4 direction;
+  vec4 camPos;
 };
 
 uniform LightingParams lighting;
@@ -31,10 +32,10 @@ void main()
   if(objectColour.w == 0)
     discard;
 
+  vec3 ambient = lighting.ambient.xyz * lighting.ambient.w;
+
   vec3 normal = normalize(inNormal);
   vec3 lightDir = normalize(-lighting.direction.xyz);
-
-  vec3 ambient = lighting.ambient.xyz * lighting.ambient.w;
 
   float lambertian = max(dot(normal, lightDir), 0.0);
   vec3 diffuse = lighting.diffuse.xyz * lighting.diffuse.w * lambertian;
@@ -42,7 +43,7 @@ void main()
   float specularIntensity = 0.0;
   if(lambertian > 0.0)
   {
-    vec3 viewDir = normalize(-inFragPos);
+    vec3 viewDir = normalize(lighting.camPos.xyz - inFragPos);
 
     vec3 halfDir = normalize(lightDir + viewDir);
     specularIntensity = pow(max(dot(normal, halfDir), 0.0), lighting.specular.w);

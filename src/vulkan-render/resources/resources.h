@@ -3,6 +3,9 @@
 
 #include <glm/glm.hpp>
 #include <string>
+#include <vector>
+
+#include "model/model_animation.h"
 
 namespace Resource {
 
@@ -38,7 +41,7 @@ struct Texture
 
 struct Model
 {
-	Model() { this->ID = 1000000; }
+	Model() { this->ID = 1000000;}
 	Model(unsigned int ID)
 	{
 		this->ID = ID;
@@ -59,15 +62,17 @@ struct Font
 
 struct QuadDraw
 {
-	QuadDraw(Texture tex, glm::mat4 model, glm::vec4 colour)
+	QuadDraw(Texture tex, glm::mat4 model, glm::vec4 colour, glm::vec4 texOffset)
 	{
 		this->tex = tex;
 		this->model = model;
 		this->colour = colour;
+		this->texOffset = texOffset;
 	}
 	Texture tex;
 	glm::mat4 model;
 	glm::vec4 colour;
+	glm::vec4 texOffset;
 };
 
 }

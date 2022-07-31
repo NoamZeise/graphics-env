@@ -94,12 +94,13 @@ Resource::Font Render::LoadFont(std::string filepath)
   return fontLoader->LoadFont(filepath, textureLoader);
 }
 
-void Render::set3DViewMatrixAndFov(glm::mat4 view, float fov)
+void Render::set3DViewMatrixAndFov(glm::mat4 view, float fov, glm::vec4 camPos)
 {
   this->fov = fov;
   view3D = view;
   proj3D = glm::perspective(glm::radians(fov),
 			((float)width) / ((float)height), 0.1f, 500.0f);
+  lighting.camPos = camPos;
 }
 
 Render::Draw2D::Draw2D(Resource::Texture tex, glm::mat4 model, glm::vec4 colour, glm::vec4 texOffset)
@@ -169,12 +170,12 @@ void Render::EndDraw(std::atomic<bool>& submit)
   blinnPhongShader->Use();
   glUniformMatrix4fv(blinnPhongShader->Location("projection"), 1, GL_FALSE, &proj3D[0][0]);
   glUniformMatrix4fv(blinnPhongShader->Location("view"), 1, GL_FALSE, &view3D[0][0]);
-  LightingParameters lighting;
-  lighting.direction = glm::transpose(glm::inverse(view3D)) * lighting.direction;
+  
   glUniform4fv(blinnPhongShader->Location("lighting.ambient"), 1, &lighting.ambient[0]);
   glUniform4fv(blinnPhongShader->Location("lighting.diffuse"), 1, &lighting.diffuse[0]);
   glUniform4fv(blinnPhongShader->Location("lighting.specular"), 1, &lighting.specular[0]);
   glUniform4fv(blinnPhongShader->Location("lighting.direction"), 1, &lighting.direction[0]);
+  glUniform4fv(blinnPhongShader->Location("lighting.direction"), 1, &lighting.camPos[0]);
   glm::vec4 colourWhite = glm::vec4(1);
   glUniform4fv(blinnPhongShader->Location("spriteColour"), 1, &colourWhite[0]);
   glUniform1i(blinnPhongShader->Location("enableTex"), GL_TRUE);
@@ -292,5 +293,5 @@ void Render::FramebufferResize()
   proj2D = glm::ortho(
       0.0f, (float)width / correction, (float)height / correction, 0.0f, -10.0f, 10.0f);
 
-  set3DViewMatrixAndFov(view3D, fov);
+  set3DViewMatrixAndFov(view3D, fov, lighting.camPos);
 }

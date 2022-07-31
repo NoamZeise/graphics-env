@@ -28,9 +28,9 @@ void main()
 {
   outTexCoord = inTexCoord;
 
-  vec4 fragPos = view * model[gl_InstanceID] * vec4(inPos, 1.0);
+  vec4 fragPos = model[gl_InstanceID] * vec4(inPos, 1.0);
   outNormal = mat3(normalMat[gl_InstanceID]) * inNormal;
 
-  gl_Position = projection * fragPos;
+  gl_Position = projection * view * fragPos;
   outFragPos = vec3(fragPos) / fragPos.w;
 }

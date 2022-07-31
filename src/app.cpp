@@ -104,6 +104,8 @@ void App::update() {
     glfwSetWindowShouldClose(mWindow, GLFW_TRUE);
   }
 
+  mRender->setLightDirection(glm::vec4(0.0f, 1.0f, 0.0f, 0.0f));
+  
   fpcam.update(input, previousInput, timer);
 
   postUpdate();
@@ -121,7 +123,7 @@ void App::postUpdate() {
   previousInput = input;
   input.offset = 0;
   timer.Update();
-  mRender->set3DViewMatrixAndFov(fpcam.getViewMatrix(), fpcam.getZoom());
+  mRender->set3DViewMatrixAndFov(fpcam.getViewMatrix(), fpcam.getZoom(), glm::vec4(fpcam.getPos(), 1.0f));
 }
 
 void App::draw() {
@@ -135,15 +137,24 @@ void App::draw() {
   finishedDrawSubmit = false;
 #endif
 
-  if(submitDraw.joinable())
-    submitDraw.join();
+    if(submitDraw.joinable())
+      submitDraw.join();
 
     mRender->Begin3DDraw();
 
-    mRender->DrawModel(
-			testModel, glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 0)),
-			glm::inverseTranspose(fpcam.getViewMatrix() * glm::mat4(1.0f)));
-
+    auto model = glm::translate(
+       glm::scale(
+         glm::rotate(
+                     glm::rotate(glm::mat4(1.0f),
+                                 0.0f, glm::vec3(0, 0, 1)),
+                                 glm::radians(270.0f), glm::vec3(-1.0f, 0.0f, 0.0f)),
+         glm::vec3(0.01f)),
+       glm::vec3(0, 0, 0));
+ 
+   mRender->DrawModel(
+     testModel,
+     model,
+     glm::inverseTranspose(model));
     mRender->Begin2DDraw();
 
     mRender->DrawString(testFont, "test", glm::vec2(400, 100), 100, -0.5,

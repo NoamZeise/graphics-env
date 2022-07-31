@@ -38,6 +38,14 @@ void TextureLoader::UnloadTextures()
 
 Texture TextureLoader::LoadTexture(std::string path)
 {
+	for(unsigned int i = 0; i > texToLoad.size(); i++)
+	{
+		if(texToLoad[i].path == path)
+		{
+			return Texture(i, glm::vec2(texToLoad[i].width, texToLoad[i].height), path);
+		}
+	}
+
 #ifndef NDEBUG
 	std::cout << "loading texture: " << path << std::endl;
 #endif
@@ -59,6 +67,7 @@ Texture TextureLoader::LoadTexture(std::string path)
 	return Texture((unsigned int)(texToLoad.size() - 1), glm::vec2(tex->width, tex->height), path);
 }
 
+	//takes ownership of data
 Texture TextureLoader::LoadTexture(unsigned char* data, int width, int height, int nrChannels)
 {
 	texToLoad.push_back({ "NULL" });
@@ -247,7 +256,7 @@ void TextureLoader::endLoading()
 		int32_t mipW = tex.width;
 		int32_t mipH = tex.height;
 
-		for (size_t i = 1; i < tex.mipLevels; i++) //start at one as 0 is original image
+		for (uint32_t i = 1; i < tex.mipLevels; i++) //start at one as 0 is original image
 		{
 			//transfer previous image to be optimal for image transfer source
 			barrier.subresourceRange.baseMipLevel = i - 1;
@@ -326,39 +335,12 @@ void TextureLoader::endLoading()
 		if (vkCreateImageView(base.device, &viewInfo, nullptr, &textures[i].view) != VK_SUCCESS)
 			throw std::runtime_error("Failed to create image view from texture at: " + texToLoad[i].path);
 	}
-
-	VkPhysicalDeviceProperties deviceProps{};
-	vkGetPhysicalDeviceProperties(base.physicalDevice, &deviceProps);
-	VkSamplerCreateInfo samplerInfo{ VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
-	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	if (settings::PIXELATED)
-	{
-		samplerInfo.magFilter = VK_FILTER_NEAREST;
-		samplerInfo.minFilter = VK_FILTER_NEAREST;
-	}
-	else
-	{
-		samplerInfo.magFilter = VK_FILTER_LINEAR;
-		samplerInfo.minFilter = VK_FILTER_LINEAR;
-	}
-	samplerInfo.anisotropyEnable = VK_TRUE;
-	samplerInfo.maxAnisotropy = deviceProps.limits.maxSamplerAnisotropy;
-	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-	samplerInfo.unnormalizedCoordinates = VK_FALSE;
-	samplerInfo.compareEnable = VK_FALSE;
-	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-	samplerInfo.mipLodBias = 0.0f;
-	samplerInfo.maxLod = static_cast<float>(minMips);
-	samplerInfo.minLod = 0.0f;
-	if (vkCreateSampler(base.device, &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS)
-		throw std::runtime_error("Failed create sampler");
+    
+    textureSampler = vkhelper::createTextureSampler(base.device, base.physicalDevice, static_cast<float>(minMips), base.features.samplerAnisotropy);
 
 	vkFreeCommandBuffers(base.device, pool, 1, &tempCmdBuffer);
 
-	for(size_t i = 0; i < MAX_TEXTURES_SUPPORTED; i++)
+	for(uint32_t i = 0; i < MAX_TEXTURES_SUPPORTED; i++)
 	{
 		imageViews[i] = _getImageView(i);
 	}

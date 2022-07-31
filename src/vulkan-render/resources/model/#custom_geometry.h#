@@ -1,0 +1,9 @@
+#ifndef CUSTOM_GEOMETRY
+#define CUSTOM_GEOMETRY
+
+class CustomGeometry
+{
+
+};
+
+#endif

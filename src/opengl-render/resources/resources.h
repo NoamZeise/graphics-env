@@ -4,6 +4,10 @@
 #include <glm/glm.hpp>
 #include <string>
 
+#include <timer.h>
+#include <iostream>
+#include <vector>
+
 namespace Resource {
 
   struct Texture
@@ -55,6 +59,17 @@ namespace Resource {
 	  glm::vec4 colour;
   };
 
+  struct ModelAnimation {
+    ModelAnimation() {}
+    void Update(Timer &timer) {
+      std::cout << "animation not supported\n";
+    }
+    std::vector<glm::mat4>* getCurrentBones() {
+      return nullptr;
+    }
+    std::string getName() { return "NULL"; }
+
+  };
 }
 
 #endif

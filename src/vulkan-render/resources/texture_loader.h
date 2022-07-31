@@ -15,15 +15,14 @@
 
 #include "stb_image.h"
 #include <config.h>
-#include "render_structs.h"
-#include "descriptor_sets.h"
-#include "vkhelper.h"
+#include "../render_structs.h"
+#include "../vkhelper.h"
 #include "resources.h"
 
 namespace Resource
 {
 
-const int MAX_TEXTURES_SUPPORTED = 200;//match in shader
+const uint32_t MAX_TEXTURES_SUPPORTED = 20;//match in shader
 
 class TextureLoader
 {
