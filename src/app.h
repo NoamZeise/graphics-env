@@ -80,6 +80,8 @@ private:
   std::thread submitDraw;
   std::atomic<bool> finishedDrawSubmit;
 
+  glm::vec4 lightDir = glm::vec4(-0.8f, -1.0f, 0.3f, 0.0f);
+  
   Resource::Model testModel;
   Resource::Texture testTex;
   Resource::Font testFont;

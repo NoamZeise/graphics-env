@@ -155,6 +155,8 @@ void App::draw() {
      testModel,
      model,
      glm::inverseTranspose(model));
+
+   
     mRender->Begin2DDraw();
 
     mRender->DrawString(testFont, "test", glm::vec2(400, 100), 100, -0.5,

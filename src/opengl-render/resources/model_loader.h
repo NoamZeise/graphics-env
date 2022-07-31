@@ -21,14 +21,15 @@ public:
 	ModelLoader();
 	~ModelLoader();
 	Model LoadModel(std::string path, TextureLoader* texLoader);
-	void DrawModel(Model model, TextureLoader* texLoader);
-	void DrawModelInstanced(Model model, TextureLoader* texLoader, int count);
+  void DrawModel(Model model, TextureLoader* texLoader, uint32_t spriteColourShaderLoc);
+  void DrawModelInstanced(Model model, TextureLoader* texLoader, int count, uint32_t spriteColourShaderLoc, uint32_t enableTexShaderLoc);
 
 private:
 	struct Mesh
 	{
 		VertexData* vertexData;
 		Texture texture;
+        glm::vec4 diffuseColour;
 	};
 	struct LoadedModel
 	{

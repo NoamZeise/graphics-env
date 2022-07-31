@@ -175,7 +175,7 @@ void Render::EndDraw(std::atomic<bool>& submit)
   glUniform4fv(blinnPhongShader->Location("lighting.diffuse"), 1, &lighting.diffuse[0]);
   glUniform4fv(blinnPhongShader->Location("lighting.specular"), 1, &lighting.specular[0]);
   glUniform4fv(blinnPhongShader->Location("lighting.direction"), 1, &lighting.direction[0]);
-  glUniform4fv(blinnPhongShader->Location("lighting.direction"), 1, &lighting.camPos[0]);
+  glUniform4fv(blinnPhongShader->Location("lighting.camPos"), 1, &lighting.camPos[0]);
   glm::vec4 colourWhite = glm::vec4(1);
   glUniform4fv(blinnPhongShader->Location("spriteColour"), 1, &colourWhite[0]);
   glUniform1i(blinnPhongShader->Location("enableTex"), GL_TRUE);
@@ -234,7 +234,7 @@ void Render::draw3DBatch(int drawCount, Resource::Model model)
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, normal3DSSBO);
   glBindBuffer( GL_SHADER_STORAGE_BUFFER,0 );
 
-  modelLoader->DrawModelInstanced(model, textureLoader, drawCount);
+  modelLoader->DrawModelInstanced(model, textureLoader, drawCount, blinnPhongShader->Location("spriteColour"), blinnPhongShader->Location("enableTex"));
 }
 
 void Render::DrawModel(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMat)
