@@ -48,7 +48,7 @@ App::App() {
   loadAssets();
 
   fpcam = Camera::FirstPerson(glm::vec3(3.0f, 0.0f, 2.0f));
-  audioManager.Play("audio/test.wav", true, 0.5f);
+  // audioManager.Play("audio/test.wav", true, 0.5f);
   finishedDrawSubmit = true;
 }
 
@@ -60,7 +60,7 @@ App::~App() {
 }
 
 void App::loadAssets() {
-  testModel = mRender->LoadModel("models/coloured_cube_test.fbx");
+  testModel = mRender->LoadModel("models/testScene.fbx");
   testTex = mRender->LoadTexture("textures/error.png");
   testFont = mRender->LoadFont("textures/Roboto-Black.ttf");
   mRender->EndResourceLoad();
@@ -160,7 +160,7 @@ void App::draw() {
     mRender->Begin2DDraw();
 
     mRender->DrawString(testFont, "test", glm::vec2(400, 100), 100, -0.5,
-    										glm::vec4(1), 90.0f);
+    										glm::vec4(1), 0.0f);
 
     mRender->DrawQuad(testTex,
     								 glmhelper::getModelMatrix(glm::vec4(400, 100, 100, 100), 0, -1),
