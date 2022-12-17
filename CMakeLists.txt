@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
 
-
 #customize
 if(GFX_ENV_VULKAN)
   set(ProjectName "Vulkan-Environment")
@@ -18,12 +17,12 @@ project(${ProjectName} VERSION 1.0)
 set(CMAKE_CXX_STANDARD 14)
 
 #packages
-if (GFX_ENV_VULKAN)
-  find_package(Vulkan REQUIRED)
-endif()
+#if (GFX_ENV_VULKAN)
+#  find_package(Vulkan REQUIRED)
+#endif()
 
 if (UNIX)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -Wl,--no-as-needed -ldl")
     if (GFX_ENV_VULKAN)
       add_definitions(-DVK_USE_PLATFORM_XLIB_KHR)
     endif()
@@ -32,21 +31,25 @@ if (UNIX)
 endif()
 
 #add executables
-file(GLOB SOURCES src/*)
+file(GLOB SOURCES src/*
+  src/render/*
+  src/render/render-shared/*
+  src/render/render-shared/resources/*
+  src/render/render-shared/resources/model/*
+  )
 list(FILTER SOURCES EXCLUDE REGEX ".*#+")
 if(GFX_ENV_VULKAN)
-  file(GLOB GRAPHICS-RENDER src/vulkan-render/*
-                            src/vulkan-render/resources/*
-                            src/vulkan-render/resources/model/*
-                            src/vulkan-render/parts/*)
+  file(GLOB GRAPHICS-RENDER src/render/vulkan-render/*
+                            src/render/vulkan-render/resources/*
+                            src/render/vulkan-render/parts/*)
   list(FILTER GRAPHICS-RENDER EXCLUDE REGEX ".*#+")
   add_executable(${ProjectName} ${SOURCES}
                               ${GRAPHICS-RENDER}
                               ${PROJ_INCLUDE})
                     
 elseif(GFX_ENV_OPENGL)
-  file(GLOB OGL_RENDER src/opengl-render/*)
-  file(GLOB OGL_RENDER_RESOURCES src/opengl-render/resources/*)
+  file(GLOB OGL_RENDER src/render/opengl-render/*)
+  file(GLOB OGL_RENDER_RESOURCES src/render/opengl-render/resources/*)
   add_executable(${ProjectName}   ${SOURCES}
                                 ${OGL_RENDER}
                                 ${OGL_RENDER_RESOURCES}
@@ -58,7 +61,7 @@ if(UNIX)
     target_include_directories(${ProjectName} PUBLIC ${FREETYPE_INCLUDE_DIRS})
     if(GFX_ENV_VULKAN)
     target_link_libraries(${ProjectName} glfw
-                                         Vulkan::Vulkan
+                                         #Vulkan::Vulkan
                                          ${FREETYPE_LIBRARIES}
                                          assimp
                                          sndfile

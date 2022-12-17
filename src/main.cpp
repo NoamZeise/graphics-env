@@ -6,13 +6,13 @@
 #include <fstream>
 
 
-int main()
+int main(int argv, char** argc)
 {
 	try
 	{
-		#ifndef NDEBUG
+#ifndef NDEBUG
 		std::cout << "In debug mode" << std::endl;
-		#endif
+#endif
 		App app;
 		app.run();
 	}
