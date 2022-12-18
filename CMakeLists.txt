@@ -1,13 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 #customize
-if(GFX_ENV_VULKAN)
-  set(ProjectName "Vulkan-Environment")
-  add_definitions(-DGFX_ENV_VULKAN)
-elseif(GFX_ENV_OPENGL)
-  set(ProjectName "OpenGL-Environment")
-  add_definitions(-DGFX_ENV_OPENGL)
-endif()
+set(ProjectName "Graphics-Environment")
 #windows only
 set(Lib "D:/noam4/Libraries/VS/lib/x64/")
 set(Include "D:/noam4/Libraries/VS/include")
@@ -16,16 +10,9 @@ project(${ProjectName} VERSION 1.0)
 
 set(CMAKE_CXX_STANDARD 14)
 
-#packages
-#if (GFX_ENV_VULKAN)
-#  find_package(Vulkan REQUIRED)
-#endif()
-
 if (UNIX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -Wl,--no-as-needed -ldl")
-    if (GFX_ENV_VULKAN)
-      add_definitions(-DVK_USE_PLATFORM_XLIB_KHR)
-    endif()
+    add_definitions(-DVK_USE_PLATFORM_XLIB_KHR)
     find_package(glfw3 3.3 REQUIRED)
     find_package(Freetype REQUIRED)
 endif()
@@ -38,45 +25,33 @@ file(GLOB SOURCES src/*
   src/render/render-shared/resources/model/*
   )
 list(FILTER SOURCES EXCLUDE REGEX ".*#+")
-if(GFX_ENV_VULKAN)
-  file(GLOB GRAPHICS-RENDER src/render/vulkan-render/*
-                            src/render/vulkan-render/resources/*
-                            src/render/vulkan-render/parts/*)
-  list(FILTER GRAPHICS-RENDER EXCLUDE REGEX ".*#+")
-  add_executable(${ProjectName} ${SOURCES}
-                              ${GRAPHICS-RENDER}
-                              ${PROJ_INCLUDE})
-                    
-elseif(GFX_ENV_OPENGL)
-  file(GLOB OGL_RENDER src/render/opengl-render/*)
-  file(GLOB OGL_RENDER_RESOURCES src/render/opengl-render/resources/*)
-  add_executable(${ProjectName}   ${SOURCES}
-                                ${OGL_RENDER}
-                                ${OGL_RENDER_RESOURCES}
-                                ${PROJ_INCLUDE})
-endif()
+file(GLOB VK_RENDER src/render/vulkan-render/*
+  src/render/vulkan-render/resources/*
+  src/render/vulkan-render/parts/*)
+list(FILTER VK_RENDER EXCLUDE REGEX ".*#+")
+
+
+file(GLOB OGL_RENDER src/render/opengl-render/*
+  src/render/opengl-render/resources/*)
+list(FILTER OGL_RENDER EXCLUDE REGEX ".*#+")
+
+add_executable(${ProjectName}   ${SOURCES}
+  ${OGL_RENDER}
+  ${VK_RENDER}
+  ${PROJ_INCLUDE})
+
 #link
 target_include_directories(${ProjectName} PUBLIC include/)
 if(UNIX)
     target_include_directories(${ProjectName} PUBLIC ${FREETYPE_INCLUDE_DIRS})
-    if(GFX_ENV_VULKAN)
     target_link_libraries(${ProjectName} glfw
-                                         #Vulkan::Vulkan
                                          ${FREETYPE_LIBRARIES}
                                          assimp
                                          sndfile
-                                         portaudio)
-    elseif(GFX_ENV_OPENGL)
-      target_link_libraries(${ProjectName} glfw
-                                     assimp
-                                     ${FREETYPE_LIBRARIES}
-                                     sndfile
-                                     portaudio
-                                     ${CMAKE_DL_LIBS})
-    endif()
+                                         portaudio
+                                         ${CMAKE_DL_LIBS})
 else()
     target_include_directories(${ProjectName} PUBLIC ${Include})
-    if(GFX_ENV_VULKAN)
     target_link_libraries(${ProjectName} ${Lib}glfw3.lib
                                          ${Lib}freetype.lib
                                          ${Lib}vulkan-1.lib
@@ -84,11 +59,4 @@ else()
                                          ${Lib}portaudio_x64.lib
                                          ${Lib}sndfile.lib
                                         bufferoverflowU.lib)
-    elseif(GFX_ENV_OPENGL)
-      target_link_libraries(${ProjectName} ${Lib}glfw3.lib
-                                         ${Lib}freetype.lib
-                                         ${Lib}assimp-vc140-mt.lib
-                                         ${Lib}portaudio_x64.lib
-                                         ${Lib}sndfile.lib)
-    endif()
 endif()

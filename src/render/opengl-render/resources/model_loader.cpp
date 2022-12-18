@@ -2,15 +2,17 @@
 #include "assimp/material.h"
 #include "assimp/types.h"
 
+#include <iostream>
+
 namespace Resource
 {
 
-ModelLoader::ModelLoader()
+GLModelLoader::GLModelLoader()
 {
 
 }
 
-ModelLoader::~ModelLoader()
+GLModelLoader::~GLModelLoader()
 {
 	for(unsigned int i = 0; i < loadedModels.size(); i++)
 	{
@@ -18,7 +20,7 @@ ModelLoader::~ModelLoader()
 	}
 }
 
-Model ModelLoader::LoadModel(std::string path, TextureLoader* texLoader)
+Model GLModelLoader::LoadModel(std::string path, GLTextureLoader* texLoader)
 {
 #ifndef NO_ASSIMP
 
@@ -54,7 +56,7 @@ Model ModelLoader::LoadModel(std::string path, TextureLoader* texLoader)
 #endif
 }
 
-  void ModelLoader::DrawModel(Model model, TextureLoader* texLoader, uint32_t spriteColourShaderLoc)
+  void GLModelLoader::DrawModel(Model model, GLTextureLoader* texLoader, uint32_t spriteColourShaderLoc)
 {
 	if(model.ID >= loadedModels.size())
 	{
@@ -72,7 +74,7 @@ Model ModelLoader::LoadModel(std::string path, TextureLoader* texLoader)
 	}
 }
 
-  void ModelLoader::DrawModelInstanced(Model model, TextureLoader* texLoader, int count, uint32_t spriteColourShaderLoc, uint32_t enableTexShaderLoc)
+  void GLModelLoader::DrawModelInstanced(Model model, GLTextureLoader* texLoader, int count, uint32_t spriteColourShaderLoc, uint32_t enableTexShaderLoc)
 {
 	if(model.ID >= loadedModels.size())
 	{
@@ -94,7 +96,7 @@ Model ModelLoader::LoadModel(std::string path, TextureLoader* texLoader)
 }
 
 #ifndef NO_ASSIMP
-void ModelLoader::processNode(LoadedModel* model, aiNode* node, const aiScene* scene, TextureLoader* texLoader, aiMatrix4x4 parentTransform)
+void GLModelLoader::processNode(LoadedModel* model, aiNode* node, const aiScene* scene, GLTextureLoader* texLoader, aiMatrix4x4 parentTransform)
 {
 	aiMatrix4x4 transform = parentTransform * node->mTransformation;
     
@@ -109,17 +111,17 @@ void ModelLoader::processNode(LoadedModel* model, aiNode* node, const aiScene* s
 		processNode(model, node->mChildren[i], scene, texLoader, transform);
 	}
 }
-void ModelLoader::processMesh(Mesh* mesh, aiMesh* aimesh, const aiScene* scene, TextureLoader* texLoader, aiMatrix4x4 transform)
+void GLModelLoader::processMesh(Mesh* mesh, aiMesh* aimesh, const aiScene* scene, GLTextureLoader* texLoader, aiMatrix4x4 transform)
 {
 	loadMaterials(mesh, scene->mMaterials[aimesh->mMaterialIndex], texLoader);
     
 
 	//vertcies
-	std::vector<Vertex3D> verticies;
+	std::vector<GLVertex3D> verticies;
 	for(unsigned int i = 0; i < aimesh->mNumVertices;i++)
 	{
 		aiVector3D transformedVertex = transform * aimesh->mVertices[i];
-		Vertex3D vertex;
+		GLVertex3D vertex;
 		vertex.position.x = transformedVertex.x;
 		vertex.position.y = transformedVertex.y;
 		vertex.position.z = transformedVertex.z;
@@ -149,9 +151,9 @@ void ModelLoader::processMesh(Mesh* mesh, aiMesh* aimesh, const aiScene* scene, 
 		for(unsigned int j = 0; j < face.mNumIndices; j++)
 			indicies.push_back(face.mIndices[j]);
 	}
-	mesh->vertexData = new VertexData(verticies, indicies);
+	mesh->vertexData = new GLVertexData(verticies, indicies);
 }
-void ModelLoader::loadMaterials(Mesh* mesh, aiMaterial* material, TextureLoader* texLoader)
+void GLModelLoader::loadMaterials(Mesh* mesh, aiMaterial* material, GLTextureLoader* texLoader)
 {
   aiColor3D diffuseColour;
   if(material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuseColour) != AI_SUCCESS)

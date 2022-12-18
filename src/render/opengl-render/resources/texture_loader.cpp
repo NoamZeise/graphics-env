@@ -11,7 +11,7 @@
 namespace Resource
 {
 
-	TextureLoader::LoadedTex::LoadedTex(std::string path)
+	GLTextureLoader::LoadedTex::LoadedTex(std::string path)
 	{
 #ifndef NDEBUG
 		std::cout << "loading texture: " << path << std::endl;
@@ -32,12 +32,12 @@ namespace Resource
 		stbi_image_free(data);
 	}
 
-	TextureLoader::LoadedTex::LoadedTex(unsigned char* data, int width, int height, int nrChannels)
+	GLTextureLoader::LoadedTex::LoadedTex(unsigned char* data, int width, int height, int nrChannels)
 	{
 		generateTexture(data, width, height, nrChannels);
 	}
 
-	void TextureLoader::LoadedTex::generateTexture(unsigned char* data, int width, int height, int nrChannels)
+	void GLTextureLoader::LoadedTex::generateTexture(unsigned char* data, int width, int height, int nrChannels)
 	{
 		unsigned int format = GL_RGBA;
 		if (nrChannels == 1)
@@ -74,20 +74,20 @@ namespace Resource
 		}
 	}
 
-	TextureLoader::LoadedTex::~LoadedTex()
+	GLTextureLoader::LoadedTex::~LoadedTex()
 	{
 		glDeleteTextures(1, &ID);
 	}
 
-	void TextureLoader::LoadedTex::Bind()
+	void GLTextureLoader::LoadedTex::Bind()
 	{
 		glBindTexture(GL_TEXTURE_2D, ID);
 	}
 
 
-	TextureLoader::TextureLoader() {}
+	GLTextureLoader::GLTextureLoader() {}
 
-	TextureLoader::~TextureLoader()
+	GLTextureLoader::~GLTextureLoader()
 	{
 		for(unsigned int i = 0; i < textures.size(); i++)
 		{
@@ -95,19 +95,19 @@ namespace Resource
 		}
 	}
 
-	Texture TextureLoader::LoadTexture(std::string path)
+	Texture GLTextureLoader::LoadTexture(std::string path)
 	{
 		textures.push_back(new LoadedTex(path));
 		return Texture(textures.size() - 1, glm::vec2(textures.back()->width, textures.back()->height), path);
 	}
 
-	Texture TextureLoader::LoadTexture(unsigned char* data, int width, int height, int nrChannels)
+	Texture GLTextureLoader::LoadTexture(unsigned char* data, int width, int height, int nrChannels)
 	{
 		textures.push_back(new LoadedTex(data, width, height, nrChannels));
 		return Texture(textures.size() - 1, glm::vec2(textures.back()->width, textures.back()->height), "FONT");
 	}
 
-	void TextureLoader::Bind(Texture tex)
+	void GLTextureLoader::Bind(Texture tex)
 	{
 		if(tex.ID >= textures.size())
 		{

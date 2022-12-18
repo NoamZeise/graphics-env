@@ -1,5 +1,5 @@
-#ifndef FONT_LOADER_H
-#define FONT_LOADER_H
+#ifndef GLFONT_LOADER_H
+#define GLFONT_LOADER_H
 
 #include <string.h>
 #include <map>
@@ -12,18 +12,18 @@
 
 #include <glmhelper.h>
 
-#include "resources.h"
+#include "../../render-shared/resources/resources.h"
 #include "texture_loader.h"
 
 namespace Resource
 {
 
-class FontLoader
+class GLFontLoader
 {
 public:
-  FontLoader() {};
- ~FontLoader();
- Font LoadFont(std::string file, TextureLoader* texLoader);
+  GLFontLoader() {};
+ ~GLFontLoader();
+ Font LoadFont(std::string file, GLTextureLoader* texLoader);
  std::vector<QuadDraw> DrawString(Font drawfont, std::string text, glm::vec2 position, float size, float depth, glm::vec4 colour, float rotate);
  float MeasureString(Font font, std::string text, float size);
 
@@ -46,13 +46,13 @@ private:
   class LoadedFont
   {
   public:
-	  LoadedFont(std::string file, TextureLoader* texLoader);
+	  LoadedFont(std::string file, GLTextureLoader* texLoader);
 	  ~LoadedFont();
 	  Character* getChar(char c);
 	  float MeasureString(std::string text, float size);
   private:
 	  std::map<char, Character*> _chars;
-	  bool loadCharacter(TextureLoader* textureLoader, FT_Face f, char c);
+	  bool loadCharacter(GLTextureLoader* textureLoader, FT_Face f, char c);
 	  const int SIZE = 100;
   };
 

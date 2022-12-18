@@ -3,7 +3,7 @@
 namespace Resource
 {
 
-  FontLoader::~FontLoader()
+  GLFontLoader::~GLFontLoader()
 	{
 		for(unsigned int i = 0; i < fonts.size(); i++)
 		{
@@ -11,13 +11,13 @@ namespace Resource
 		}
 	}
 
-	Font FontLoader::LoadFont(std::string file, TextureLoader* texLoader)
+	Font GLFontLoader::LoadFont(std::string file, GLTextureLoader* texLoader)
 	{
 		fonts.push_back(new LoadedFont(file, texLoader));
 		return Font(fonts.size() - 1);
 	}
 
-  std::vector<QuadDraw> FontLoader::DrawString(Font drawfont, std::string text, glm::vec2 position, float size, float depth, glm::vec4 colour, float rotate)
+  std::vector<QuadDraw> GLFontLoader::DrawString(Font drawfont, std::string text, glm::vec2 position, float size, float depth, glm::vec4 colour, float rotate)
 	{
 		std::vector<QuadDraw> draws;
 		if (drawfont.ID >= fonts.size())
@@ -25,7 +25,7 @@ namespace Resource
 			std::cout << "font is out of range" << std::endl;
 			return draws;
 		}
-		FontLoader::LoadedFont* font = fonts[drawfont.ID];
+		GLFontLoader::LoadedFont* font = fonts[drawfont.ID];
 		for (std::string::const_iterator c = text.begin(); c != text.end(); c++)
 		{
 			Character* cTex = font->getChar(*c);
@@ -52,7 +52,7 @@ namespace Resource
 		return draws;
 	}
 
-  float FontLoader::MeasureString(Font font, std::string text, float size)
+  float GLFontLoader::MeasureString(Font font, std::string text, float size)
   {
     if (font.ID >= fonts.size())
     {
@@ -64,7 +64,7 @@ namespace Resource
 
 //PRIVATE METHODS
 
-FontLoader::LoadedFont::LoadedFont(std::string file, TextureLoader* texLoader)
+GLFontLoader::LoadedFont::LoadedFont(std::string file, GLTextureLoader* texLoader)
 {
 #ifndef NDEBUG
 	std::cout << "loading font: " << file << std::endl;
@@ -89,7 +89,7 @@ FontLoader::LoadedFont::LoadedFont(std::string file, TextureLoader* texLoader)
 	FT_Done_FreeType(ftlib);
 }
 
-FontLoader::LoadedFont::~LoadedFont()
+GLFontLoader::LoadedFont::~LoadedFont()
 {
 	std::map<char, Character*>::iterator it;
 	for (it = _chars.begin(); it != _chars.end(); it++)
@@ -99,7 +99,7 @@ FontLoader::LoadedFont::~LoadedFont()
 	}
 }
 
-bool FontLoader::LoadedFont::loadCharacter(TextureLoader* textureLoader, FT_Face face, char c)
+bool GLFontLoader::LoadedFont::loadCharacter(GLTextureLoader* textureLoader, FT_Face face, char c)
 {
 	if (FT_Load_Char(face, c, FT_LOAD_RENDER))
 	{
@@ -163,12 +163,12 @@ bool FontLoader::LoadedFont::loadCharacter(TextureLoader* textureLoader, FT_Face
 	return true;
 }
 
-FontLoader::Character* FontLoader::LoadedFont::getChar(char c)
+GLFontLoader::Character* GLFontLoader::LoadedFont::getChar(char c)
 {
 	return _chars[c];
 }
 
-float FontLoader::LoadedFont::MeasureString(std::string text, float size)
+float GLFontLoader::LoadedFont::MeasureString(std::string text, float size)
 {
 	float sz = 0;
 	for (std::string::const_iterator c = text.begin(); c != text.end(); c++)

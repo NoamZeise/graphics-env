@@ -1,13 +1,11 @@
 #include "render.h"
 
-Render::Render(GLFWwindow *window, glm::vec2 target)
+namespace glenv {
+GLRender::GLRender(GLFWwindow *window, glm::vec2 target)
 {
   glfwMakeContextCurrent(window);
 
   this->window = window;
-  this->width = target.x;
-  this->height = target.y;
-
   this->targetResolution = target;
 
   if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -19,27 +17,27 @@ Render::Render(GLFWwindow *window, glm::vec2 target)
   glEnable(GL_CULL_FACE);
 
 
-  blinnPhongShader = new Shader("shaders/opengl/3D-lighting.vert", "shaders/opengl/blinnphong.frag");
+  blinnPhongShader = new GLShader("shaders/opengl/3D-lighting.vert", "shaders/opengl/blinnphong.frag");
   blinnPhongShader->Use();
 
   glUniform1i(blinnPhongShader->Location("image"), 0);
 
-  flatShader = new Shader("shaders/opengl/flat.vert", "shaders/opengl/flat.frag");
+  flatShader = new GLShader("shaders/opengl/flat.vert", "shaders/opengl/flat.frag");
   flatShader->Use();
   glUniform1i(flatShader->Location("image"), 0);
 
   view2D = glm::mat4(1.0f);
 
-  std::vector<Vertex2D> quadVerts = {
-    Vertex2D(0.0f, 1.0f, 0.0f, 0.0f, 1.0f),
-    Vertex2D(1.0f, 0.0f, 0.0f, 1.0f, 0.0f),
-    Vertex2D(0.0f, 0.0f, 0.0f, 0.0f, 0.0f),
-    Vertex2D(0.0f, 1.0f, 0.0f, 0.0f, 1.0f),
-    Vertex2D(1.0f, 1.0f, 0.0f, 1.0f, 1.0f),
-    Vertex2D(1.0f, 0.0f, 0.0f, 1.0f, 0.0f),
+  std::vector<GLVertex2D> quadVerts = {
+    GLVertex2D(0.0f, 1.0f, 0.0f, 0.0f, 1.0f),
+    GLVertex2D(1.0f, 0.0f, 0.0f, 1.0f, 0.0f),
+    GLVertex2D(0.0f, 0.0f, 0.0f, 0.0f, 0.0f),
+    GLVertex2D(0.0f, 1.0f, 0.0f, 0.0f, 1.0f),
+    GLVertex2D(1.0f, 1.0f, 0.0f, 1.0f, 1.0f),
+    GLVertex2D(1.0f, 0.0f, 0.0f, 1.0f, 0.0f),
   };
   std::vector<unsigned int> quadInds =  {0, 1, 2, 3, 4, 5};
-  quad = new VertexData(quadVerts, quadInds);
+  quad = new GLVertexData(quadVerts, quadInds);
 
   glGenBuffers(1, &model3DSSBO);
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, model3DSSBO);
@@ -61,15 +59,15 @@ Render::Render(GLFWwindow *window, glm::vec2 target)
   glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(perInstance2DTexOffset), &perInstance2DTexOffset, GL_DYNAMIC_DRAW);
   glBindBuffer( GL_SHADER_STORAGE_BUFFER,0 );
 
-  textureLoader = new Resource::TextureLoader();
-  fontLoader = new  Resource::FontLoader();
-  modelLoader = new Resource::ModelLoader();
+  textureLoader = new Resource::GLTextureLoader();
+  fontLoader = new  Resource::GLFontLoader();
+  modelLoader = new Resource::GLModelLoader();
   textureLoader->LoadTexture("textures/error.png");
 
   FramebufferResize();
 }
 
-Render::~Render()
+GLRender::~GLRender()
 {
   delete quad;
   delete blinnPhongShader;
@@ -79,31 +77,22 @@ Render::~Render()
   delete modelLoader;
 }
 
-Resource::Texture Render::LoadTexture(std::string filepath)
+Resource::Texture GLRender::LoadTexture(std::string filepath)
 {
   return textureLoader->LoadTexture(filepath);
 }
 
-Resource::Model Render::LoadModel(std::string filepath)
+Resource::Model GLRender::LoadModel(std::string filepath)
 {
   return modelLoader->LoadModel(filepath, textureLoader);
 }
 
-Resource::Font Render::LoadFont(std::string filepath)
+Resource::Font GLRender::LoadFont(std::string filepath)
 {
   return fontLoader->LoadFont(filepath, textureLoader);
 }
 
-void Render::set3DViewMatrixAndFov(glm::mat4 view, float fov, glm::vec4 camPos)
-{
-  this->fov = fov;
-  view3D = view;
-  proj3D = glm::perspective(glm::radians(fov),
-			((float)width) / ((float)height), 0.1f, 500.0f);
-  lighting.camPos = camPos;
-}
-
-Render::Draw2D::Draw2D(Resource::Texture tex, glm::mat4 model, glm::vec4 colour, glm::vec4 texOffset)
+GLRender::Draw2D::Draw2D(Resource::Texture tex, glm::mat4 model, glm::vec4 colour, glm::vec4 texOffset)
 {
   this->tex = tex;
   this->model = model;
@@ -111,7 +100,7 @@ Render::Draw2D::Draw2D(Resource::Texture tex, glm::mat4 model, glm::vec4 colour,
   this->texOffset = texOffset;
 }
 
-Render::Draw3D::Draw3D(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMatrix)
+GLRender::Draw3D::Draw3D(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMatrix)
 {
   this->model = model;
   this->modelMatrix = modelMatrix;
@@ -119,17 +108,17 @@ Render::Draw3D::Draw3D(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 n
 }
 
 
-void Render::Begin2DDraw()
+void GLRender::Begin2DDraw()
 {
   current2DDraw = 0;
 }
 
-void Render::Begin3DDraw()
+void GLRender::Begin3DDraw()
 {
   current3DDraw = 0;
 }
 
-void Render::EndDraw(std::atomic<bool>& submit)
+void GLRender::EndDraw(std::atomic<bool>& submit)
 {
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -203,7 +192,7 @@ void Render::EndDraw(std::atomic<bool>& submit)
   submit = true;
 }
 
-void Render::draw2DBatch(int drawCount, Resource::Texture texture, glm::vec4 currentColour)
+void GLRender::draw2DBatch(int drawCount, Resource::Texture texture, glm::vec4 currentColour)
 {
   glUniform4fv(flatShader->Location("spriteColour"), 1, &currentColour[0]);
 
@@ -222,7 +211,7 @@ void Render::draw2DBatch(int drawCount, Resource::Texture texture, glm::vec4 cur
   quad->DrawInstanced(GL_TRIANGLES, drawCount);
 }
 
-void Render::draw3DBatch(int drawCount, Resource::Model model)
+void GLRender::draw3DBatch(int drawCount, Resource::Model model)
 {
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, model3DSSBO);
   glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(perInstance3DModel), perInstance3DModel, GL_DYNAMIC_DRAW);
@@ -237,7 +226,7 @@ void Render::draw3DBatch(int drawCount, Resource::Model model)
   modelLoader->DrawModelInstanced(model, textureLoader, drawCount, blinnPhongShader->Location("spriteColour"), blinnPhongShader->Location("enableTex"));
 }
 
-void Render::DrawModel(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMat)
+void GLRender::DrawModel(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMat)
 {
   if(current3DDraw < MAX_3D_DRAWS)
   {
@@ -245,7 +234,7 @@ void Render::DrawModel(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 n
   }
 }
 
-void Render::DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix, glm::vec4 colour, glm::vec4 texOffset)
+void GLRender::DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix, glm::vec4 colour, glm::vec4 texOffset)
 {
   if(current2DDraw < MAX_2D_DRAWS)
   {
@@ -253,17 +242,17 @@ void Render::DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix, glm::vec
   }
 }
 
-void Render::DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix, glm::vec4 colour)
+void GLRender::DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix, glm::vec4 colour)
 {
   DrawQuad(texture, modelMatrix, colour, glm::vec4(0, 0, 1, 1));
 }
 
-void Render::DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix)
+void GLRender::DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix)
 {
   DrawQuad(texture, modelMatrix, glm::vec4(1), glm::vec4(0, 0, 1, 1));
 }
 
-void Render::DrawString(Resource::Font font, std::string text, glm::vec2 position, float size, float depth, glm::vec4 colour, float rotate)
+void GLRender::DrawString(Resource::Font font, std::string text, glm::vec2 position, float size, float depth, glm::vec4 colour, float rotate)
 {
   auto draws = fontLoader->DrawString(font, text, position, size, depth, colour, rotate);
 
@@ -273,9 +262,14 @@ void Render::DrawString(Resource::Font font, std::string text, glm::vec2 positio
   }
 }
 
-void Render::FramebufferResize()
+float GLRender::MeasureString(Resource::Font font,std::string text, float size) {
+  return fontLoader->MeasureString(font, text, size);
+}
+
+void GLRender::FramebufferResize()
 {
-  glfwGetWindowSize(window, &this->width, &this->height);
+  int width, height;
+  glfwGetWindowSize(window, &width, &height);
   glViewport(0, 0, width, height);
 
   float deviceRatio = (float)width /
@@ -291,7 +285,45 @@ void Render::FramebufferResize()
     correction = xCorrection;
   }
   proj2D = glm::ortho(
-      0.0f, (float)width / correction, (float)height / correction, 0.0f, -10.0f, 10.0f);
+      0.0f, (float)width*scale2D / correction, (float)height*scale2D / correction, 0.0f, -10.0f, 10.0f);
 
   set3DViewMatrixAndFov(view3D, fov, lighting.camPos);
 }
+
+  void GLRender::set3DViewMatrixAndFov(glm::mat4 view, float fov, glm::vec4 camPos)
+  {
+  this->fov = fov;
+  view3D = view;
+  proj3D = glm::perspective(glm::radians(fov),
+                            (targetResolution.x / targetResolution.y), 0.1f, 500.0f);
+  lighting.camPos = camPos;
+  }
+
+  void GLRender::set2DViewMatrixAndScale(glm::mat4 view, float scale)
+  {
+    view2D = view;
+    scale2D = scale;
+  }
+
+  void GLRender::setForceTargetRes(bool force) {
+    if(forceTargetResolution != force) {
+      forceTargetResolution = force;
+      FramebufferResize();
+    }
+  }
+  bool GLRender::isTargetResForced() { return forceTargetResolution; }
+
+  void GLRender::setTargetResolution(glm::vec2 resolution) {
+    targetResolution = resolution;
+    forceTargetResolution = true;
+    FramebufferResize();
+  }
+  glm::vec2 GLRender::getTargetResolution() {
+    return targetResolution;
+  }
+  void GLRender::setVsync(bool vsync) {
+    this->vsync = vsync;
+    FramebufferResize();
+  }
+
+}//namespace

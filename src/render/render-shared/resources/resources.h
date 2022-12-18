@@ -60,6 +60,13 @@ struct QuadDraw
 		this->colour = colour;
 		this->texOffset = texOffset;
 	}
+	QuadDraw(Texture tex, glm::mat4 model, glm::vec4 colour)
+	{
+		this->tex = tex;
+		this->model = model;
+		this->colour = colour;
+		this->texOffset = glm::vec4(0, 0, 1, 1);
+	}
 	Texture tex;
 	glm::mat4 model;
 	glm::vec4 colour;

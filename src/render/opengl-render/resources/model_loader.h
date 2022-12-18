@@ -1,5 +1,5 @@
-#ifndef MODEL_LOADER_H
-#define MODEL_LOADER_H
+#ifndef GLMODEL_LOADER_H
+#define GLMODEL_LOADER_H
 
 #ifndef NO_ASSIMP
 #include <assimp/Importer.hpp>
@@ -9,25 +9,25 @@
 
 #include "vertex_data.h"
 #include "texture_loader.h"
-#include "resources.h"
+#include "../../render-shared/resources/resources.h"
 
 
 namespace Resource
 {
 
-class ModelLoader
+class GLModelLoader
 {
 public:
-	ModelLoader();
-	~ModelLoader();
-	Model LoadModel(std::string path, TextureLoader* texLoader);
-  void DrawModel(Model model, TextureLoader* texLoader, uint32_t spriteColourShaderLoc);
-  void DrawModelInstanced(Model model, TextureLoader* texLoader, int count, uint32_t spriteColourShaderLoc, uint32_t enableTexShaderLoc);
+	GLModelLoader();
+	~GLModelLoader();
+	Model LoadModel(std::string path, GLTextureLoader* texLoader);
+  void DrawModel(Model model, GLTextureLoader* texLoader, uint32_t spriteColourShaderLoc);
+  void DrawModelInstanced(Model model, GLTextureLoader* texLoader, int count, uint32_t spriteColourShaderLoc, uint32_t enableTexShaderLoc);
 
 private:
 	struct Mesh
 	{
-		VertexData* vertexData;
+		GLVertexData* vertexData;
 		Texture texture;
         glm::vec4 diffuseColour;
 	};
@@ -46,9 +46,9 @@ private:
 	};
 
 #ifndef NO_ASSIMP
-  void processNode(LoadedModel* model, aiNode* node, const aiScene* scene, TextureLoader* texLoader, aiMatrix4x4 parentTransform);
-	void processMesh(Mesh* mesh, aiMesh* aimesh, const aiScene* scene, TextureLoader* texLoader, aiMatrix4x4 transform);
-	void loadMaterials(Mesh* mesh, aiMaterial* material, TextureLoader* texLoader);
+  void processNode(LoadedModel* model, aiNode* node, const aiScene* scene, GLTextureLoader* texLoader, aiMatrix4x4 parentTransform);
+	void processMesh(Mesh* mesh, aiMesh* aimesh, const aiScene* scene, GLTextureLoader* texLoader, aiMatrix4x4 transform);
+	void loadMaterials(Mesh* mesh, aiMaterial* material, GLTextureLoader* texLoader);
 #endif
 
 	std::vector<LoadedModel*> loadedModels;

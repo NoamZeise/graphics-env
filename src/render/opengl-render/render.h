@@ -22,6 +22,8 @@
 #include "resources/font_loader.h"
 #include "resources/model_loader.h"
 
+namespace glenv {
+
 //match in shaders
 const int MAX_2D_DRAWS = 10000;
 const int MAX_3D_DRAWS = 10000;
@@ -29,60 +31,74 @@ const int MAX_3D_DRAWS = 10000;
 const int MAX_2D_BATCH = 10000;
 const int MAX_3D_BATCH = 10000;
 
-class Render
+class GLRender
 {
 public:
-	Render(GLFWwindow* window, glm::vec2 target);
-	~Render();
-  static void SetGLFWWindowHints()
+  static bool LoadOpenGL()
   {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    return true;
   }
-  void set3DViewMatrixAndFov(glm::mat4 view, float fov, glm::vec4 camPos);
-  void setLightDirection(glm::vec4 lightDir) {
-    lighting.direction = lightDir;
-  }
+  GLRender(GLFWwindow* window);
+	GLRender(GLFWwindow* window, glm::vec2 target);
+	~GLRender();
+
 	Resource::Texture LoadTexture(std::string filepath);
   Resource::Model LoadModel(std::string filepath);
 	Resource::Font LoadFont(std::string filepath);
   
   Resource::Model LoadAnimatedModel(std::string filepath, std::vector<Resource::ModelAnimation> *pGetAnimations) {
     std::cout << "skeletal animation not supported in ogl\n";
-    
+    return ::Resource::Model();
   }
+
+
+    void EndResourceLoad() { }
+    void LoadResourcesToGPU() {}
+    void UseLoadedResources() {}
 
     void BeginAnim3DDraw()
   {
 std::cout << "skeletal animation not supported in ogl\n";
   }
 
-  void DrawAnimModel(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMatrix, Resource::ModelAnimation *animation)
+  void DrawAnimModel(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMatrix, ::Resource::ModelAnimation *animation)
 
   {
 std::cout << "skeletal animation not supported in ogl\n";
   }
 
-  
-	void EndResourceLoad() { }
-
-  void Begin2DDraw();
-  void Begin3DDraw();
+    void Begin2DDraw();
+    void Begin3DDraw();
 	void DrawModel(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMat);
 	void DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix, glm::vec4 colour, glm::vec4 texOffset);
 	void DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix, glm::vec4 colour);
 	void DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix);
 	void DrawString(Resource::Font font, std::string text, glm::vec2 position, float size, float depth, glm::vec4 colour, float rotate);
 	void DrawString(Resource::Font font, std::string text, glm::vec2 position, float size, float depth, glm::vec4 colour);
+  float MeasureString(Resource::Font font, std::string text, float size);
   void EndDraw(std::atomic<bool>& submit);
 
 	void FramebufferResize();
 
+  void set3DViewMatrixAndFov(glm::mat4 view, float fov, glm::vec4 camPos);
+  void set2DViewMatrixAndScale(glm::mat4 view, float scale);
+  void setLightDirection(glm::vec4 lightDir) {
+    lighting.direction = lightDir;
+  }
+  void setForceTargetRes(bool force);
+  bool isTargetResForced();
+  void setTargetResolution(glm::vec2 resolution);
+  glm::vec2 getTargetResolution();
+  void setVsync(bool vsync);
+
 private:
 
-	void draw3DBatch(int drawCount, Resource::Model model);
-	void draw2DBatch(int drawCount, Resource::Texture texture, glm::vec4 currentColour);
+	void draw3DBatch(int drawCount, ::Resource::Model model);
+	void draw2DBatch(int drawCount, ::Resource::Texture texture, glm::vec4 currentColour);
 
 	struct LightingParameters
 	{
@@ -107,12 +123,13 @@ private:
 	GLFWwindow* window;
 	glm::vec2 targetResolution;
 
-  Shader* blinnPhongShader;
-	Shader* flatShader;
+  bool forceTargetResolution = false;
+  bool vsync = true;
 
-  int width;
-  int height;
+  GLShader* blinnPhongShader;
+	GLShader* flatShader;
 
+  float scale2D = 1.0f; //TODO make 2D scale work
   glm::mat4 proj2D;
   glm::mat4 view2D;
 
@@ -120,17 +137,17 @@ private:
   glm::mat4 view3D;
 	float fov;
 
-  VertexData* quad;
+  GLVertexData* quad;
 
-  Resource::TextureLoader* textureLoader;
-	Resource::FontLoader* fontLoader;
-  Resource::ModelLoader* modelLoader;
+  Resource::GLTextureLoader* textureLoader;
+	Resource::GLFontLoader* fontLoader;
+  Resource::GLModelLoader* modelLoader;
 
   struct Draw2D
   {
     Draw2D() {}
-    Draw2D(Resource::Texture tex, glm::mat4 model, glm::vec4 colour, glm::vec4 texOffset);
-    Resource::Texture tex;
+    Draw2D(::Resource::Texture tex, glm::mat4 model, glm::vec4 colour, glm::vec4 texOffset);
+    ::Resource::Texture tex;
     glm::mat4 model;
     glm::vec4 colour;
     glm::vec4 texOffset;
@@ -138,9 +155,9 @@ private:
   struct Draw3D
   {
     Draw3D() {}
-    Draw3D(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMatrix);
+    Draw3D(::Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMatrix);
 
-    Resource::Model model;
+    ::Resource::Model model;
     glm::mat4 modelMatrix;
     glm::mat4 normalMatrix;
   };
@@ -161,8 +178,6 @@ private:
 	GLuint normal3DSSBO;
 };
 
-
-
-
+}//namespace
 
 #endif

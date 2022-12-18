@@ -1,5 +1,5 @@
-#ifndef TEXTURE_LOADER_H
-#define TEXTURE_LOADER_H
+#ifndef GLTEXTURE_LOADER_H
+#define GLTEXTURE_LOADER_H
 
 #include "../../render-shared/resources/resources.h"
 #include <vector>
@@ -7,11 +7,11 @@
 namespace Resource
 {
 
-class TextureLoader
+class GLTextureLoader
 {
 public:
-	TextureLoader();
-	~TextureLoader();
+	GLTextureLoader();
+	~GLTextureLoader();
 	Texture LoadTexture(std::string path);
 	Texture LoadTexture(unsigned char* data, int width, int height, int nrChannels);
 	void Bind(Texture tex);

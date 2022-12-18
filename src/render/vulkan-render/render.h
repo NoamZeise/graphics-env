@@ -23,6 +23,7 @@
 #include "resources/texture_loader.h"
 #include "vkhelper.h"
 
+
 #include <atomic>
 
 namespace vkenv {

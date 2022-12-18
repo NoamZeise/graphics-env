@@ -1,23 +1,15 @@
-#ifndef SHADER_H
-#define SHADER_H
+#ifndef GLSHADER_H
+#define GLSHADER_H
 
-#include <glad/glad.h>
-
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
-#include <iostream>
 #include <string>
-#include <fstream>
-#include <vector>
 
-class Shader
+namespace glenv {
+class GLShader
 {
 public:
-	Shader() {}
-	Shader(const char* VertexShaderPath, const char* FragmentShaderPath);
-	~Shader();
+	GLShader() {}
+	GLShader(const char* VertexShaderPath, const char* FragmentShaderPath);
+	~GLShader();
 	void Use();
 	unsigned int Location(const std::string& uniformName) const;
 	unsigned int program() { return shaderProgram; }
@@ -27,5 +19,7 @@ private:
 	unsigned int compileShader(const char* path, bool isFragmentShader);
 };
 
+
+} //namespace
 
 #endif // !SHADER_H

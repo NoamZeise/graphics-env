@@ -12,12 +12,12 @@ Render::Render(RenderFramework preferredRenderer) {
             std::cout << "Failed to load Vulkan, trying OpenGL\n";
 
         case RenderFramework::OPENGL:
-            if(glenv::Render::LoadOpenGL()) {
+            if(glenv::GLRender::LoadOpenGL()) {
                 renderer = RenderFramework::OPENGL;
                 break;
             }
             else {
-                std::cout <<"Failed to load OpenGL";
+                std::cout <<"Failed to load OpenGL\n";
                 noApiLoaded = true;
             }
             break;

@@ -1,6 +1,18 @@
 #include "shader.h"
 
-Shader::Shader(const char* VertexShaderPath, const char* FragmentShaderPath)
+#include <glad/glad.h>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+#include <iostream>
+#include <fstream>
+#include <vector>
+
+namespace glenv {
+
+GLShader::GLShader(const char* VertexShaderPath, const char* FragmentShaderPath)
 {
 //create shader
 	unsigned int vShader, fShader;
@@ -35,12 +47,12 @@ Shader::Shader(const char* VertexShaderPath, const char* FragmentShaderPath)
 	glDeleteShader(fShader);
 }
 
-Shader::~Shader()
+GLShader::~GLShader()
 {
 	glDeleteProgram(shaderProgram);
 }
 
-unsigned int Shader::compileShader(const char* path, bool isFragmentShader)
+unsigned int GLShader::compileShader(const char* path, bool isFragmentShader)
 {
 	std::string dir = path;
 	unsigned int shader;
@@ -77,12 +89,14 @@ unsigned int Shader::compileShader(const char* path, bool isFragmentShader)
 	return shader;
 }
 
-void Shader::Use()
+void GLShader::Use()
 {
 	glUseProgram(shaderProgram);
 }
 
-unsigned int Shader::Location(const std::string& uniformName) const
+unsigned int GLShader::Location(const std::string& uniformName) const
 {
 	return glGetUniformLocation(shaderProgram, uniformName.c_str());
 }
+
+}//namespace
