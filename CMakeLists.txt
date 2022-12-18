@@ -17,48 +17,26 @@ if (UNIX)
     find_package(Freetype REQUIRED)
 endif()
 
+add_subdirectory(libs)
+
 #add executables
-file(GLOB SOURCES src/*
-  src/render/*
-  src/render/render-shared/*
-  src/render/render-shared/resources/*
-  src/render/render-shared/resources/model/*
-  )
+file(GLOB SOURCES src/*)
 list(FILTER SOURCES EXCLUDE REGEX ".*#+")
-file(GLOB VK_RENDER src/render/vulkan-render/*
-  src/render/vulkan-render/resources/*
-  src/render/vulkan-render/parts/*)
-list(FILTER VK_RENDER EXCLUDE REGEX ".*#+")
 
-
-file(GLOB OGL_RENDER src/render/opengl-render/*
-  src/render/opengl-render/resources/*)
-list(FILTER OGL_RENDER EXCLUDE REGEX ".*#+")
-
-add_executable(${ProjectName} ${SOURCES}
-  ${OGL_RENDER}
-  ${VK_RENDER}
-  ${PROJ_INCLUDE})
-
+add_executable(${ProjectName} ${SOURCES}  ${OGL_RENDER}  ${PROJ_INCLUDE})
+  
 #link
 target_include_directories(${ProjectName} PUBLIC
 					  include/
 					  )
+
+target_link_libraries(${ProjectName} Vulkan-Renderer)
+target_link_libraries(${ProjectName} OpenGL-Renderer)
 if(UNIX)
     target_include_directories(${ProjectName} PUBLIC ${FREETYPE_INCLUDE_DIRS})
     target_link_libraries(${ProjectName} glfw
-                                         ${FREETYPE_LIBRARIES}
-                                         assimp
-                                         sndfile
-                                         portaudio
                                          ${CMAKE_DL_LIBS})
 else()
     target_include_directories(${ProjectName} PUBLIC ${Include})
-    target_link_libraries(${ProjectName} ${Lib}glfw3.lib
-                                         ${Lib}freetype.lib
-                                         ${Lib}vulkan-1.lib
-                                         ${Lib}assimp-vc140-mt.lib
-                                         ${Lib}portaudio_x64.lib
-                                         ${Lib}sndfile.lib
-                                        bufferoverflowU.lib)
+    target_link_libraries(${ProjectName} ${Lib}glfw3.lib)
 endif()

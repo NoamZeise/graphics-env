@@ -4,7 +4,7 @@
 #include <atomic>
 #include <thread>
 
-#include "render/render.h"
+#include "render.h"
 
 #include <GLFW/glfw3.h>
 #ifndef GLM_FORCE_DEPTH_ZERO_TO_ONE

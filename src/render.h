@@ -1,8 +1,8 @@
 #ifndef GRAPHICS_ENV_RENDERER
 #define GRAPHICS_ENV_RENDERER
 
-#include "opengl-render/render.h"
-#include "vulkan-render/render.h"
+#include "../libs/opengl-render/render.h"
+#include "../libs/vulkan-render/render.h"
 
 #include <string>
 #include <vector>
