@@ -23,9 +23,8 @@ ModelInfo::Model ModelLoader::LoadModel(std::string path)
 
     if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 		throw std::runtime_error("failed to load model at \"" + path + "\" assimp error: " + importer.GetErrorString());
-
-	processNode(&model, scene->mRootNode, scene, aiMatrix4x4(), -1);
-
+    
+    processNode(&model, scene->mRootNode, scene, aiMatrix4x4(), -1);
 #ifndef  NDEBUG
     std::cout << "model bone count: " << model.bones.size() << std::endl;
     std::cout << "model animation count: " << scene->mNumAnimations << std::endl;
@@ -62,16 +61,16 @@ void ModelLoader::processNode(ModelInfo::Model* model, aiNode* node, const aiSce
     {
         model->nodes[parentNode].children.push_back(thisID);
     }
-	for(unsigned int i = 0; i < node->mNumMeshes; i++)
-	{
-		aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-		model->meshes.push_back(ModelInfo::Mesh());
-		processMesh(model, mesh, scene, transform);
-	}
-	for(unsigned int i = 0; i < node->mNumChildren; i++)
-	{
-		processNode(model, node->mChildren[i], scene, transform, thisID);
-	}
+    for(unsigned int i = 0; i < node->mNumMeshes; i++)
+    {
+	aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
+	model->meshes.push_back(ModelInfo::Mesh());
+	processMesh(model, mesh, scene, transform);
+    }
+    for(unsigned int i = 0; i < node->mNumChildren; i++)
+    {
+	processNode(model, node->mChildren[i], scene, transform, thisID);
+    }
 }
 void ModelLoader::processMesh(ModelInfo::Model* model, aiMesh* aimesh, const aiScene* scene, aiMatrix4x4 transform)
 {

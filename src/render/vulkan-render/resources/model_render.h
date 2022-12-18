@@ -17,7 +17,7 @@
 #include <cstring>
 #include <iostream>
 
-#include "../../render-shared/resources/resources.h"
+#include <resources/resources.h>
 #include "texture_loader.h"
 #include "../render_structs.h"
 #include "../pipeline.h"

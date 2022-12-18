@@ -1,5 +1,7 @@
 #include "texture_loader.h"
 
+#include <resources/stb_image.h>
+
 namespace Resource
 {
 

@@ -10,11 +10,10 @@
 #include <cstring>
 #include <iostream>
 
-#include "../../render-shared/resources/stb_image.h"
 #include <config.h>
 #include "../render_structs.h"
 #include "../vkhelper.h"
-#include "../../render-shared/resources/resources.h"
+#include <resources/resources.h>
 
 namespace Resource
 {

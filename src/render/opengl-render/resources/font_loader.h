@@ -12,7 +12,7 @@
 
 #include <glmhelper.h>
 
-#include "../../render-shared/resources/resources.h"
+#include <resources/resources.h>
 #include "texture_loader.h"
 
 namespace Resource

@@ -6,7 +6,7 @@
 #include <glad/glad.h>
 #include <config.h>
 
-#include "../../render-shared/resources/stb_image.h"
+#include <resources/stb_image.h>
 
 namespace Resource
 {
@@ -98,13 +98,13 @@ namespace Resource
 	Texture GLTextureLoader::LoadTexture(std::string path)
 	{
 		textures.push_back(new LoadedTex(path));
-		return Texture(textures.size() - 1, glm::vec2(textures.back()->width, textures.back()->height), path);
+		return Texture((unsigned int)(textures.size() - 1), glm::vec2(textures.back()->width, textures.back()->height), path);
 	}
 
 	Texture GLTextureLoader::LoadTexture(unsigned char* data, int width, int height, int nrChannels)
 	{
 		textures.push_back(new LoadedTex(data, width, height, nrChannels));
-		return Texture(textures.size() - 1, glm::vec2(textures.back()->width, textures.back()->height), "FONT");
+		return Texture((unsigned int)(textures.size() - 1), glm::vec2(textures.back()->width, textures.back()->height), "FONT");
 	}
 
 	void GLTextureLoader::Bind(Texture tex)

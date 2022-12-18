@@ -19,7 +19,7 @@
 #include <stdexcept>
 
 
-#include "../../render-shared/resources/model/model_info.h"
+#include <resources/model/model_info.h>
 
 namespace Resource
 {

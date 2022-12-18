@@ -35,13 +35,15 @@ file(GLOB OGL_RENDER src/render/opengl-render/*
   src/render/opengl-render/resources/*)
 list(FILTER OGL_RENDER EXCLUDE REGEX ".*#+")
 
-add_executable(${ProjectName}   ${SOURCES}
+add_executable(${ProjectName} ${SOURCES}
   ${OGL_RENDER}
   ${VK_RENDER}
   ${PROJ_INCLUDE})
 
 #link
-target_include_directories(${ProjectName} PUBLIC include/)
+target_include_directories(${ProjectName} PUBLIC
+					  include/
+					  )
 if(UNIX)
     target_include_directories(${ProjectName} PUBLIC ${FREETYPE_INCLUDE_DIRS})
     target_link_libraries(${ProjectName} glfw

@@ -87,22 +87,12 @@ private:
   Resource::Model testModel1;
   Resource::Model monkeyModel1;
   Resource::Model colouredCube1;
-  Resource::Model testWolf1;
-  std::vector<Resource::ModelAnimation> wolfAnims1;
-  Resource::ModelAnimation currentWolfAnim1;
-  Resource::ModelAnimation secondWolfAnim1;
-  Resource::ModelAnimation thirdWolfAnim1;
   Resource::Texture testTex1;
   Resource::Font testFont1;
 
   Resource::Model testModel2;
   Resource::Model monkeyModel2;
   Resource::Model colouredCube2;
-  Resource::Model testWolf2;
-  std::vector<Resource::ModelAnimation> wolfAnims2;
-  Resource::ModelAnimation currentWolfAnim2;
-  Resource::ModelAnimation secondWolfAnim2;
-  Resource::ModelAnimation thirdWolfAnim2;
   Resource::Texture testTex2;
   Resource::Font testFont2;
 };

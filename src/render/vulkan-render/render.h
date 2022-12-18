@@ -9,7 +9,7 @@
 #endif
 #include <glm/glm.hpp>
 
-#include "../render-shared/resources/resources.h"
+#include <resources/resources.h>
 #include "parts/primary.h"
 #include "parts/swapchain.h"
 #include "parts/render_style.h"
@@ -37,7 +37,7 @@ public:
   Render(GLFWwindow *window);
   Render(GLFWwindow *window, glm::vec2 target);
   ~Render();
-    static bool LoadVulkan();
+  static bool LoadVulkan();
 
   Resource::Texture LoadTexture(std::string filepath);
   Resource::Font LoadFont(std::string filepath);
