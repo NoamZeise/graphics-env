@@ -79,7 +79,6 @@ enum class RenderFramework {
 
 class Render {
     public:
-        Render() { Render(VULKAN); }
         Render(RenderFramework preferredRenderer);
         ~Render() {  _RENDER_NO_FN(delete vkRender, delete glRender); }
         bool NoApiLoaded() { return noApiLoaded; }

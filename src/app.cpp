@@ -8,11 +8,12 @@ App::App() {
   mWindowWidth = INITIAL_WINDOW_WIDTH;
   mWindowHeight = INITIAL_WINDOW_HEIGHT;
 
+
   glfwSetErrorCallback(error_callback);
   if (!glfwInit())
     throw std::runtime_error("failed to initialise glfw!");
 
-  mRender = new Render();
+  mRender = new Render(RenderFramework::VULKAN);
 
   if(mRender->NoApiLoaded()) {
     throw std::runtime_error("failed to load any graphics apis");
