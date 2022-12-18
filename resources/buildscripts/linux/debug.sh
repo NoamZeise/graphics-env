@@ -8,5 +8,5 @@ cp -r resources/shaders build/Debug
 cp -r resources/models build/Debug
 cp -r resources/textures build/Debug
 cd build/Debug
-./Vulkan-Environment
+./Graphics-Environment
 cd ../..
