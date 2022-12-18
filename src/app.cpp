@@ -1,5 +1,8 @@
 #include "app.h"
 
+#include <glmhelper.h>
+#include <iostream>
+
 App::App() {
 
   mWindowWidth = INITIAL_WINDOW_WIDTH;
@@ -9,10 +12,13 @@ App::App() {
   if (!glfwInit())
     throw std::runtime_error("failed to initialise glfw!");
 
-  if(!Render::SetGLFWWindowHintsAndLoadVulkan())
-      throw std::runtime_error("failed to load Vulkan! May not be supported by this device.");
+  mRender = new Render();
 
-  mWindow = glfwCreateWindow(mWindowWidth, mWindowHeight, "Vulkan App", nullptr, nullptr);
+  if(mRender->NoApiLoaded()) {
+    throw std::runtime_error("failed to load any graphics apis");
+  }
+
+  mWindow = glfwCreateWindow(mWindowWidth, mWindowHeight, "App", nullptr, nullptr);
   if (!mWindow)
   {
     glfwTerminate();
@@ -31,7 +37,7 @@ App::App() {
   int width = mWindowWidth;
   int height = mWindowHeight;
 
-  mRender = new Render(mWindow, glm::vec2(width, height));
+  mRender->LoadRender(mWindow, glm::vec2(mWindowWidth, mWindowHeight));
 
   if (FIXED_WINDOW_RATIO)
     glfwSetWindowAspectRatio(mWindow, width, height);

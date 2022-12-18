@@ -1,16 +1,8 @@
 #ifndef TEXTURE_LOADER_H
 #define TEXTURE_LOADER_H
 
-#include "resources.h"
-#include "stb_image.h"
-
-#include <string>
+#include "../../render-shared/resources/resources.h"
 #include <vector>
-#include <iostream>
-
-#include <glad/glad.h>
-
-#include <config.h>
 
 namespace Resource
 {

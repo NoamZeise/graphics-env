@@ -1,5 +1,13 @@
 #include "texture_loader.h"
 
+#include <iostream>
+#include <string>
+
+#include <glad/glad.h>
+#include <config.h>
+
+#include "../../render-shared/resources/stb_image.h"
+
 namespace Resource
 {
 

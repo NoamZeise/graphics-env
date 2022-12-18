@@ -2,29 +2,23 @@
 #define APP_H
 
 #include <atomic>
-#include <iostream>
 #include <thread>
 
 #include "render/render.h"
-#include "render/vulkan-render/config.h"
 
 #include <GLFW/glfw3.h>
 #ifndef GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #endif
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 
 #include <input.h>
 #include <timer.h>
-#include <glmhelper.h>
 
 #include "camera.h"
 
 //#define TIME_APP_DRAW_UPDATE
 //#define MULTI_UPDATE_ON_SLOW_DRAW
-
-const bool FIXED_WINDOW_RATIO = false;
 
 class App {
 public:
@@ -34,11 +28,15 @@ public:
   void resize(int windowWidth, int windowHeight);
 
 #pragma region GLFW_CALLBACKS
-  static void framebuffer_size_callback(GLFWwindow *window, int width, int height);
+  static void framebuffer_size_callback(GLFWwindow *window, int width,
+                                        int height);
   static void mouse_callback(GLFWwindow *window, double xpos, double ypos);
-  static void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
-  static void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode);
-  static void mouse_button_callback(GLFWwindow *window, int button, int action, int mods);
+  static void scroll_callback(GLFWwindow *window, double xoffset,
+                              double yoffset);
+  static void key_callback(GLFWwindow *window, int key, int scancode,
+                           int action, int mode);
+  static void mouse_button_callback(GLFWwindow *window, int button, int action,
+                                    int mods);
   static void error_callback(int error, const char *description);
 #pragma endregion
   Input input;
@@ -55,11 +53,13 @@ private:
   void loadTestScene2(std::atomic<bool> &loaded);
   void drawTestScene2();
 
-    enum class Scene {
-	Test1,
-	Test2,
-    };
-    Scene current = Scene::Test1;
+  const bool FIXED_WINDOW_RATIO = false;
+
+  enum class Scene {
+    Test1,
+    Test2,
+  };
+  Scene current = Scene::Test1;
 
   glm::vec2 correctedPos(glm::vec2 pos);
   glm::vec2 correctedMouse();
@@ -74,16 +74,15 @@ private:
   Timer timer;
   Camera::FirstPerson fpcam;
 
-  std::thread submitDraw;
-  std::atomic<bool> finishedDrawSubmit;
-
   glm::vec4 lightDir = glm::vec4(0.0f, -0.5f, -1.0f, 0.0f);
   float rotate = 0.0f;
 
+  std::thread submitDraw;
+  std::atomic<bool> finishedDrawSubmit;
   std::thread assetLoadThread;
   std::atomic<bool> assetsLoaded;
 
-    bool sceneChangeInProgress = false;
+  bool sceneChangeInProgress = false;
 
   Resource::Model testModel1;
   Resource::Model monkeyModel1;

@@ -16,7 +16,7 @@
 
 #include "shader.h"
 #include <config.h>
-#include "resources/resources.h"
+#include "../render-shared/resources/resources.h"
 #include "resources/vertex_data.h"
 #include "resources/texture_loader.h"
 #include "resources/font_loader.h"

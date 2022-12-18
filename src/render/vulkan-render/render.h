@@ -8,17 +8,8 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #endif
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_inverse.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 
-#include <atomic>
-#include <cstring>
-#include <iostream>
-#include <stdexcept>
-#include <string>
-
-#include <glmhelper.h>
-
+#include "../render-shared/resources/resources.h"
 #include "parts/primary.h"
 #include "parts/swapchain.h"
 #include "parts/render_style.h"
@@ -32,6 +23,10 @@
 #include "resources/texture_loader.h"
 #include "vkhelper.h"
 
+#include <atomic>
+
+namespace vkenv {
+
 const size_t MAX_ANIMATIONS_PER_FRAME = 10;
 const int MAX_3D_INSTANCE = 20;
 const int MAX_2D_INSTANCE = 20;
@@ -41,7 +36,7 @@ public:
   Render(GLFWwindow *window);
   Render(GLFWwindow *window, glm::vec2 target);
   ~Render();
-  static bool SetGLFWWindowHintsAndLoadVulkan();
+    static bool LoadVulkan();
 
   Resource::Texture LoadTexture(std::string filepath);
   Resource::Font LoadFont(std::string filepath);
@@ -176,5 +171,7 @@ private:
   VkDebugUtilsMessengerEXT _debugMessenger;
 #endif
 };
+
+} //namespace
 
 #endif

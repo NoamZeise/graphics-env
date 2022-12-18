@@ -1,17 +1,21 @@
 #include "render.h"
-#include "glm/geometric.hpp"
-#include "vulkan/vulkan_core.h"
-#include <stdint.h>
+
+#include <cstring>
+#include <iostream>
+#include <stdexcept>
+#include <string>
+
+#include <glmhelper.h>
+
+namespace vkenv {
 
 
-bool Render::SetGLFWWindowHintsAndLoadVulkan()
+bool Render::LoadVulkan()
 {
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     if(volkInitialize() != VK_SUCCESS) {
-      std::cout << "failed to initilize volk\n";
       return false;
     }
-    std::cout << "volk initialized successfully\n";
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     return true;
 }
 
@@ -892,3 +896,5 @@ void Render::setVsync(bool vsync) {
     this->vsync = vsync;
     FramebufferResize();
 }
+
+}//namespace
