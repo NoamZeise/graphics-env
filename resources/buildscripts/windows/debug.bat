@@ -1,5 +1,5 @@
 SETLOCAL
-del build/Debug/Graphics-Environment
+del build\Debug\Graphics-Environment.exe
 cd build
 call vcvars64
 cmake .. -G"Ninja Multi-Config" -DCMAKE_EXPORT_COMPILE_COMMANDS=1

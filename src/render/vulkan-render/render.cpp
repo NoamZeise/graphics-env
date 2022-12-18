@@ -441,7 +441,6 @@ void Render::UseLoadedResources()
   _modelLoader = _stagingModelLoader;
   delete _fontLoader;
   _fontLoader = _stagingFontLoader;
-  
   _initStagingResourceManagers();
   _initFrameResources();
 }
