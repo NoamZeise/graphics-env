@@ -11,5 +11,5 @@ Xcopy resources\shaders build\Release\shaders /i /c /e /r /y
 Xcopy resources\textures build\Release\textures /i /c /e /r /y
 Xcopy resources\windows-dlls build\Release\ /i /c /e /r /y
 cd build\Release
-Graphics-Environment -r opengl
+Graphics-Environment
 ENDLOCAL
