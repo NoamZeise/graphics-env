@@ -12,7 +12,7 @@ App::App() {
   if (!glfwInit())
     throw std::runtime_error("failed to initialise glfw!");
 
-  mRender = new Render(RenderFramework::VULKAN);
+  mRender = new Render(RenderFramework::OPENGL);
 
   if(mRender->NoApiLoaded()) {
     throw std::runtime_error("failed to load any graphics apis");
