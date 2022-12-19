@@ -1,0 +1,4 @@
+[submodule "libs/vulkan-env"]
+	path = libs/vulkan-env
+	url = https://github.com/NoamZeise/Vulkan-Environment.git
+	branch = library_only

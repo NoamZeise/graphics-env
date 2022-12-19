@@ -25,7 +25,7 @@ list(FILTER SOURCES EXCLUDE REGEX ".*#+")
 
 add_executable(${ProjectName} ${SOURCES}  ${OGL_RENDER}  ${PROJ_INCLUDE})
   
-#link
+#linke
 target_include_directories(${ProjectName} PUBLIC
 					  include/
 					  )
