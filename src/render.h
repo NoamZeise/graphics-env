@@ -1,7 +1,7 @@
 #ifndef GRAPHICS_ENV_RENDERER
 #define GRAPHICS_ENV_RENDERER
 
-#include "../libs/opengl-render/render.h"
+#include "../libs/OpenGL-Environment/src/render.h"
 #include "../libs/Vulkan-Environment/src/render.h"
 
 #include <string>

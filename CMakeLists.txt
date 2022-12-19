@@ -16,6 +16,7 @@ if (UNIX)
     find_package(glfw3 3.3 REQUIRED)
     find_package(Freetype REQUIRED)
 endif()
+  
 
 add_subdirectory(libs)
 
