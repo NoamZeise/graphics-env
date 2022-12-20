@@ -165,26 +165,14 @@ void App::controls()
        if(input.Keys[GLFW_KEY_1]) {
 	   if(current != Scene::Test1) {
 	       assetsLoaded = false;
-	       if(mRender->getRenderFramework() == RenderFramework::VULKAN) {
-		   assetLoadThread =
-		       std::thread(&App::loadTestScene1, this, std::ref(assetsLoaded));
-	       } else {
-		   loadTestScene1(assetsLoaded);
-		   assetsLoaded = true;
-	       }
+		   assetLoadThread = std::thread(&App::loadTestScene1, this, std::ref(assetsLoaded));
 	       sceneChangeInProgress = true;
 	   }
        }
        if(input.Keys[GLFW_KEY_2]) {
 	   if(current != Scene::Test2) {
 	       assetsLoaded = false;
-	       if(mRender->getRenderFramework() == RenderFramework::VULKAN) {
-		   assetLoadThread =
-		       std::thread(&App::loadTestScene2, this, std::ref(assetsLoaded));
-	       } else {
-		   loadTestScene2(assetsLoaded);
-		   assetsLoaded = true;
-	       }
+	       assetLoadThread = std::thread(&App::loadTestScene2, this, std::ref(assetsLoaded));
 	       sceneChangeInProgress = true;
 	   }
        }
