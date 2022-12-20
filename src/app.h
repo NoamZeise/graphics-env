@@ -22,7 +22,7 @@
 
 class App {
 public:
-  App();
+  App(RenderFramework defaultFramework);
   ~App();
   void run();
   void resize(int windowWidth, int windowHeight);

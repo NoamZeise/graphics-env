@@ -8,5 +8,5 @@ cp -r resources/shaders build/Release
 cp -r resources/models build/Release
 cp -r resources/textures build/Release
 cd build/Release
-./Graphics-Environment -r vulkan
+./Graphics-Environment
 cd ../..

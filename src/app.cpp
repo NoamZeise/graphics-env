@@ -3,7 +3,7 @@
 #include <glmhelper.h>
 #include <iostream>
 
-App::App() {
+App::App(RenderFramework defaultFramework) {
 
   mWindowWidth = INITIAL_WINDOW_WIDTH;
   mWindowHeight = INITIAL_WINDOW_HEIGHT;
@@ -12,7 +12,7 @@ App::App() {
   if (!glfwInit())
     throw std::runtime_error("failed to initialise glfw!");
 
-  mRender = new Render(RenderFramework::OPENGL);
+  mRender = new Render(defaultFramework);
 
   if(mRender->NoApiLoaded()) {
     throw std::runtime_error("failed to load any graphics apis");
