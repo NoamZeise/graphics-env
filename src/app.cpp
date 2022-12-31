@@ -109,9 +109,7 @@ void App::update() {
 #ifdef TIME_APP_DRAW_UPDATE
   auto stop = std::chrono::high_resolution_clock::now();
   std::cout << "update: "
-            << std::chrono::duration_cast<std::chrono::microseconds>(stop -
-                                                                     start)
-                   .count()
+            << std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count()
             << " microseconds" << std::endl;
 #endif
 }
@@ -168,7 +166,7 @@ void App::controls()
        if(input.Keys[GLFW_KEY_1]) {
 	   if(current != Scene::Test1) {
 	       assetsLoaded = false;
-	       FrameworkSwitch(mRender->getRenderFramework(),
+	       pFrameworkSwitch(mRender,
 			       assetLoadThread = std::thread(&App::loadTestScene1, this, std::ref(assetsLoaded)),
 			       loadTestScene1(assetsLoaded)
 	       );
@@ -178,7 +176,7 @@ void App::controls()
        if(input.Keys[GLFW_KEY_2]) {
 	   if(current != Scene::Test2) {
 	       assetsLoaded = false;
-	       FrameworkSwitch(mRender->getRenderFramework(),
+	       pFrameworkSwitch(mRender,
 			       assetLoadThread = std::thread(&App::loadTestScene2, this, std::ref(assetsLoaded)),
 			       loadTestScene2(assetsLoaded)
 	       );
@@ -215,12 +213,13 @@ void App::draw() {
   if(current==Scene::Test2)
       drawTestScene2();
 
-  if(mRender->getRenderFramework() == RenderFramework::VULKAN) {
-      submitDraw = std::thread(&Render::EndDraw, mRender, std::ref(finishedDrawSubmit));
-  } else {
-      mRender->EndDraw(finishedDrawSubmit);
-      finishedDrawSubmit = true;
-  }
+  pFrameworkSwitch(mRender,
+		   submitDraw = std::thread(&Render::EndDraw, mRender, std::ref(finishedDrawSubmit)),
+		   {
+		       mRender->EndDraw(finishedDrawSubmit);
+		       finishedDrawSubmit = true;
+		   }
+  );
 
 #ifdef TIME_APP_DRAW_UPDATE
   auto stop = std::chrono::high_resolution_clock::now();
