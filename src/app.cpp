@@ -91,7 +91,8 @@ void App::update() {
 
   if(sceneChangeInProgress && assetsLoaded) {
       assetLoadThread.join();
-      submitDraw.join();
+      if(submitDraw.joinable()) 
+	  submitDraw.join();
       std::cout << "loading done\n";
       mRender->LoadResourcesToGPU();
       mRender->UseLoadedResources();
