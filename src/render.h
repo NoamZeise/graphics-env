@@ -23,6 +23,12 @@ enum class RenderFramework {
         default: return glRender->__VA_ARGS__; break;		\
     }
 
+#define FrameworkSwitch(framework, vk, gl) switch(framework) {	\
+   case RenderFramework::VULKAN: vk; break;    \
+        case RenderFramework::OPENGL: gl; break;    \
+    }
+
+
 class Render {
 public:
   Render(RenderFramework preferredRenderer);

@@ -1,4 +1,5 @@
 #include "app.h"
+#include "render.h"
 
 #include <glmhelper.h>
 #include <iostream>
@@ -90,7 +91,8 @@ void App::update() {
   controls();
 
   if(sceneChangeInProgress && assetsLoaded) {
-      assetLoadThread.join();
+      if(assetLoadThread.joinable())
+	  assetLoadThread.join();
       if(submitDraw.joinable()) 
 	  submitDraw.join();
       std::cout << "loading done\n";
@@ -166,14 +168,20 @@ void App::controls()
        if(input.Keys[GLFW_KEY_1]) {
 	   if(current != Scene::Test1) {
 	       assetsLoaded = false;
-		   assetLoadThread = std::thread(&App::loadTestScene1, this, std::ref(assetsLoaded));
+	       FrameworkSwitch(mRender->getRenderFramework(),
+			       assetLoadThread = std::thread(&App::loadTestScene1, this, std::ref(assetsLoaded)),
+			       loadTestScene1(assetsLoaded)
+	       );
 	       sceneChangeInProgress = true;
 	   }
        }
        if(input.Keys[GLFW_KEY_2]) {
 	   if(current != Scene::Test2) {
 	       assetsLoaded = false;
-	       assetLoadThread = std::thread(&App::loadTestScene2, this, std::ref(assetsLoaded));
+	       FrameworkSwitch(mRender->getRenderFramework(),
+			       assetLoadThread = std::thread(&App::loadTestScene2, this, std::ref(assetsLoaded)),
+			       loadTestScene2(assetsLoaded)
+	       );
 	       sceneChangeInProgress = true;
 	   }
        }
