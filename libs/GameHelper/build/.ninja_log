@@ -1,0 +1,4 @@
+# ninja log v5
+2	39	6956969701773390	demo/CMakeFiles/GameHelperDemo.dir/demo.cpp.obj	c0947bc8c7ae6c1a
+4	300	6956969704373380	demo/CMakeFiles/GameHelperDemo.dir/timer_demo.cpp.obj	a620510d8ae963bd
+301	377	6956969705128208	demo/GameHelperDemo.exe	eb638a450462985

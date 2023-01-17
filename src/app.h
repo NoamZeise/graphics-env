@@ -71,7 +71,7 @@ private:
   Render *mRender;
   int mWindowWidth, mWindowHeight;
   Input previousInput;
-  Timer timer;
+  gamehelper::Timer timer;
   Camera::FirstPerson fpcam;
 
   glm::vec4 lightDir = glm::vec4(0.0f, -0.5f, -1.0f, 0.0f);

@@ -25,19 +25,22 @@ file(GLOB SOURCES src/*)
 list(FILTER SOURCES EXCLUDE REGEX ".*#+")
 
 add_executable(${ProjectName} ${SOURCES}  ${OGL_RENDER}  ${PROJ_INCLUDE})
-  
-#linke
+
+#link
 target_include_directories(${ProjectName} PUBLIC
 					  include/
-					  )
+					)
 
-target_link_libraries(${ProjectName} Vulkan-Renderer)
-target_link_libraries(${ProjectName} OpenGL-Renderer)
+target_link_libraries(${ProjectName} PUBLIC GameHelper)
+
+target_link_libraries(${ProjectName} PRIVATE Vulkan-Renderer)
+target_link_libraries(${ProjectName} PRIVATE OpenGL-Renderer)
+
 if(UNIX)
     target_include_directories(${ProjectName} PUBLIC ${FREETYPE_INCLUDE_DIRS})
-    target_link_libraries(${ProjectName} glfw
+    target_link_libraries(${ProjectName} PUBLIC glfw
                                          ${CMAKE_DL_LIBS})
 else()
     target_include_directories(${ProjectName} PUBLIC ${Include})
-    target_link_libraries(${ProjectName} ${Lib}glfw3.lib)
+    target_link_libraries(${ProjectName} PUBLIC ${Lib}glfw3.lib)
 endif()

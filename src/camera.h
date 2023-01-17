@@ -28,7 +28,7 @@ namespace Camera
 		glm::mat4 getViewMatrix();
 		float getZoom();
         glm::vec3 getPos() { return _position; }
-		void update(Input &input, Input &prevInput, Timer &timer);
+	    void update(Input &input, Input &prevInput, gamehelper::Timer &timer);
 
 
 	private:
