@@ -25,7 +25,7 @@ namespace Camera
 	}
 
 
-    void FirstPerson::update(Input &input, Input &prevInput, gamehelper::Timer &timer)
+    void FirstPerson::update(gamehelper::Input &input, gamehelper::Input &prevInput, gamehelper::Timer &timer)
 	{
 		viewUpdated = true;
 		//keyboard

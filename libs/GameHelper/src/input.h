@@ -1,6 +1,7 @@
 #ifndef INPUT_H
 #define INPUT_H
 
+namespace gamehelper {
 struct Input
 {
 	Input()
@@ -23,6 +24,6 @@ struct Input
 	double Y;
 	double offset;
 };
-
+}
 
 #endif

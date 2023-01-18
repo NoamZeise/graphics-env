@@ -39,7 +39,7 @@ public:
                                     int mods);
   static void error_callback(int error, const char *description);
 #pragma endregion
-  Input input;
+  gamehelper::Input input;
 
 private:
   void loadAssets();
@@ -70,7 +70,7 @@ private:
   GLFWwindow *mWindow;
   Render *mRender;
   int mWindowWidth, mWindowHeight;
-  Input previousInput;
+  gamehelper::Input previousInput;
   gamehelper::Timer timer;
   Camera::FirstPerson fpcam;
 
