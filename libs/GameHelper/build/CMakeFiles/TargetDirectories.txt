@@ -1,7 +1,0 @@
-D:/noam4/repos/c++/Graphics-Environment/libs/GameHelper/build/CMakeFiles/edit_cache.dir
-D:/noam4/repos/c++/Graphics-Environment/libs/GameHelper/build/CMakeFiles/rebuild_cache.dir
-D:/noam4/repos/c++/Graphics-Environment/libs/GameHelper/build/src/CMakeFiles/edit_cache.dir
-D:/noam4/repos/c++/Graphics-Environment/libs/GameHelper/build/src/CMakeFiles/rebuild_cache.dir
-D:/noam4/repos/c++/Graphics-Environment/libs/GameHelper/build/demo/CMakeFiles/GameHelperDemo.dir
-D:/noam4/repos/c++/Graphics-Environment/libs/GameHelper/build/demo/CMakeFiles/edit_cache.dir
-D:/noam4/repos/c++/Graphics-Environment/libs/GameHelper/build/demo/CMakeFiles/rebuild_cache.dir
