@@ -2,8 +2,9 @@
 #define MODEL_ANIMATION_H
 
 #include "model_info.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
-#include <timer.h>
 
 namespace Resource
 {
@@ -13,7 +14,7 @@ class ModelAnimation
 public:
     ModelAnimation() {}
     ModelAnimation(std::vector<glm::mat4> bones, ModelInfo::Animation animation);
-    void Update(gamehelper::Timer &timer);
+    void Update(float frameElapsedMillis);
     std::vector<glm::mat4>* getCurrentBones() { return &bones; }
     std::string getName() { return animation.name; }
 

@@ -9,9 +9,9 @@ ModelAnimation::ModelAnimation(std::vector<glm::mat4> bones, ModelInfo::Animatio
     this->animation = animation;
 }
 
-void ModelAnimation::Update(gamehelper::Timer &timer)
+void ModelAnimation::Update(float frameElapsesdMillis)
 {
-    currentTime = fmod(currentTime + (timer.FrameElapsed() * animation.ticks), animation.duration);
+    currentTime = fmod(currentTime + (frameElapsesdMillis * animation.ticks), animation.duration);
     processNode(animation.nodes[0], glm::mat4(1.0f));
 }
 
