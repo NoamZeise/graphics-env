@@ -1,3 +1,3 @@
 add_library(GameHelper INTERFACE)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(GameHelper INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
