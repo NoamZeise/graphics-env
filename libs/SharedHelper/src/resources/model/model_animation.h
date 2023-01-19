@@ -1,7 +1,7 @@
 #ifndef MODEL_ANIMATION_H
 #define MODEL_ANIMATION_H
 
-#include <resources/model/model_info.h>
+#include "model_info.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>

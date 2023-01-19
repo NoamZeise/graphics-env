@@ -14,10 +14,8 @@ if (UNIX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -Wl,--no-as-needed -ldl")
     add_definitions(-DVK_USE_PLATFORM_XLIB_KHR)
     find_package(glfw3 3.3 REQUIRED)
-    find_package(Freetype REQUIRED)
 endif()
   
-
 add_subdirectory(libs)
 
 #add executables
@@ -27,9 +25,8 @@ list(FILTER SOURCES EXCLUDE REGEX ".*#+")
 add_executable(${ProjectName} ${SOURCES}  ${OGL_RENDER}  ${PROJ_INCLUDE})
 
 #link
-target_include_directories(${ProjectName} PUBLIC
-					  include/
-					)
+target_include_directories(${ProjectName} PUBLIC include/)
+
 add_dependencies(${ProjectName} GameHelper Vulkan-Renderer OpenGL-Renderer)
 target_link_libraries(${ProjectName} PUBLIC GameHelper)
 target_link_libraries(${ProjectName} PRIVATE Vulkan-Renderer)

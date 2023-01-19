@@ -1,4 +1,2 @@
 add_library(SharedHelper resources/model/model_animation.cpp)
-add_dependencies(SharedHelper ResourceLoader)
-target_link_libraries(SharedHelper PRIVATE ResourceLoader)
 target_include_directories(SharedHelper PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

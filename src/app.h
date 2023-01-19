@@ -14,6 +14,7 @@
 
 #include <input.h>
 #include <timer.h>
+#include <audio.h>
 
 #include "camera.h"
 
@@ -95,6 +96,8 @@ private:
   Resource::Model colouredCube2;
   Resource::Texture testTex2;
   Resource::Font testFont2;
+
+    Audio::Manager audio;
 };
 
 #endif

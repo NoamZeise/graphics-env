@@ -1,4 +1,4 @@
-#include <resources/model/model_animation.h>
+#include "model_animation.h"
 
 namespace Resource
 {

@@ -49,6 +49,8 @@ App::App(RenderFramework defaultFramework) {
 
   fpcam = Camera::FirstPerson(glm::vec3(3.0f, 0.0f, 2.0f));
   finishedDrawSubmit = true;
+
+  audio.Play("audio/test.wav", false, 1.0f);
 }
 
 App::~App() {

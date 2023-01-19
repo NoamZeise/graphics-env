@@ -13,8 +13,6 @@
 namespace Audio
 {
 
-namespace {
-
 const int FRAMES_PER_BUFFER = 64;
 
 static int instanceCallback(const void *input, void *output,
@@ -137,8 +135,6 @@ static int instanceCallback(const void *input, void *output,
 		}
 	return paContinue;
 }
-
-} //unnamed end
 
 class Manager
 {
