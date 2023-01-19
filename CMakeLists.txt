@@ -30,9 +30,8 @@ add_executable(${ProjectName} ${SOURCES}  ${OGL_RENDER}  ${PROJ_INCLUDE})
 target_include_directories(${ProjectName} PUBLIC
 					  include/
 					)
-
+add_dependencies(${ProjectName} GameHelper Vulkan-Renderer OpenGL-Renderer)
 target_link_libraries(${ProjectName} PUBLIC GameHelper)
-
 target_link_libraries(${ProjectName} PRIVATE Vulkan-Renderer)
 target_link_libraries(${ProjectName} PRIVATE OpenGL-Renderer)
 
