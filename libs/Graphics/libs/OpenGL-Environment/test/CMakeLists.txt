@@ -1,0 +1,3 @@
+add_executable(OpenGLEnvironmentTest test.cpp)
+add_dependencies(OpenGLEnvironmentTest OpenGL-Environment)
+target_link_libraries(OpenGLEnvironmentTest OpenGL-Environment)

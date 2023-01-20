@@ -1,0 +1,5 @@
+build/*
+.vscode/*
+*.gch
+.ccls-cache/*
+.cache/*
