@@ -346,7 +346,7 @@ void App::drawTestScene2() {
                      glm::vec3(1.0f));
 
       mRender->DrawModel(colouredCube2, model, glm::inverseTranspose(model));
-        model = glm::scale(glm::rotate(glm::translate(glm::mat4(1.0f),
+      model = glm::scale(glm::rotate(glm::translate(glm::mat4(1.0f),
                                                 glm::vec3(0.0f, -30.0f, -15.0f))
 
                                      ,

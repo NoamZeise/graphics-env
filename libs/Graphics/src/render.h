@@ -1,12 +1,14 @@
 #ifndef GRAPHICS_ENV_RENDERER
 #define GRAPHICS_ENV_RENDERER
 
-#include <resources/resources.h>
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <string>
 #include <vector>
 #include <atomic>
+
+#include <resources/resources.h>
+#include <glm/glm.hpp>
 
 namespace vkenv{
     class Render;
