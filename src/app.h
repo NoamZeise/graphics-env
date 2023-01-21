@@ -4,7 +4,7 @@
 #include <atomic>
 #include <thread>
 
-#include "render.h"
+#include <render.h>
 
 #include <GLFW/glfw3.h>
 #ifndef GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -97,7 +97,7 @@ private:
   Resource::Texture testTex2;
   Resource::Font testFont2;
 
-    Audio::Manager audio;
+  Audio::Manager audio;
 };
 
 #endif
