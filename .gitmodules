@@ -1,0 +1,6 @@
+[submodule "libs/Graphics/libs/VulkanEnvironment"]
+	path = libs/Graphics/libs/VulkanEnvironment
+	url = https://github.com/NoamZeise/Vulkan-Environment.git
+[submodule "libs/Graphics/libs/OpenGlEnvironment"]
+	path = libs/Graphics/libs/OpenGlEnvironment
+	url = https://github.com/NoamZeise/OpenGL-Environment.git
