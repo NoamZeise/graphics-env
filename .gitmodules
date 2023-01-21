@@ -1,7 +1,7 @@
-[submodule "libs/Vulkan-Environment"]
-	path = libs/Vulkan-Environment
+[submodule "libs/Graphics/libs/Vulkan-Environment"]
+	path = libs/Graphics/libs/Vulkan-Environment
 	url = https://github.com/NoamZeise/Vulkan-Environment.git
 	branch = library_only
-[submodule "libs/OpenGL-Environment"]
-	path = libs/OpenGL-Environment
+[submodule "libs/Graphics/libs/OpenGL-Environment"]
+	path = libs/Graphics/libs/OpenGL-Environment
 	url = https://github.com/NoamZeise/OpenGL-Environment.git
