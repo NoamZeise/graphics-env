@@ -1,6 +1,11 @@
 #include "camera.h"
 
-namespace Camera
+#ifndef GLFW_INCLUDE_VULKAN
+#define GLFW_INCLUDE_VULKAN
+#endif
+#include <GLFW/glfw3.h>
+
+namespace camera
 {
 	FirstPerson::FirstPerson(glm::vec3 position)
 	{

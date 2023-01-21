@@ -1,10 +1,6 @@
 #ifndef FREE_CAMERA_H
 #define FREE_CAMERA_H
 
-#ifndef GLFW_INCLUDE_VULKAN
-#define GLFW_INCLUDE_VULKAN
-#endif
-#include <GLFW/glfw3.h>
 #ifndef GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #endif
@@ -17,7 +13,7 @@
 #include <input.h>
 #include <timer.h>
 
-namespace Camera
+namespace camera
 {
 	class FirstPerson
 	{
