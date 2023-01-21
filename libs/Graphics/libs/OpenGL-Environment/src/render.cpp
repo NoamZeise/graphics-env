@@ -1,5 +1,6 @@
 #include "render.h"
 
+#include "GLFW/glfw3.h"
 #include "ogl_helper.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
@@ -8,6 +9,12 @@
 #include <iostream>
 
 namespace glenv {
+GLRender::GLRender(GLFWwindow *window) {
+    int width, height;
+    glfwGetWindowSize(window, &width, &height);
+    GLRender(window, glm::vec2(width, height));
+}
+    
 GLRender::GLRender(GLFWwindow *window, glm::vec2 target)
 {
   glfwMakeContextCurrent(window);
@@ -249,6 +256,11 @@ void GLRender::DrawString(Resource::Font font, std::string text, glm::vec2 posit
   {
     DrawQuad(draw.tex, draw.model, draw.colour);
   }
+}
+
+void GLRender::DrawString(Resource::Font font, std::string text, glm::vec2 position, float size, float depth, glm::vec4 colour)
+{
+    DrawString(font, text, position, size, depth, colour, 0);
 }
 
 float GLRender::MeasureString(Resource::Font font,std::string text, float size) {

@@ -2,6 +2,7 @@
 #define OGL_RENDER_H
 
 #include <glad/glad.h>
+#define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
@@ -9,8 +10,9 @@
 #include <atomic>
 #include <vector>
 
-#include "shader.h"
 #include <resources/resources.h>
+
+#include "shader.h"
 #include "resources/vertex_data.h"
 #include "resources/texture_loader.h"
 #include "resources/font_loader.h"
