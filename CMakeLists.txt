@@ -1,39 +1,16 @@
 cmake_minimum_required(VERSION 3.10)
 
-#customize
 set(ProjectName "Graphics-Environment")
-#windows only
-set(Lib "D:/noam4/Libraries/VS/lib/x64/")
-set(Include "D:/noam4/Libraries/VS/include")
 
-project(${ProjectName} VERSION 1.0)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+if(STATIC_FLAG)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static")
+endif()
+
+project(Graphics-Env-Proj VERSION 1.0)
 
 set(CMAKE_CXX_STANDARD 14)
-
-if (UNIX)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -Wl,--no-as-needed -ldl")
-    add_definitions(-DVK_USE_PLATFORM_XLIB_KHR)
-    find_package(glfw3 REQUIRED)
-endif()
   
 add_subdirectory(libs)
-
-#add executables
-file(GLOB SOURCES src/*)
-list(FILTER SOURCES EXCLUDE REGEX ".*#+")
-
-add_executable(${ProjectName} ${SOURCES}  ${OGL_RENDER}  ${PROJ_INCLUDE})
-
-#link
-target_include_directories(${ProjectName} PUBLIC include/)
-
-add_dependencies(${ProjectName} GameHelper Graphics)
-target_link_libraries(${ProjectName} PUBLIC GameHelper Graphics)
-
-if(UNIX)
-  target_link_libraries(${ProjectName} PUBLIC glfw
-                                         ${CMAKE_DL_LIBS})
-else()
-    target_include_directories(${ProjectName} PUBLIC ${Include})
-    target_link_libraries(${ProjectName} PUBLIC ${Lib}glfw3.lib)
-endif()
+add_subdirectory(src)

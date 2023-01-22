@@ -1,2 +1,2 @@
-add_subdirectory(Vulkan-Environment)
-add_subdirectory(OpenGL-Environment)
+add_subdirectory(VulkanEnvironment)
+add_subdirectory(OpenGlEnvironment)
