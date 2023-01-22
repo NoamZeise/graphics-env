@@ -97,7 +97,7 @@ private:
   Resource::Texture testTex2;
   Resource::Font testFont2;
 
-  Audio::Manager audio;
+  audio::Manager audio;
 };
 
 #endif

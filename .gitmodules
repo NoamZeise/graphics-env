@@ -4,3 +4,6 @@
 [submodule "libs/Graphics/libs/OpenGlEnvironment"]
 	path = libs/Graphics/libs/OpenGlEnvironment
 	url = https://github.com/NoamZeise/OpenGL-Environment.git
+[submodule "libs/GameHelper/libs/audio"]
+	path = libs/GameHelper/libs/audio
+	url = https://github.com/NoamZeise/audio.git

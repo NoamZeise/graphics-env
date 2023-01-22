@@ -4,11 +4,12 @@
 #include <iostream>
 #endif
 #include <fstream>
+#include <cstring>
 
 
 int main(int argc, char** argv)
 {
-	try
+    try
 	{
 #ifndef NDEBUG
 		std::cout << "In debug mode" << std::endl;
