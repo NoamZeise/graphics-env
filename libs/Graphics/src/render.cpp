@@ -39,8 +39,11 @@ Render::Render(RenderFramework preferredRenderer) {
 Render::~Render() { _RENDER_NO_FN(delete vkRender, delete glRender); }
 
 void Render::LoadRender(GLFWwindow *window){
-    _RENDER_NO_FN(vkRender = new vkenv::Render(window),
-                  glRender = new glenv::GLRender(window))}
+  int width, height;
+  glfwGetWindowSize(window, &width, &height);
+  _RENDER_NO_FN(vkRender = new vkenv::Render(window, glm::vec2(width, height)),
+		glRender = new glenv::GLRender(window, glm::vec2(width, height)))
+    }
 
 void Render::LoadRender(GLFWwindow *window, glm::vec2 target){
     _RENDER_NO_FN(vkRender = new vkenv::Render(window, target),
