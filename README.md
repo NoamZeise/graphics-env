@@ -15,14 +15,16 @@ A 2D and 3D renderer with vulkan or opengl backend, add rendering and update cod
 
 ## External libraries and their uses:
 
-* [Vulkan lunarG](https://vulkan.lunarg.com/) for vulkan function loader, debugging, validation layers, spriv compilers
 * included: [volk](https://github.com/zeux/volk) dynamically loads pointers to vulkan from driver
 * included: [GLFW](https://www.glfw.org/) handles windowing and input
 * included: [GLM](https://github.com/g-truc/glm) handles glsl datatypes and linear algebra
 * included: [stb_image.h](https://github.com/nothings/stb) handles image loading
-* included OPTIONAL:   [Assimp](https://github.com/assimp/assimp) handles model loading
-* external REQUIRED:   [Vulkan](https://vulkan.lunarg.com/) for vulkan type definitions, used by volk
-* external OPTIONAL:   [freetype2](https://freetype.org/) handles font loading
+* included:   [Assimp](https://github.com/assimp/assimp) handles model loading
+* external REQUIRED:   [Vulkan SDK](https://vulkan.lunarg.com/) for vulkan type definitions, used by volk
+* external REQUIRED:   [freetype2](https://freetype.org/) handles font loading
+* external REQUIRED:   [libsndfile](https://github.com/libsndfile/libsndfile) handles audio file loading
+* external REQUIRED:   [portaudio](http://www.portaudio.com/) handles cross platform audio playback
+
 
 # setup
 
