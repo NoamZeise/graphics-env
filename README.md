@@ -1,5 +1,5 @@
-# Work in progress Vulkan Rendering Framework
-A 2D and 3D renderer for vulkan, ideal for small projects, just add rendering and update code into app.cpp. Works with Windows or Linux.
+# Work in progress Game Framework
+A 2D and 3D renderer with vulkan or opengl backend, add rendering and update code into app.cpp. Works with Windows or Linux.
 
 ## Features:
 
@@ -10,67 +10,23 @@ A 2D and 3D renderer for vulkan, ideal for small projects, just add rendering an
 * Play .wav and .ogg audio files
 
 ## Projects using this framework:
-* [The Last Dodo](https://github.com/NoamZeise/DodoDash) -> Platforming Game
-* [Get Back Jaxx](https://github.com/NoamZeise/GGJ22) -> Adventure Game
-* [Hard Drive Homicide](https://github.com/NoamZeise/Hard-Drive-Homicide) -> Twin-Stick Bullet Hell Game
-* [Battle Island](https://github.com/NoamZeise/Battle-Island) -> Turn-Based Strategy Game
-
-## Todo list:
-bugs:
-* make first-person camera feel better
-
-features:
-* skeletal animation (and distinguish between animated and non-animated draws)
-* make multiple render passes optional
-
-optimisations:
-* convert model data to proprietary format with another program to remove assimp dependancy from this project
-* use the same pipeline layout for multiple pipelines
-* unload old and load new textures while using renderer
+* [Robyn Hood](https://github.com/NoamZeise/Robyn-Hood) - 2022 - 2D On-rails Stealth Game
+* [Trials of The Pharaoh](https://github.com/NoamZeise/TrailsOfThePharaoh) - 2022 - 2D Light Ray Puzzle Game
 
 ## External libraries and their uses:
 
 * [Vulkan lunarG](https://vulkan.lunarg.com/) for vulkan function loader, debugging, validation layers, spriv compilers
-* [GLFW](https://www.glfw.org/) handles windowing and input
-* [GLM](https://github.com/g-truc/glm) handles glsl datatypes and linear algebra
-* [stb_image.h](https://github.com/nothings/stb) handles image loading
-* [freetype2](https://freetype.org/) handles font loading
-* [Assimp](https://github.com/assimp/assimp) handles model loading
-* [libsndfile](https://github.com/libsndfile/libsndfile) handles audio loading
-* [portaudio](http://www.portaudio.com/) handles audio playback
+* included: [volk](https://github.com/zeux/volk) dynamically loads pointers to vulkan from driver
+* included: [GLFW](https://www.glfw.org/) handles windowing and input
+* included: [GLM](https://github.com/g-truc/glm) handles glsl datatypes and linear algebra
+* included: [stb_image.h](https://github.com/nothings/stb) handles image loading
+* included OPTIONAL:   [Assimp](https://github.com/assimp/assimp) handles model loading
+* external REQUIRED:   [Vulkan](https://vulkan.lunarg.com/) for vulkan type definitions, used by volk
+* external OPTIONAL:   [freetype2](https://freetype.org/) handles font loading
 
 # setup
 
-
-
-### windows
-
-
-* download the [vulkan sdk](https://vulkan.lunarg.com/), run installer and put the necessary files in your lib and include directories
-
-* download [glfw3](https://www.glfw.org/), compile and put in your lib and include directories
-
-* download [glm](https://github.com/g-truc/glm), it is header only so put the headers in your include directory
-
-* download [freetype](https://freetype.org/download.html) compile and put in your lib and include directories
-
-* download [assimp](https://github.com/assimp/assimp/blob/master/Build.md) compile and put in your lib and include directories, and distribute the dll with your binaries
-
-* download [libsndfile](http://www.mega-nerd.com/libsndfile/#Download) compile and put in your lib and include directories, and distrubute dll with your binaries
-
-* download [portaudio](http://files.portaudio.com/docs/v19-doxydocs/compile_windows.html) compile and put in your lib and include directories, and distrubute dll with your binaries
-
-
-* set your lib and include paths at the start of the cmake file
-```
-#windows only
-set(Lib "Path/to/lib")
-set(Include "Path/to/include")
-```
-
-* If you are using the msvc compiler, you can use the included windows build scripts under "resources/buildscripts/windows/" to build the debug or release versions of the project and automatically launch it. You must include the assimp .dll with the project.
-
-### linux with apt
+### linux with apt on debian based systems
 vulkan tools
 ```
 $ sudo apt-get install vulkan-tools
@@ -85,5 +41,32 @@ $ vkcube
 ```
 additional libraries
 ```
-$ sudo apt-get install libglfw3-dev libglm-dev libfreetype-dev libassimp-dev libsndfile1-dev libasound-dev portaudio19-dev
+$ sudo apt-get install libfreetype-dev libsndfile1-dev libasound-dev portaudio19-dev
 ```
+
+### windows
+
+* download [freetype](https://freetype.org/download.html) compile and put in your lib and include directories
+
+* download [libsndfile](http://www.mega-nerd.com/libsndfile/#Download) compile and put in your lib and include directories, and distrubute dll with your binaries
+
+* download [portaudio](http://files.portaudio.com/docs/v19-doxydocs/compile_windows.html) compile and put in your lib and include directories, and distrubute dll with your binaries
+
+
+If using GNU compiler on window, you can use something like Msys2 and use `$ pacman -S mingw-w64-x86_64-freetype` to get freetype (similar for libsndfile and portaudio), or if not using Msys2, or using microsoft's compiler download these libraries directly and make sure cmake or your compiler can see the library files.  
+You may need to specify `FREETYPE_LIBRARY` as the path to your library folder if cmake can't find it, and similarly for the other libraries
+
+Download the [Vulkan SDK](https://www.lunarg.com/vulkan-sdk/), for getting the vulkan headers and compiling shaders into spirv. make sure the headers can be seen by your compiler.
+
+# Todo list:
+bugs:
+* make first-person camera feel better
+
+features:
+* skeletal animation with ogl renderer
+* make multiple render passes optional
+
+optimisations:
+* convert model data to proprietary format with another program to remove assimp dependancy from this project
+* use the same pipeline layout for multiple pipelines
+* unload old and load new textures while using renderer
