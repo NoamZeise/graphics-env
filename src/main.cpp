@@ -7,7 +7,7 @@
 #include <cstring>
 
 
-void frameworkArg(int argc, char** argv, int i, RenderFramework *framework);
+bool frameworkArg(int argc, char** argv, int &i, RenderFramework *framework);
 
 
 int main(int argc, char** argv) {
@@ -18,7 +18,14 @@ int main(int argc, char** argv) {
 #endif
       RenderFramework framework = RenderFramework::VULKAN;
       for(int i = 1; i < argc; i++) {
-	frameworkArg(argc, argv, i, &framework);
+	  bool argHandled = false;
+	  argHandled |= frameworkArg(argc, argv, i, &framework);
+	  if(!argHandled) {
+	      std::cerr << "passed unrecognised arg to app\n";
+	      std::cerr << "  recognised args: \n"
+		           "      -r [param] -> choose rendering framework\n";
+	      return 1;
+	  }
       }
       App app(framework);
       app.run();
@@ -43,7 +50,7 @@ int main(int argc, char** argv) {
 }
 
 
-void frameworkArg(int argc, char** argv, int i, RenderFramework *framework) {
+bool frameworkArg(int argc, char** argv, int &i, RenderFramework *framework) {
   if(strcmp(argv[i], "-r") == 0) {
     if(i + 1 < argc) {
       i++;
@@ -51,10 +58,15 @@ void frameworkArg(int argc, char** argv, int i, RenderFramework *framework) {
 	*framework = RenderFramework::OPENGL;
 	std::cout << "default framework opengl selected\n";
       }
-      if(strcmp(argv[i], "vulkan") == 0) {
+      else if(strcmp(argv[i], "vulkan") == 0) {
 	*framework = RenderFramework::VULKAN;
 	std::cout << "default framework vulkan selected\n";
+      } else {
+	  std::cerr << "unrecognised framework passed, 'vulkan' or 'opengl'\n";
+	  return false;
       }
+      return true;
     }
   }
+  return false;
 }
