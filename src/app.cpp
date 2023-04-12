@@ -107,6 +107,7 @@ void App::update() {
   }
 
   rotate += timer.FrameElapsed() * 0.001f;
+  
   fpcam.update(input, previousInput, timer);
 
   postUpdate();
@@ -265,7 +266,7 @@ void App::drawTestScene1() {
 
   auto model = glm::translate(
       glm::scale(
-          glm::rotate(glm::rotate(glm::mat4(1.0f), rotate, glm::vec3(0, 0, 1)),
+		 glm::rotate(glm::rotate(glm::mat4(1.0f), rotate, glm::vec3(0, 0, 1)),
                       glm::radians(270.0f), glm::vec3(-1.0f, 0.0f, 0.0f)),
           glm::vec3(1.0f)),
       glm::vec3(0, 3, 0));
@@ -274,7 +275,7 @@ void App::drawTestScene1() {
 
   model = glm::translate(
       glm::scale(
-          glm::rotate(glm::rotate(glm::mat4(1.0f), rotate, glm::vec3(0, 0, 1)),
+		 glm::rotate(glm::rotate(glm::mat4(1.0f), rotate, glm::vec3(0, 0, 1)),
                       glm::radians(270.0f), glm::vec3(-1.0f, 0.0f, 0.0f)),
           glm::vec3(0.01f)),
       glm::vec3(0, 0, 0));
@@ -316,7 +317,7 @@ void App::drawTestScene2() {
     mRender->Begin3DDraw();
   auto model = glm::translate(
       glm::scale(
-          glm::rotate(glm::rotate(glm::mat4(1.0f), rotate, glm::vec3(0, 0, 1)),
+		 glm::rotate(glm::rotate(glm::mat4(1.0f), rotate, glm::vec3(0, 0, 1)),
                       glm::radians(270.0f), glm::vec3(-1.0f, 0.0f, 0.0f)),
           glm::vec3(1.0f)),
       glm::vec3(0, 2, 0));
@@ -324,14 +325,14 @@ void App::drawTestScene2() {
   mRender->DrawModel(monkeyModel2, model, glm::inverseTranspose(model));
   model = glm::translate(
       glm::scale(
-          glm::rotate(glm::rotate(glm::mat4(1.0f), rotate * 0.5f, glm::vec3(0, 0, 1)),
+		 glm::rotate(glm::rotate(glm::mat4(1.0f), rotate * 0.5f, glm::vec3(0, 0, 1)),
                       glm::radians(270.0f), glm::vec3(-1.0f, 0.0f, 0.0f)),
           glm::vec3(1.0f)),
       glm::vec3(1, 2, 0));
     mRender->DrawModel(monkeyModel2, model, glm::inverseTranspose(model));
     model = glm::translate(
       glm::scale(
-          glm::rotate(glm::rotate(glm::mat4(1.0f), rotate * 2.0f, glm::vec3(0, 0, 1)),
+		 glm::rotate(glm::rotate(glm::mat4(1.0f), rotate * 2.0f, glm::vec3(0, 0, 1)),
                       glm::radians(270.0f), glm::vec3(-1.0f, 0.0f, 0.0f)),
           glm::vec3(1.0f)),
       glm::vec3(2, 2, 0));

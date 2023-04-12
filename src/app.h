@@ -76,7 +76,7 @@ private:
   camera::FirstPerson fpcam;
 
   glm::vec4 lightDir = glm::vec4(0.0f, -0.5f, -1.0f, 0.0f);
-  float rotate = 0.0f;
+  float rotate = 0.0;
 
   std::thread submitDraw;
   std::atomic<bool> finishedDrawSubmit;

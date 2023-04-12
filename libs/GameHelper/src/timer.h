@@ -35,7 +35,7 @@ private:
     timeDuration start;
     timeDuration lastUpdate;
     timeDuration currentUpdate;
-    long long frameElapsed;
+    long long frameElapsed = 0;
 };
 
 }
