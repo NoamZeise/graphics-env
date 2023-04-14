@@ -4,6 +4,7 @@
 #include <atomic>
 #include <thread>
 
+#define GLFW_INCLUDE_NONE
 #include <render.h>
 
 #include <GLFW/glfw3.h>

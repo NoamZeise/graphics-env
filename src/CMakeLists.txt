@@ -7,3 +7,13 @@ add_custom_command(TARGET MyApp POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${CMAKE_CURRENT_SOURCE_DIR}/../resources"
         $<TARGET_FILE_DIR:MyApp>)
+
+if(NOT NO_ASSIMP)
+  if(NOT BUILD_ASSIMP_STATIC)	
+    add_custom_command(TARGET MyApp POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_directory
+      $<TARGET_FILE_DIR:assimp>
+      $<TARGET_FILE_DIR:MyApp>)
+  endif()
+endif()
+

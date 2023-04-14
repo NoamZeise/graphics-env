@@ -56,9 +56,10 @@ $ sudo apt-get install libfreetype-dev libsndfile1-dev libasound-dev portaudio19
 
 
 If using GNU compiler on window, you can use something like Msys2 and use `$ pacman -S mingw-w64-x86_64-freetype` to get freetype (similar for libsndfile and portaudio), or if not using Msys2, or using microsoft's compiler download these libraries directly and make sure cmake or your compiler can see the library files.  
-You may need to specify `FREETYPE_LIBRARY` as the path to your library folder if cmake can't find it, and similarly for the other libraries
+You may need to specify `FREETYPE_LIBRARY` and `FREETYPE_INCLUDE_DIRS` as the path to your downloaded freetype files. 
+You may also need to specify `sndfile_DIR` and `portaudio_DIR` with the cmake folders of those libraries ( ie where the `portaudioConfig.cmake` files are).
 
-Download the [Vulkan SDK](https://www.lunarg.com/vulkan-sdk/), for getting the vulkan headers and compiling shaders into spirv. make sure the headers can be seen by your compiler.
+Download the [Vulkan SDK](https://www.lunarg.com/vulkan-sdk/), for getting the vulkan validation layers and the tools for compiling shaders into spirv.
 
 # Todo list:
 bugs:
