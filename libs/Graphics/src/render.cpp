@@ -45,19 +45,22 @@ void Render::LoadRender(GLFWwindow *window){
 		glRender = new glenv::GLRender(window, glm::vec2(width, height)))
     }
 
-void Render::LoadRender(GLFWwindow *window, glm::vec2 target){
-    _RENDER_NO_FN(vkRender = new vkenv::Render(window, target),
-                  glRender = new glenv::GLRender(window, target))}
+    void Render::LoadRender(GLFWwindow *window, glm::vec2 target){
+        _RENDER_NO_FN(vkRender = new vkenv::Render(window, target),
+                      glRender = new glenv::GLRender(window, target))}
 
 
+    Resource::Texture Render::LoadTexture(std::string filepath){
+        _RENDER_FN(LoadTexture(filepath))}
 
+    Resource::Font Render::LoadFont(std::string filepath){
+        _RENDER_FN(LoadFont(filepath))}
 
-Resource::Texture Render::LoadTexture(std::string filepath){
-    _RENDER_FN(LoadTexture(filepath))}
+    Resource::Model Render::Load3DModel(std::string filepath){
+        _RENDER_FN(Load3DModel(filepath))}
 
-Resource::Font Render::LoadFont(std::string filepath){_RENDER_FN(LoadFont(filepath))}
-
-Resource::Model Render::LoadModel(std::string filepath){_RENDER_FN(LoadModel(filepath))}
+    Resource::Model Render::Load3DModel(ModelInfo::Model& model){
+        _RENDER_FN(Load3DModel(model))}
 
 Resource::Model Render::LoadAnimatedModel(std::string filepath, std::vector<Resource::ModelAnimation> *pGetAnimations){
         _RENDER_FN(LoadAnimatedModel(filepath, pGetAnimations))

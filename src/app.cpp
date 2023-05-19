@@ -3,7 +3,7 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
-#include <glmhelper.h>
+#include <graphics/glm_helper.h>
 #include <iostream>
 
 App::App(RenderFramework defaultFramework) {
@@ -252,9 +252,9 @@ glm::vec2 App::correctedMouse()
 }
 
 void App::loadTestScene1(std::atomic<bool> &loaded) {
-  testModel1 = mRender->LoadModel("models/testScene.fbx");
-  monkeyModel1 = mRender->LoadModel("models/monkey.obj");
-  colouredCube1 = mRender->LoadModel("models/ROOM.fbx");
+  testModel1 = mRender->Load3DModel("models/testScene.fbx");
+  monkeyModel1 = mRender->Load3DModel("models/monkey.obj");
+  colouredCube1 = mRender->Load3DModel("models/ROOM.fbx");
   testTex1 = mRender->LoadTexture("textures/error.png");
   testFont1 = mRender->LoadFont("textures/Roboto-Black.ttf");
   loaded = true;
@@ -298,17 +298,17 @@ void App::drawTestScene1() {
    }
 
      mRender->DrawQuad(
-      testTex1, glmhelper::getModelMatrix(glm::vec4(400, 100, 100, 100), 0, -1),
+	     testTex1, glmhelper::calcMatFromRect(glm::vec4(400, 100, 100, 100), 0, -1),
       glm::vec4(1), glm::vec4(0, 0, 1, 1));
 
   mRender->DrawQuad(testTex1,
-                    glmhelper::getModelMatrix(glm::vec4(0, 0, 400, 400), 0, 0),
+                    glmhelper::calcMatFromRect(glm::vec4(0, 0, 400, 400), 0, 0),
                     glm::vec4(1, 0, 1, 0.3), glm::vec4(0, 0, 1, 1));
 }
 
 void App::loadTestScene2(std::atomic<bool> &loaded) {
-  monkeyModel2 = mRender->LoadModel("models/monkey.obj");
-  colouredCube2 = mRender->LoadModel("models/ROOM.fbx");
+  monkeyModel2 = mRender->Load3DModel("models/monkey.obj");
+  colouredCube2 = mRender->Load3DModel("models/ROOM.fbx");
   testFont2 = mRender->LoadFont("textures/Roboto-Black.ttf");
   loaded = true;
 }

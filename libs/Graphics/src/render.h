@@ -7,7 +7,7 @@
 #include <vector>
 #include <atomic>
 
-#include <resources/resources.h>
+#include <graphics/resources.h>
 #include <glm/glm.hpp>
 
 namespace vkenv{
@@ -43,7 +43,8 @@ public:
 
     Resource::Texture LoadTexture(std::string filepath);
     Resource::Font LoadFont(std::string filepath);
-    Resource::Model LoadModel(std::string filepath);
+    Resource::Model Load3DModel(std::string filepath);
+    Resource::Model Load3DModel(ModelInfo::Model& model);
     Resource::Model LoadAnimatedModel(std::string filepath, std::vector<Resource::ModelAnimation> *pGetAnimations);
 	
     void LoadResourcesToGPU();
