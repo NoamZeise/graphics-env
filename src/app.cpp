@@ -8,49 +8,48 @@
 
 App::App(RenderFramework defaultFramework) {
 
-  mWindowWidth = INITIAL_WINDOW_WIDTH;
-  mWindowHeight = INITIAL_WINDOW_HEIGHT;
+    mWindowWidth = INITIAL_WINDOW_WIDTH;
+    mWindowHeight = INITIAL_WINDOW_HEIGHT;
 
-  glfwSetErrorCallback(error_callback);
-  if (!glfwInit())
-    throw std::runtime_error("failed to initialise glfw!");
+    glfwSetErrorCallback(error_callback);
+    if (!glfwInit())
+	throw std::runtime_error("failed to initialise glfw!");
 
-  mRender = new Render(defaultFramework);
+    mRender = new Render(defaultFramework);
 
-  if(mRender->NoApiLoaded()) {
-    throw std::runtime_error("failed to load any graphics apis");
-  }
+    if(mRender->NoApiLoaded()) {
+	throw std::runtime_error("failed to load any graphics apis");
+    }
 
-  mWindow = glfwCreateWindow(mWindowWidth, mWindowHeight, "App", nullptr, nullptr);
-  if (!mWindow)
-  {
-    glfwTerminate();
-    throw std::runtime_error("failed to create glfw window!");
-  }
+    mWindow = glfwCreateWindow(mWindowWidth, mWindowHeight, "App", nullptr, nullptr);
+    if(!mWindow) {
+	glfwTerminate();
+	throw std::runtime_error("failed to create glfw window!");
+    }
 
-  glfwSetWindowUserPointer(mWindow, this);
-  glfwSetFramebufferSizeCallback(mWindow, framebuffer_size_callback);
-  glfwSetCursorPosCallback(mWindow, mouse_callback);
-  glfwSetScrollCallback(mWindow, scroll_callback);
-  glfwSetKeyCallback(mWindow, key_callback);
-  glfwSetMouseButtonCallback(mWindow, mouse_button_callback);
-  glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-  glfwSetInputMode(mWindow, GLFW_RAW_MOUSE_MOTION, glfwRawMouseMotionSupported());
+    glfwSetWindowUserPointer(mWindow, this);
+    glfwSetFramebufferSizeCallback(mWindow, framebuffer_size_callback);
+    glfwSetCursorPosCallback(mWindow, mouse_callback);
+    glfwSetScrollCallback(mWindow, scroll_callback);
+    glfwSetKeyCallback(mWindow, key_callback);
+    glfwSetMouseButtonCallback(mWindow, mouse_button_callback);
+    glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(mWindow, GLFW_RAW_MOUSE_MOTION, glfwRawMouseMotionSupported());
 
-  int width = mWindowWidth;
-  int height = mWindowHeight;
+    int width = mWindowWidth;
+    int height = mWindowHeight;
 
-  mRender->LoadRender(mWindow, glm::vec2(mWindowWidth, mWindowHeight));
+    mRender->LoadRender(mWindow, glm::vec2(mWindowWidth, mWindowHeight));
 
-  if (FIXED_WINDOW_RATIO)
-    glfwSetWindowAspectRatio(mWindow, width, height);
+    if(FIXED_WINDOW_RATIO)
+	glfwSetWindowAspectRatio(mWindow, width, height);
 
-  loadAssets();
+    loadAssets();
 
-  fpcam = camera::FirstPerson(glm::vec3(3.0f, 0.0f, 2.0f));
-  finishedDrawSubmit = true;
+    fpcam = camera::FirstPerson(glm::vec3(3.0f, 0.0f, 2.0f));
+    finishedDrawSubmit = true;
 
-  audio.Play("audio/test.wav", false, 1.0f);
+    audio.Play("audio/test.wav", false, 1.0f);
 }
 
 App::~App() {
@@ -106,16 +105,19 @@ void App::update() {
       current = current == Scene::Test1 ? Scene::Test2 : Scene::Test1;
   }
 
+  if(current == Scene::Test1) {
+      wolfAnim1.Update(timer.FrameElapsed());
+  }
+
   rotate += timer.FrameElapsed() * 0.001f;
   
   fpcam.update(input, previousInput, timer);
 
   postUpdate();
 #ifdef TIME_APP_DRAW_UPDATE
-  auto stop = std::chrono::high_resolution_clock::now();
-  std::cout << "update: "
-            << std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count()
-            << " microseconds" << std::endl;
+    monitored_update_stats = "update: " + std::to_string(
+	  std::chrono::duration_cast<std::chrono::microseconds>(
+		  std::chrono::high_resolution_clock::now() - start).count() / 1000.0) + " ms";
 #endif
 }
 
@@ -218,6 +220,18 @@ void App::draw() {
   if(current==Scene::Test2)
       drawTestScene2();
 
+  #ifdef TIME_APP_DRAW_UPDATE
+  Resource::Font font;
+  if(current == Scene::Test1)
+      font = testFont1;
+  if(current == Scene::Test2)
+      font = testFont2;
+  mRender->DrawString(font, monitored_update_stats,
+		      glm::vec2(10.0, 20.0), 15, 5.0f, glm::vec4(1.0f));
+  mRender->DrawString(font, monitored_draw_stats,
+		      glm::vec2(10.0, 40.0), 15, 5.0f, glm::vec4(1.0f));
+  #endif
+
   pFrameworkSwitch(mRender,
 		   submitDraw = std::thread(&Render::EndDraw, mRender, std::ref(finishedDrawSubmit)),
 		   {
@@ -228,11 +242,9 @@ void App::draw() {
 
 #ifdef TIME_APP_DRAW_UPDATE
   auto stop = std::chrono::high_resolution_clock::now();
-  std::cout << "draw: "
-            << std::chrono::duration_cast<std::chrono::microseconds>(stop -
-                                                                     start)
-                   .count()
-            << " microseconds" << std::endl;
+  monitored_draw_stats = "draw: " + std::to_string(
+	 1.0 / std::chrono::duration_cast<std::chrono::microseconds>(
+		  std::chrono::high_resolution_clock::now() - start).count() * 1000000.0) + " fps";
 #endif
 }
 
@@ -255,6 +267,12 @@ void App::loadTestScene1(std::atomic<bool> &loaded) {
   testModel1 = mRender->Load3DModel("models/testScene.fbx");
   monkeyModel1 = mRender->Load3DModel("models/monkey.obj");
   colouredCube1 = mRender->Load3DModel("models/ROOM.fbx");
+  std::vector<Resource::ModelAnimation> animations;
+  wolf1 = mRender->LoadAnimatedModel("models/wolf.fbx", &animations);
+  if(animations.size() > 2)
+      wolfAnim1 = animations[1];
+  else
+      throw std::runtime_error("wolf anim had unexpected number of animations");
   testTex1 = mRender->LoadTexture("textures/error.png");
   testFont1 = mRender->LoadFont("textures/Roboto-Black.ttf");
   loaded = true;
@@ -288,6 +306,16 @@ void App::drawTestScene1() {
                                  glm::vec3(-1.0f, 0.0f, 0.0f)),
                      glm::vec3(4.0f));
   mRender->DrawModel(colouredCube1, model, glm::inverseTranspose(model));
+
+  mRender->BeginAnim3DDraw();
+
+  model = glm::scale(glm::rotate(glm::translate(glm::mat4(1.0f),
+                                                glm::vec3(0.0f, 0.0f, 6.0f)),
+                                 glm::radians(270.0f),
+                                 glm::vec3(-1.0f, 0.0f, 0.0f)),
+                     glm::vec3(0.1f));
+  
+  mRender->DrawAnimModel(wolf1, model, glm::inverseTranspose(model), &wolfAnim1);
 
   mRender->Begin2DDraw();
 

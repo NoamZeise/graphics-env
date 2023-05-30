@@ -126,3 +126,5 @@ glm::vec2 Render::getTargetResolution() {
     _RENDER_FN(getTargetResolution())
 }
 void Render::setVsync(bool vsync){_RENDER_FN(setVsync(vsync))}
+
+bool Render::getVsync(){_RENDER_FN(getVsync())}

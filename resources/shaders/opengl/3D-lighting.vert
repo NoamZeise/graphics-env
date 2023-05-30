@@ -19,8 +19,6 @@ layout (std430, binding = 3) buffer perInstanceNormalData
   mat4 normalMat[MAX_3D_INSTANCE];
 };
 
-
-
 uniform mat4 projection;
 uniform mat4 view;
 

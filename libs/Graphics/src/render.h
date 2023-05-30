@@ -80,6 +80,7 @@ public:
     void setTargetResolution(glm::vec2 resolution);
     glm::vec2 getTargetResolution();
     void setVsync(bool vsync);
+    bool getVsync();
 
   RenderFramework getRenderFramework() {
     return renderer;

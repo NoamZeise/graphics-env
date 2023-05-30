@@ -8,6 +8,7 @@ A 2D and 3D renderer with vulkan or opengl backend, add rendering and update cod
 * Import and Draw image textures 
 * Import and Draw fonts
 * Play .wav and .ogg audio files
+* 3D Skeletal Animation
 
 ## Projects using this framework:
 * [Robyn Hood](https://github.com/NoamZeise/Robyn-Hood) - 2022 - 2D On-rails Stealth Game
@@ -64,9 +65,9 @@ Download the [Vulkan SDK](https://www.lunarg.com/vulkan-sdk/), for getting the v
 # Todo list:
 bugs:
 * make first-person camera feel better
+* resolution scaling the same across opengl and vulkan
 
 features:
-* skeletal animation with ogl renderer
 * make multiple render passes optional
 
 optimisations:
