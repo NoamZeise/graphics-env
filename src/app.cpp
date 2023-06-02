@@ -33,13 +33,15 @@ App::App(RenderFramework defaultFramework) {
     glfwSetScrollCallback(mWindow, scroll_callback);
     glfwSetKeyCallback(mWindow, key_callback);
     glfwSetMouseButtonCallback(mWindow, mouse_button_callback);
-    glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    //glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetInputMode(mWindow, GLFW_RAW_MOUSE_MOTION, glfwRawMouseMotionSupported());
 
     int width = mWindowWidth;
     int height = mWindowHeight;
 
     mRender->LoadRender(mWindow, glm::vec2(mWindowWidth, mWindowHeight));
+
+    mRender->setTargetResolution(glm::vec2(500.0f, 500.0f));
 
     if(FIXED_WINDOW_RATIO)
 	glfwSetWindowAspectRatio(mWindow, width, height);
