@@ -11,6 +11,7 @@ if(UNIX) # want linux binary to check current dir for libraries
       target_link_libraries(MyApp -static-libgcc -static-libstdc++)
     endif()
   endif()
+  target_link_libraries(MyApp -pthread)
 endif()
 
 add_custom_command(TARGET MyApp POST_BUILD
