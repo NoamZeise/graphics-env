@@ -6,6 +6,14 @@
 #include <graphics/glm_helper.h>
 #include <iostream>
 
+
+const int INITIAL_WINDOW_WIDTH = 1000;
+const int INITIAL_WINDOW_HEIGHT = 800;
+const bool FIXED_WINDOW_RATIO = false;
+const bool FIX_RESOLUTION = true;
+const int TARGET_WIDTH = 400;
+const int TARGET_HEIGHT = 400;
+
 App::App(RenderFramework defaultFramework) {
 
     mWindowWidth = INITIAL_WINDOW_WIDTH;
@@ -42,7 +50,8 @@ App::App(RenderFramework defaultFramework) {
 
     mRender->LoadRender(mWindow, glm::vec2(mWindowWidth, mWindowHeight));
 
-    mRender->setTargetResolution(glm::vec2(500.0f, 500.0f));
+    if(FIX_RESOLUTION)
+	mRender->setTargetResolution(glm::vec2(TARGET_WIDTH, TARGET_HEIGHT));
 
     if(FIXED_WINDOW_RATIO)
 	glfwSetWindowAspectRatio(mWindow, width, height);

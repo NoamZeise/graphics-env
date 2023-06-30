@@ -55,8 +55,6 @@ private:
     void loadTestScene2(std::atomic<bool> &loaded);
     void drawTestScene2();
 
-    const bool FIXED_WINDOW_RATIO = false;
-
     enum class Scene {
 	Test1,
 	Test2,
@@ -65,9 +63,6 @@ private:
 
     glm::vec2 correctedPos(glm::vec2 pos);
     glm::vec2 correctedMouse();
-
-    const int INITIAL_WINDOW_WIDTH = 1000;
-    const int INITIAL_WINDOW_HEIGHT = 500;
 
     GLFWwindow *mWindow;
     Render *mRender;
