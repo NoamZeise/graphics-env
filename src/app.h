@@ -13,11 +13,11 @@
 #endif
 #include <glm/glm.hpp>
 
-#include <input.h>
-#include <timer.h>
+#include <GameHelper/input.h>
+#include <GameHelper/timer.h>
 #include <audio.h>
 
-#include <camera.h>
+#include <GameHelper/camera.h>
 
 #define TIME_APP_DRAW_UPDATE
 //#define MULTI_UPDATE_ON_SLOW_DRAW
