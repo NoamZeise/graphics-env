@@ -101,6 +101,7 @@ void App::update() {
 #ifdef TIME_APP_DRAW_UPDATE
   auto start = std::chrono::high_resolution_clock::now();
 #endif
+  input.update();
   glfwPollEvents();
 
   controls();
@@ -123,7 +124,7 @@ void App::update() {
 
   rotate += timer.FrameElapsed() * 0.001f;
   
-  fpcam.update(input, previousInput, timer);
+  fpcam.update(input, timer);
 
   postUpdate();
 #ifdef TIME_APP_DRAW_UPDATE
@@ -133,82 +134,78 @@ void App::update() {
 #endif
 }
 
-void App::controls()
-{
-  if (input.Keys[GLFW_KEY_F] && !previousInput.Keys[GLFW_KEY_F]) {
-    if (glfwGetWindowMonitor(mWindow) == nullptr) {
+void App::controls() {
+    if (input.kb.press(GLFW_KEY_F)) {
+	if (glfwGetWindowMonitor(mWindow) == nullptr) {
 	    const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 	    glfwSetWindowMonitor(mWindow, glfwGetPrimaryMonitor(), 0, 0, mode->width,
-                           mode->height, mode->refreshRate);
-    } else {
+				 mode->height, mode->refreshRate);
+	} else {
 	    const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 	    glfwSetWindowMonitor(mWindow, NULL, 0, 0, mWindowWidth, mWindowHeight,
-                           mode->refreshRate);
+				 mode->refreshRate);
+	}
     }
-  }
-  if (input.Keys[GLFW_KEY_ESCAPE] && !previousInput.Keys[GLFW_KEY_ESCAPE]) {
-    glfwSetWindowShouldClose(mWindow, GLFW_TRUE);
-  }
-  const float speed = 0.001f;
-  if (input.Keys[GLFW_KEY_INSERT]) {
-    lightDir.x += speed * timer.FrameElapsed();
-  }
-  if (input.Keys[GLFW_KEY_HOME]) {
-    lightDir.x -= speed * timer.FrameElapsed();
-  }
-  if (input.Keys[GLFW_KEY_DELETE]) {
-    lightDir.z += speed * timer.FrameElapsed();
-  }
-  if (input.Keys[GLFW_KEY_END]) {
-    lightDir.z -= speed * timer.FrameElapsed();
-  }
-  if (input.Keys[GLFW_KEY_PAGE_UP]) {
-    lightDir.y += speed * timer.FrameElapsed();
-  }
-  if (input.Keys[GLFW_KEY_PAGE_DOWN]) {
-    lightDir.y -= speed * timer.FrameElapsed();
-  }
-
-  if (input.Keys[GLFW_KEY_G]) {
-      mRender->setTargetResolution(glm::vec2(1000, 100));
-  }
-  if (input.Keys[GLFW_KEY_H]) {
-      mRender->setForceTargetRes(false);
-  }
-  if (input.Keys[GLFW_KEY_V]) {
-      mRender->setVsync(true);
-  }
-   if (input.Keys[GLFW_KEY_B]) {
-       mRender->setVsync(false);
-  }
-   if(!sceneChangeInProgress) {
-       if(input.Keys[GLFW_KEY_1]) {
-	   if(current != Scene::Test1) {
-	       assetsLoaded = false;
-	       pFrameworkSwitch(mRender,
-			       assetLoadThread = std::thread(&App::loadTestScene1, this, std::ref(assetsLoaded)),
-			       loadTestScene1(assetsLoaded)
-	       );
-	       sceneChangeInProgress = true;
-	   }
-       }
-       if(input.Keys[GLFW_KEY_2]) {
-	   if(current != Scene::Test2) {
-	       assetsLoaded = false;
-	       pFrameworkSwitch(mRender,
-			       assetLoadThread = std::thread(&App::loadTestScene2, this, std::ref(assetsLoaded)),
-			       loadTestScene2(assetsLoaded)
-	       );
-	       sceneChangeInProgress = true;
-	   }
-       }
-   }
-   mRender->setLightDirection(lightDir);
+    if (input.kb.press(GLFW_KEY_ESCAPE)) {
+	glfwSetWindowShouldClose(mWindow, GLFW_TRUE);
+    }
+    const float speed = 0.001f;
+    if (input.kb.hold(GLFW_KEY_INSERT)) {
+	lightDir.x += speed * timer.FrameElapsed();
+    }
+    if (input.kb.hold(GLFW_KEY_HOME)) {
+	lightDir.x -= speed * timer.FrameElapsed();
+    }
+    if (input.kb.hold(GLFW_KEY_DELETE)) {
+	lightDir.z += speed * timer.FrameElapsed();
+    }
+    if (input.kb.hold(GLFW_KEY_END)) {
+	lightDir.z -= speed * timer.FrameElapsed();
+    }
+    if (input.kb.hold(GLFW_KEY_PAGE_UP)) {
+	lightDir.y += speed * timer.FrameElapsed();
+    }
+    if (input.kb.hold(GLFW_KEY_PAGE_DOWN)) {
+	lightDir.y -= speed * timer.FrameElapsed();
+    }
+    if (input.kb.hold(GLFW_KEY_G)) {
+	mRender->setTargetResolution(glm::vec2(1000, 100));
+    }
+    if (input.kb.hold(GLFW_KEY_H)) {
+	mRender->setForceTargetRes(false);
+    }
+    if (input.kb.hold(GLFW_KEY_V)) {
+	mRender->setVsync(true);
+    }
+    if (input.kb.hold(GLFW_KEY_B)) {
+	mRender->setVsync(false);
+    }
+    if(!sceneChangeInProgress) {
+	if(input.kb.hold(GLFW_KEY_1)) {
+	    if(current != Scene::Test1) {
+		assetsLoaded = false;
+		pFrameworkSwitch(mRender,
+				 assetLoadThread = std::thread(&App::loadTestScene1, this, std::ref(assetsLoaded)),
+				 loadTestScene1(assetsLoaded)
+				 );
+		sceneChangeInProgress = true;
+	    }
+	}
+	if(input.kb.hold(GLFW_KEY_2)) {
+	    if(current != Scene::Test2) {
+		assetsLoaded = false;
+		pFrameworkSwitch(mRender,
+				 assetLoadThread = std::thread(&App::loadTestScene2, this, std::ref(assetsLoaded)),
+				 loadTestScene2(assetsLoaded)
+				 );
+		sceneChangeInProgress = true;
+	    }
+	}
+    }
+    mRender->setLightDirection(lightDir);
 }
 
 void App::postUpdate() {
-  previousInput = input;
-  input.offset = 0;
   timer.Update();
   mRender->set3DViewMatrixAndFov(fpcam.getViewMatrix(), fpcam.getZoom(),
                                  glm::vec4(fpcam.getPos(), 0.0));
@@ -245,7 +242,8 @@ void App::draw() {
   #endif
 
   pFrameworkSwitch(mRender,
-		   submitDraw = std::thread(&Render::EndDraw, mRender, std::ref(finishedDrawSubmit)),
+		   submitDraw = std::thread(
+			   &Render::EndDraw, mRender, std::ref(finishedDrawSubmit)),
 		   {
 		       mRender->EndDraw(finishedDrawSubmit);
 		       finishedDrawSubmit = true;
@@ -272,7 +270,7 @@ glm::vec2 App::correctedPos(glm::vec2 pos)
 
 glm::vec2 App::correctedMouse()
 {
-  return correctedPos(glm::vec2(input.X, input.Y));
+    return correctedPos(glm::vec2(input.m.x(), input.m.y()));
 }
 
 void App::loadTestScene1(std::atomic<bool> &loaded) {
@@ -429,37 +427,23 @@ void App::framebuffer_size_callback(GLFWwindow *window, int width, int height) {
 
 void App::mouse_callback(GLFWwindow *window, double xpos, double ypos) {
   App *app = reinterpret_cast<App *>(glfwGetWindowUserPointer(window));
-  app->input.X = xpos;
-  app->input.Y = ypos;
+  app->input.m.mousePosCallback(xpos, ypos);
 }
 void App::scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
   App *app = reinterpret_cast<App *>(glfwGetWindowUserPointer(window));
-  app->input.offset = yoffset;
+  app->input.m.mouseScrollCallback(xoffset, yoffset);
 }
 
 void App::key_callback(GLFWwindow *window, int key, int scancode, int action,
                        int mode) {
   App *app = reinterpret_cast<App *>(glfwGetWindowUserPointer(window));
-  if (key >= 0 && key < 1024) {
-    if (action == GLFW_PRESS) {
-      app->input.Keys[key] = true;
-    } else if (action == GLFW_RELEASE) {
-      app->input.Keys[key] = false;
-    }
-  }
+  app->input.kb.handleKey(key, scancode, action);
 }
 
 void App::mouse_button_callback(GLFWwindow *window, int button, int action,
                                 int mods) {
   App *app = reinterpret_cast<App *>(glfwGetWindowUserPointer(window));
-
-  if (button >= 0 && button < 8) {
-    if (action == GLFW_PRESS) {
-      app->input.Buttons[button] = true;
-    } else if (action == GLFW_RELEASE) {
-      app->input.Buttons[button] = false;
-    }
-  }
+  app->input.m.mouseButtonCallback(button, action, mods);
 }
 
 void App::error_callback(int error, const char *description) {

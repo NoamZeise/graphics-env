@@ -67,7 +67,6 @@ private:
     GLFWwindow *mWindow;
     Render *mRender;
     int mWindowWidth, mWindowHeight;
-    gamehelper::Input previousInput;
     gamehelper::Timer timer;
     camera::FirstPerson fpcam;
 
