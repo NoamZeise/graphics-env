@@ -19,7 +19,7 @@
 
 #include <GameHelper/camera.h>
 
-#include "manager.h"
+#include <manager.h>
 
 #define TIME_APP_DRAW_UPDATE
 //#define MULTI_UPDATE_ON_SLOW_DRAW

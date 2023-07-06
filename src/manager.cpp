@@ -1,4 +1,4 @@
-#include "manager.h"
+#include <manager.h>
 
 #include <stdexcept>
 
@@ -53,8 +53,8 @@ Manager::Manager(RenderFramework renderer,
 	glfwSetWindowAspectRatio(window, winWidth, winHeight);
 
     render->LoadRender(window);
-    if(state.framebufferWidth != 0 && sframebufferHeighteight != 0)
-	render->setTargetResolution(glm::vec2(state.framebufferWidth, sframebufferHeighteight));
+    if(state.framebufferWidth != 0 && state.framebufferHeight != 0)
+	render->setTargetResolution(glm::vec2(state.framebufferWidth, state.framebufferHeight));
 }
 
 Manager::~Manager() {
