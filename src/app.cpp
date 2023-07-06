@@ -6,69 +6,22 @@
 #include <graphics/glm_helper.h>
 #include <iostream>
 
-
-const int INITIAL_WINDOW_WIDTH = 1000;
-const int INITIAL_WINDOW_HEIGHT = 800;
-const bool FIXED_WINDOW_RATIO = false;
-const bool FIX_RESOLUTION = true;
-const int TARGET_WIDTH = 400;
-const int TARGET_HEIGHT = 400;
-
 App::App(RenderFramework defaultFramework) {
-
-    mWindowWidth = INITIAL_WINDOW_WIDTH;
-    mWindowHeight = INITIAL_WINDOW_HEIGHT;
-
-    glfwSetErrorCallback(error_callback);
-    if (!glfwInit())
-	throw std::runtime_error("failed to initialise glfw!");
-
-    mRender = new Render(defaultFramework);
-
-    if(mRender->NoApiLoaded()) {
-	throw std::runtime_error("failed to load any graphics apis");
-    }
-
-    mWindow = glfwCreateWindow(mWindowWidth, mWindowHeight, "App", nullptr, nullptr);
-    if(!mWindow) {
-	glfwTerminate();
-	throw std::runtime_error("failed to create glfw window!");
-    }
-
-    glfwSetWindowUserPointer(mWindow, this);
-    glfwSetFramebufferSizeCallback(mWindow, framebuffer_size_callback);
-    glfwSetCursorPosCallback(mWindow, mouse_callback);
-    glfwSetScrollCallback(mWindow, scroll_callback);
-    glfwSetKeyCallback(mWindow, key_callback);
-    glfwSetMouseButtonCallback(mWindow, mouse_button_callback);
-    //glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    glfwSetInputMode(mWindow, GLFW_RAW_MOUSE_MOTION, glfwRawMouseMotionSupported());
-
-
-    int width = mWindowWidth;
-    int height = mWindowHeight;
-
-    mRender->LoadRender(mWindow, glm::vec2(mWindowWidth, mWindowHeight));
-
-    if(FIX_RESOLUTION)
-	mRender->setTargetResolution(glm::vec2(TARGET_WIDTH, TARGET_HEIGHT));
-
-    if(FIXED_WINDOW_RATIO)
-	glfwSetWindowAspectRatio(mWindow, width, height);
+    ManagerState state;
+    manager = new Manager(defaultFramework, state);
 
     loadAssets();
 
     fpcam = camera::FirstPerson(glm::vec3(3.0f, 0.0f, 2.0f));
     finishedDrawSubmit = true;
 
-    audio.Play("audio/test.wav", false, 1.0f);
+    manager->audio.Play("audio/test.wav", false, 1.0f);
 }
 
 App::~App() {
   if (submitDraw.joinable())
     submitDraw.join();
-  delete mRender;
-  glfwTerminate();
+  delete manager;
 }
 
 void App::loadAssets() {
@@ -76,33 +29,23 @@ void App::loadAssets() {
 	loadTestScene1(assetsLoaded);
     if(current == Scene::Test2)
 	loadTestScene2(assetsLoaded);
-    mRender->LoadResourcesToGPU();
-    mRender->UseLoadedResources();
+    manager->render->LoadResourcesToGPU();
+    manager->render->UseLoadedResources();
 }
 
 void App::run() {
-  while (!glfwWindowShouldClose(mWindow)) {
+  while (!glfwWindowShouldClose(manager->window)) {
     update();
-    if (mWindowWidth != 0 && mWindowHeight != 0)
+    if (manager->winWidth != 0 && manager->winHeight != 0)
       draw();
   }
-}
-
-void App::resize(int windowWidth, int windowHeight) {
-  if (submitDraw.joinable())
-    submitDraw.join();
-  this->mWindowWidth = windowWidth;
-  this->mWindowHeight = windowHeight;
-  if (mRender != nullptr && mWindowWidth != 0 && mWindowHeight != 0)
-    mRender->FramebufferResize();
 }
 
 void App::update() {
 #ifdef TIME_APP_DRAW_UPDATE
   auto start = std::chrono::high_resolution_clock::now();
 #endif
-  input.update();
-  glfwPollEvents();
+  manager->update();
 
   controls();
 
@@ -112,19 +55,19 @@ void App::update() {
       if(submitDraw.joinable()) 
 	  submitDraw.join();
       std::cout << "loading done\n";
-      mRender->LoadResourcesToGPU();
-      mRender->UseLoadedResources();
+      manager->render->LoadResourcesToGPU();
+      manager->render->UseLoadedResources();
       sceneChangeInProgress = false;
       current = current == Scene::Test1 ? Scene::Test2 : Scene::Test1;
   }
 
   if(current == Scene::Test1) {
-      wolfAnim1.Update(timer.FrameElapsed());
+      wolfAnim1.Update(manager->timer.FrameElapsed());
   }
 
-  rotate += timer.FrameElapsed() * 0.001f;
+  rotate += manager->timer.FrameElapsed() * 0.001f;
   
-  fpcam.update(input, timer);
+  fpcam.update(manager->input, manager->timer);
 
   postUpdate();
 #ifdef TIME_APP_DRAW_UPDATE
@@ -135,66 +78,57 @@ void App::update() {
 }
 
 void App::controls() {
-    if (input.kb.press(GLFW_KEY_F)) {
-	if (glfwGetWindowMonitor(mWindow) == nullptr) {
-	    const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-	    glfwSetWindowMonitor(mWindow, glfwGetPrimaryMonitor(), 0, 0, mode->width,
-				 mode->height, mode->refreshRate);
-	} else {
-	    const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-	    glfwSetWindowMonitor(mWindow, NULL, 0, 0, mWindowWidth, mWindowHeight,
-				 mode->refreshRate);
-	}
-    }
-    if (input.kb.press(GLFW_KEY_ESCAPE)) {
-	glfwSetWindowShouldClose(mWindow, GLFW_TRUE);
+    if (manager->input.kb.press(GLFW_KEY_F))
+	manager->toggleFullscreen();
+    if (manager->input.kb.press(GLFW_KEY_ESCAPE)) {
+	glfwSetWindowShouldClose(manager->window, GLFW_TRUE);
     }
     const float speed = 0.001f;
-    if (input.kb.hold(GLFW_KEY_INSERT)) {
-	lightDir.x += speed * timer.FrameElapsed();
+    if (manager->input.kb.hold(GLFW_KEY_INSERT)) {
+	lightDir.x += speed * manager->timer.FrameElapsed();
     }
-    if (input.kb.hold(GLFW_KEY_HOME)) {
-	lightDir.x -= speed * timer.FrameElapsed();
+    if (manager->input.kb.hold(GLFW_KEY_HOME)) {
+	lightDir.x -= speed * manager->timer.FrameElapsed();
     }
-    if (input.kb.hold(GLFW_KEY_DELETE)) {
-	lightDir.z += speed * timer.FrameElapsed();
+    if (manager->input.kb.hold(GLFW_KEY_DELETE)) {
+	lightDir.z += speed * manager->timer.FrameElapsed();
     }
-    if (input.kb.hold(GLFW_KEY_END)) {
-	lightDir.z -= speed * timer.FrameElapsed();
+    if (manager->input.kb.hold(GLFW_KEY_END)) {
+	lightDir.z -= speed * manager->timer.FrameElapsed();
     }
-    if (input.kb.hold(GLFW_KEY_PAGE_UP)) {
-	lightDir.y += speed * timer.FrameElapsed();
+    if (manager->input.kb.hold(GLFW_KEY_PAGE_UP)) {
+	lightDir.y += speed * manager->timer.FrameElapsed();
     }
-    if (input.kb.hold(GLFW_KEY_PAGE_DOWN)) {
-	lightDir.y -= speed * timer.FrameElapsed();
+    if (manager->input.kb.hold(GLFW_KEY_PAGE_DOWN)) {
+	lightDir.y -= speed * manager->timer.FrameElapsed();
     }
-    if (input.kb.hold(GLFW_KEY_G)) {
-	mRender->setTargetResolution(glm::vec2(1000, 100));
+    if (manager->input.kb.hold(GLFW_KEY_G)) {
+	manager->render->setTargetResolution(glm::vec2(1000, 100));
     }
-    if (input.kb.hold(GLFW_KEY_H)) {
-	mRender->setForceTargetRes(false);
+    if (manager->input.kb.hold(GLFW_KEY_H)) {
+	manager->render->setForceTargetRes(false);
     }
-    if (input.kb.hold(GLFW_KEY_V)) {
-	mRender->setVsync(true);
+    if (manager->input.kb.hold(GLFW_KEY_V)) {
+	manager->render->setVsync(true);
     }
-    if (input.kb.hold(GLFW_KEY_B)) {
-	mRender->setVsync(false);
+    if (manager->input.kb.hold(GLFW_KEY_B)) {
+	manager->render->setVsync(false);
     }
     if(!sceneChangeInProgress) {
-	if(input.kb.hold(GLFW_KEY_1)) {
+	if(manager->input.kb.hold(GLFW_KEY_1)) {
 	    if(current != Scene::Test1) {
 		assetsLoaded = false;
-		pFrameworkSwitch(mRender,
+		pFrameworkSwitch(manager->render,
 				 assetLoadThread = std::thread(&App::loadTestScene1, this, std::ref(assetsLoaded)),
 				 loadTestScene1(assetsLoaded)
 				 );
 		sceneChangeInProgress = true;
 	    }
 	}
-	if(input.kb.hold(GLFW_KEY_2)) {
+	if(manager->input.kb.hold(GLFW_KEY_2)) {
 	    if(current != Scene::Test2) {
 		assetsLoaded = false;
-		pFrameworkSwitch(mRender,
+		pFrameworkSwitch(manager->render,
 				 assetLoadThread = std::thread(&App::loadTestScene2, this, std::ref(assetsLoaded)),
 				 loadTestScene2(assetsLoaded)
 				 );
@@ -202,12 +136,11 @@ void App::controls() {
 	    }
 	}
     }
-    mRender->setLightDirection(lightDir);
+    manager->render->setLightDirection(lightDir);
 }
 
 void App::postUpdate() {
-  timer.Update();
-  mRender->set3DViewMatrixAndFov(fpcam.getViewMatrix(), fpcam.getZoom(),
+  manager->render->set3DViewMatrixAndFov(fpcam.getViewMatrix(), fpcam.getZoom(),
                                  glm::vec4(fpcam.getPos(), 0.0));
 }
 
@@ -235,17 +168,17 @@ void App::draw() {
       font = testFont1;
   if(current == Scene::Test2)
       font = testFont2;
-  mRender->DrawString(font, monitored_update_stats,
+  manager->render->DrawString(font, monitored_update_stats,
 		      glm::vec2(10.0, 20.0), 15, 5.0f, glm::vec4(1.0f));
-  mRender->DrawString(font, monitored_draw_stats,
+  manager->render->DrawString(font, monitored_draw_stats,
 		      glm::vec2(10.0, 40.0), 15, 5.0f, glm::vec4(1.0f));
   #endif
 
-  pFrameworkSwitch(mRender,
+  pFrameworkSwitch(manager->render,
 		   submitDraw = std::thread(
-			   &Render::EndDraw, mRender, std::ref(finishedDrawSubmit)),
+			   &Render::EndDraw, manager->render, std::ref(finishedDrawSubmit)),
 		   {
-		       mRender->EndDraw(finishedDrawSubmit);
+		       manager->render->EndDraw(finishedDrawSubmit);
 		       finishedDrawSubmit = true;
 		   }
   );
@@ -258,39 +191,24 @@ void App::draw() {
 #endif
 }
 
-glm::vec2 App::correctedPos(glm::vec2 pos)
-{
-  if (mRender->isTargetResForced())
-      return glm::vec2(
-	pos.x * (mRender->getTargetResolution().x / (float)mWindowWidth),
-	pos.y * (mRender->getTargetResolution().y / (float)mWindowHeight));
-
-  return glm::vec2(pos.x, pos.y);
-}
-
-glm::vec2 App::correctedMouse()
-{
-    return correctedPos(glm::vec2(input.m.x(), input.m.y()));
-}
-
 void App::loadTestScene1(std::atomic<bool> &loaded) {
-  testModel1 = mRender->Load3DModel("models/testScene.fbx");
-  monkeyModel1 = mRender->Load3DModel("models/monkey.obj");
-  colouredCube1 = mRender->Load3DModel("models/ROOM.fbx");
+  testModel1 = manager->render->Load3DModel("models/testScene.fbx");
+  monkeyModel1 = manager->render->Load3DModel("models/monkey.obj");
+  colouredCube1 = manager->render->Load3DModel("models/ROOM.fbx");
   std::vector<Resource::ModelAnimation> animations;
-  wolf1 = mRender->LoadAnimatedModel("models/wolf.fbx", &animations);
+  wolf1 = manager->render->LoadAnimatedModel("models/wolf.fbx", &animations);
   if(animations.size() > 2)
       wolfAnim1 = animations[1];
   else
       throw std::runtime_error("wolf anim had unexpected number of animations");
-  testTex1 = mRender->LoadTexture("textures/error.png");
-  testFont1 = mRender->LoadFont("textures/Roboto-Black.ttf");
+  testTex1 = manager->render->LoadTexture("textures/error.png");
+  testFont1 = manager->render->LoadFont("textures/Roboto-Black.ttf");
   loaded = true;
 }
 
 void App::drawTestScene1() {
 
-  mRender->Begin3DDraw();
+  manager->render->Begin3DDraw();
 
   auto model = glm::translate(
       glm::scale(
@@ -299,7 +217,7 @@ void App::drawTestScene1() {
           glm::vec3(1.0f)),
       glm::vec3(0, 3, 0));
 
-  mRender->DrawModel(monkeyModel1, model, glm::inverseTranspose(model));
+  manager->render->DrawModel(monkeyModel1, model, glm::inverseTranspose(model));
 
   model = glm::translate(
       glm::scale(
@@ -308,16 +226,16 @@ void App::drawTestScene1() {
           glm::vec3(0.01f)),
       glm::vec3(0, 0, 0));
 
-  mRender->DrawModel(testModel1, model, glm::inverseTranspose(model));
+  manager->render->DrawModel(testModel1, model, glm::inverseTranspose(model));
 
   model = glm::scale(glm::rotate(glm::translate(glm::mat4(1.0f),
                                                 glm::vec3(0.0f, -30.0f, -15.0f)),
                                  glm::radians(270.0f),
                                  glm::vec3(-1.0f, 0.0f, 0.0f)),
                      glm::vec3(4.0f));
-  mRender->DrawModel(colouredCube1, model, glm::inverseTranspose(model));
+  manager->render->DrawModel(colouredCube1, model, glm::inverseTranspose(model));
 
-  mRender->BeginAnim3DDraw();
+  manager->render->BeginAnim3DDraw();
 
   model = glm::scale(glm::rotate(glm::translate(glm::mat4(1.0f),
                                                 glm::vec3(0.0f, 0.0f, 6.0f)),
@@ -325,34 +243,34 @@ void App::drawTestScene1() {
                                  glm::vec3(-1.0f, 0.0f, 0.0f)),
                      glm::vec3(0.1f));
   
-  mRender->DrawAnimModel(wolf1, model, glm::inverseTranspose(model), &wolfAnim1);
+  manager->render->DrawAnimModel(wolf1, model, glm::inverseTranspose(model), &wolfAnim1);
 
-  mRender->Begin2DDraw();
+  manager->render->Begin2DDraw();
 
 
-  mRender->DrawString(testFont1, "Scene 1", glm::vec2(10, 100), 40, -1.0f, glm::vec4(1), 0.0f);
+  manager->render->DrawString(testFont1, "Scene 1", glm::vec2(10, 100), 40, -1.0f, glm::vec4(1), 0.0f);
   if(sceneChangeInProgress) {
-    mRender->DrawString(testFont1, "Loading", glm::vec2(200, 400), 40, -1.0f, glm::vec4(1), 0.0f);
+    manager->render->DrawString(testFont1, "Loading", glm::vec2(200, 400), 40, -1.0f, glm::vec4(1), 0.0f);
    }
 
-     mRender->DrawQuad(
+     manager->render->DrawQuad(
 	     testTex1, glmhelper::calcMatFromRect(glm::vec4(400, 100, 100, 100), 0, -1),
       glm::vec4(1), glm::vec4(0, 0, 1, 1));
 
-  mRender->DrawQuad(testTex1,
+  manager->render->DrawQuad(testTex1,
                     glmhelper::calcMatFromRect(glm::vec4(0, 0, 400, 400), 0, 0),
                     glm::vec4(1, 0, 1, 0.3), glm::vec4(0, 0, 1, 1));
 }
 
 void App::loadTestScene2(std::atomic<bool> &loaded) {
-  monkeyModel2 = mRender->Load3DModel("models/monkey.obj");
-  colouredCube2 = mRender->Load3DModel("models/ROOM.fbx");
-  testFont2 = mRender->LoadFont("textures/Roboto-Black.ttf");
+  monkeyModel2 = manager->render->Load3DModel("models/monkey.obj");
+  colouredCube2 = manager->render->Load3DModel("models/ROOM.fbx");
+  testFont2 = manager->render->LoadFont("textures/Roboto-Black.ttf");
   loaded = true;
 }
 
 void App::drawTestScene2() {
-    mRender->Begin3DDraw();
+    manager->render->Begin3DDraw();
   auto model = glm::translate(
       glm::scale(
 		 glm::rotate(glm::rotate(glm::mat4(1.0f), rotate, glm::vec3(0, 0, 1)),
@@ -360,21 +278,21 @@ void App::drawTestScene2() {
           glm::vec3(1.0f)),
       glm::vec3(0, 2, 0));
 
-  mRender->DrawModel(monkeyModel2, model, glm::inverseTranspose(model));
+  manager->render->DrawModel(monkeyModel2, model, glm::inverseTranspose(model));
   model = glm::translate(
       glm::scale(
 		 glm::rotate(glm::rotate(glm::mat4(1.0f), rotate * 0.5f, glm::vec3(0, 0, 1)),
                       glm::radians(270.0f), glm::vec3(-1.0f, 0.0f, 0.0f)),
           glm::vec3(1.0f)),
       glm::vec3(1, 2, 0));
-    mRender->DrawModel(monkeyModel2, model, glm::inverseTranspose(model));
+    manager->render->DrawModel(monkeyModel2, model, glm::inverseTranspose(model));
     model = glm::translate(
       glm::scale(
 		 glm::rotate(glm::rotate(glm::mat4(1.0f), rotate * 2.0f, glm::vec3(0, 0, 1)),
                       glm::radians(270.0f), glm::vec3(-1.0f, 0.0f, 0.0f)),
           glm::vec3(1.0f)),
       glm::vec3(2, 2, 0));
-    mRender->DrawModel(monkeyModel2, model, glm::inverseTranspose(model));
+    manager->render->DrawModel(monkeyModel2, model, glm::inverseTranspose(model));
 
       model = glm::scale(glm::rotate(glm::translate(glm::mat4(1.0f),
                                                 glm::vec3(0.0f, -30.0f, -15.0f))
@@ -384,7 +302,7 @@ void App::drawTestScene2() {
                                  glm::vec3(-1.0f, 0.0f, 0.0f)),
                      glm::vec3(1.0f));
 
-      mRender->DrawModel(colouredCube2, model, glm::inverseTranspose(model));
+      manager->render->DrawModel(colouredCube2, model, glm::inverseTranspose(model));
       model = glm::scale(glm::rotate(glm::translate(glm::mat4(1.0f),
                                                 glm::vec3(0.0f, -30.0f, -15.0f))
 
@@ -394,7 +312,7 @@ void App::drawTestScene2() {
                      glm::vec3(1.0f));
 	model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-  mRender->DrawModel(colouredCube2, model, glm::inverseTranspose(model));
+  manager->render->DrawModel(colouredCube2, model, glm::inverseTranspose(model));
         model = glm::scale(glm::rotate(glm::translate(glm::mat4(1.0f),
                                                 glm::vec3(0.0f, -30.0f, -15.0f))
 
@@ -402,50 +320,14 @@ void App::drawTestScene2() {
                                  glm::radians(270.0f),
                                  glm::vec3(-1.0f, 0.0f, 0.0f)),
                      glm::vec3(1.0f));
-  mRender->DrawModel(colouredCube2, model, glm::inverseTranspose(model));
+  manager->render->DrawModel(colouredCube2, model, glm::inverseTranspose(model));
       
 
-  mRender->Begin2DDraw();
+  manager->render->Begin2DDraw();
 
-  mRender->DrawString(testFont2, "Scene 2", glm::vec2(10, 100), 40, -0.4f, glm::vec4(1), 0.0f);
+  manager->render->DrawString(testFont2, "Scene 2", glm::vec2(10, 100), 40, -0.4f, glm::vec4(1), 0.0f);
 
   if(sceneChangeInProgress) {
-      mRender->DrawString(testFont2, "Loading", glm::vec2(200, 400), 40, -0.4f, glm::vec4(1), 0.0f);
+      manager->render->DrawString(testFont2, "Loading", glm::vec2(200, 400), 40, -0.4f, glm::vec4(1), 0.0f);
   }    
-}
-
-
-
-/*
- *       GLFW CALLBACKS
- */
-
-void App::framebuffer_size_callback(GLFWwindow *window, int width, int height) {
-  auto app = reinterpret_cast<App *>(glfwGetWindowUserPointer(window));
-  app->resize(width, height);
-}
-
-void App::mouse_callback(GLFWwindow *window, double xpos, double ypos) {
-  App *app = reinterpret_cast<App *>(glfwGetWindowUserPointer(window));
-  app->input.m.mousePosCallback(xpos, ypos);
-}
-void App::scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
-  App *app = reinterpret_cast<App *>(glfwGetWindowUserPointer(window));
-  app->input.m.mouseScrollCallback(xoffset, yoffset);
-}
-
-void App::key_callback(GLFWwindow *window, int key, int scancode, int action,
-                       int mode) {
-  App *app = reinterpret_cast<App *>(glfwGetWindowUserPointer(window));
-  app->input.kb.handleKey(key, scancode, action);
-}
-
-void App::mouse_button_callback(GLFWwindow *window, int button, int action,
-                                int mods) {
-  App *app = reinterpret_cast<App *>(glfwGetWindowUserPointer(window));
-  app->input.m.mouseButtonCallback(button, action, mods);
-}
-
-void App::error_callback(int error, const char *description) {
-  throw std::runtime_error(description);
 }

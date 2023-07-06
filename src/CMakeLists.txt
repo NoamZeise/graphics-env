@@ -1,4 +1,4 @@
-add_executable(MyApp app.cpp main.cpp)
+add_executable(MyApp app.cpp main.cpp manager.cpp)
 
 target_link_libraries(MyApp GameHelper Graphics)
 target_include_directories(MyApp PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}../include")
