@@ -1,2 +1,0 @@
-add_subdirectory(VulkanEnvironment)
-add_subdirectory(OpenGlEnvironment)

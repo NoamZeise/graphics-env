@@ -1,6 +1,6 @@
 #include "render.h"
-#include "../libs/OpenGlEnvironment/src/render.h"
-#include "../libs/VulkanEnvironment/src/render.h"
+#include "../../OpenGLEnvironment/src/render.h"
+#include "../../VulkanEnvironment/src/render.h"
 #include <iostream>
 
 #define _RENDER_NO_FN(vk, gl) switch(renderer) { \
