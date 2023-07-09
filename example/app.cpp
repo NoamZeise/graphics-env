@@ -47,6 +47,7 @@ void App::update() {
 #endif
   manager->update();
 
+  
   controls();
 
   if(sceneChangeInProgress && assetsLoaded) {

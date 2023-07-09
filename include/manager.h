@@ -3,6 +3,7 @@
 
 #include <thread>
 #include <atomic>
+#include <string>
 
 #include <glm/glm.hpp>
 
@@ -26,9 +27,11 @@ struct ManagerState {
     bool startFullscreen = false;
     bool fixedWindowRatio = false;
     cursorState cursor = cursorState::normal;
+    std::string windowName = "App";
 };
 
 struct Manager {
+    Manager(ManagerState state);
     Manager(RenderFramework renderer,
 	    ManagerState state);
     ~Manager();
@@ -46,6 +49,9 @@ struct Manager {
 
     glm::vec2 screenToRenderSpace(glm::vec2 pos);
     glm::vec2 mousePos();
+
+private:
+    void init(RenderFramework renderer, ManagerState state);
 };
 
 #endif

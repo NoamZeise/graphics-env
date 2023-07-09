@@ -21,6 +21,13 @@ namespace camera {
       return _zoom;
   }
 
+  void FirstPerson::setCam(glm::vec3 pos, float fov, float pitch, float yaw) {
+      _position = pos;
+      _zoom = fov;
+      _pitch = pitch;
+      _yaw = yaw;
+      calculateVectors();
+  }
 
   void FirstPerson::update(gamehelper::Input &input, gamehelper::Timer &timer) {
       viewUpdated = true;
@@ -57,6 +64,7 @@ namespace camera {
 
       calculateVectors();
       //std::cout << "X:" << _position.x << " Y:" << _position.y << " Z:" << _position.z << std::endl;
+      //std::cout << "pitch: " << _pitch << "   yaw: " << _yaw << std::endl;
   }
 
   void FirstPerson::calculateVectors() {

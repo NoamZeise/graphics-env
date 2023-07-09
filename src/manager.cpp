@@ -9,8 +9,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mode
 void mouseBtnCallback(GLFWwindow *window, int button, int action, int mods);
 void errorCallback(int error, const char *description);
 
-Manager::Manager(RenderFramework renderer,
-		 ManagerState state) {
+void Manager::init(RenderFramework renderer, ManagerState state) {
     winWidth = state.windowWidth;
     winHeight = state.windowHeight;
 
@@ -21,7 +20,7 @@ Manager::Manager(RenderFramework renderer,
     if(render->NoApiLoaded())
 	throw std::runtime_error("Failed to load any graphics apis!");
 
-    window = glfwCreateWindow(winWidth, winHeight, "App",
+    window = glfwCreateWindow(winWidth, winHeight, state.windowName.c_str(),
 			      state.startFullscreen ? glfwGetPrimaryMonitor() : NULL,
 			      nullptr);
     if(!window)
@@ -55,7 +54,17 @@ Manager::Manager(RenderFramework renderer,
     render->LoadRender(window);
     if(state.framebufferWidth != 0 && state.framebufferHeight != 0)
 	render->setTargetResolution(glm::vec2(state.framebufferWidth, state.framebufferHeight));
+    
 }
+
+Manager::Manager(ManagerState state) {
+    init(RenderFramework::VULKAN, state);
+}
+
+Manager::Manager(RenderFramework renderer,
+		 ManagerState state) {
+    init(renderer, state);
+ }
 
 Manager::~Manager() {
     delete render;

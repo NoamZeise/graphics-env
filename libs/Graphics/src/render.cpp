@@ -74,9 +74,12 @@ void Render::UseLoadedResources(){_RENDER_FN(UseLoadedResources())}
   void Render::BeginAnim3DDraw() { _RENDER_FN(BeginAnim3DDraw()) }
   void Render::Begin2DDraw() { _RENDER_FN(Begin2DDraw()) }
   void Render::DrawModel(Resource::Model model, glm::mat4 modelMatrix,
-                 glm::mat4 normalMatrix) {
-    _RENDER_FN(DrawModel(model, modelMatrix, normalMatrix))
-  }
+                         glm::mat4 normalMatrix){
+      _RENDER_FN(DrawModel(model, modelMatrix, normalMatrix))}
+  void Render::DrawModel(Resource::Model model, glm::mat4 modelMatrix,
+		       glm::mat4 normalMatrix, glm::vec4 colour) {
+      _RENDER_FN(DrawModel(model, modelMatrix, normalMatrix, colour))
+  } 
   void Render::DrawAnimModel(Resource::Model model, glm::mat4 modelMatrix,
                      glm::mat4 normalMatrix,
                      Resource::ModelAnimation *animation) {
@@ -114,9 +117,13 @@ void Render::set3DViewMatrixAndFov(glm::mat4 view, float fov, glm::vec4 camPos) 
 void Render::set2DViewMatrixAndScale(glm::mat4 view, float scale) {
     _RENDER_FN(set2DViewMatrixAndScale(view, scale))
   }
-void Render::setLightDirection(glm::vec4 lightDir) {
-    _RENDER_FN(setLightDirection(lightDir))
-  }
+  void Render::setLightDirection(glm::vec4 lightDir){
+      _RENDER_FN(setLightDirection(lightDir))}
+
+glm::mat4 Render::get3DProj() {
+    _RENDER_FN(get3DProj());
+}
+  
 void Render::setForceTargetRes(bool force) { _RENDER_FN(setForceTargetRes(force)) }
 bool Render::isTargetResForced() { _RENDER_FN(isTargetResForced()) }
 void Render::setTargetResolution(glm::vec2 resolution){

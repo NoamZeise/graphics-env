@@ -23,7 +23,8 @@ namespace camera
 		FirstPerson(glm::vec3 position);
 		glm::mat4 getViewMatrix();
 		float getZoom();
-        glm::vec3 getPos() { return _position; }
+	    glm::vec3 getPos() { return _position; }
+	    void setCam(glm::vec3 pos, float fov, float pitch, float yaw);
 	    void update(gamehelper::Input &input, gamehelper::Timer &timer);
 
 
