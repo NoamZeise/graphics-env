@@ -1,5 +1,4 @@
 add_subdirectory(Graphics)
-add_subdirectory(audio)
 add_subdirectory(GameHelper)
 add_subdirectory(VulkanEnvironment)
 add_subdirectory(OpenGLEnvironment)

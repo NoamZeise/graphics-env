@@ -10,7 +10,6 @@
 #include <render.h>
 #include <GameHelper/timer.h>
 #include <GameHelper/input.h>
-#include <audio.h>
 
 enum class cursorState {
     normal,
@@ -46,7 +45,6 @@ struct Manager {
     glm::vec2 correctedMouse;
     gamehelper::Timer timer;
     gamehelper::Input input;
-    audio::Manager audio;
 
     glm::vec2 screenToRenderSpace(glm::vec2 pos);
     glm::vec2 mousePos();
