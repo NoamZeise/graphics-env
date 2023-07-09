@@ -43,6 +43,7 @@ struct Manager {
     Render* render;
     int winWidth;
     int winHeight;
+    glm::vec2 correctedMouse;
     gamehelper::Timer timer;
     gamehelper::Input input;
     audio::Manager audio;

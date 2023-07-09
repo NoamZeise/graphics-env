@@ -4,6 +4,8 @@
 #include <stdexcept>
 #endif
 
+#include <iostream>
+
 void MouseState::mousePosCallback(double x, double y) {
     this->x = x;
     this->y = y;
