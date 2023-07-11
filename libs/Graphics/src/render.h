@@ -55,6 +55,8 @@ public:
     void Begin2DDraw();
   void DrawModel(Resource::Model model, glm::mat4 modelMatrix,
                  glm::mat4 normalMatrix);
+    void DrawModel(Resource::Model model, glm::mat4 modelMatrix,
+		   glm::mat4 normalMatrix, glm::vec4 colour);
   void DrawAnimModel(Resource::Model model, glm::mat4 modelMatrix,
                      glm::mat4 normalMatrix,
                      Resource::ModelAnimation *animation);

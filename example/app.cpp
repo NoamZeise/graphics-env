@@ -219,6 +219,24 @@ void App::drawTestScene1() {
 
   manager->render->DrawModel(monkeyModel1, model, glm::inverseTranspose(model));
 
+  model = glm::translate(model,
+			 glm::vec3(0, 3, 0));
+
+  manager->render->DrawModel(monkeyModel1, model, glm::inverseTranspose(model),
+			     glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+
+    model = glm::translate(model,
+			 glm::vec3(0, 3, 0));
+
+  manager->render->DrawModel(monkeyModel1, model, glm::inverseTranspose(model),
+			     glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
+
+    model = glm::translate(model,
+			 glm::vec3(0, 3, 0));
+
+  manager->render->DrawModel(monkeyModel1, model, glm::inverseTranspose(model),
+			     glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+
   model = glm::translate(
       glm::scale(
 		 glm::rotate(glm::rotate(glm::mat4(1.0f), rotate, glm::vec3(0, 0, 1)),
@@ -238,7 +256,7 @@ void App::drawTestScene1() {
   manager->render->BeginAnim3DDraw();
 
   model = glm::scale(glm::rotate(glm::translate(glm::mat4(1.0f),
-                                                glm::vec3(0.0f, 0.0f, 6.0f)),
+                                                glm::vec3(0.0f, 10.0f, 6.0f)),
                                  glm::radians(270.0f),
                                  glm::vec3(-1.0f, 0.0f, 0.0f)),
                      glm::vec3(0.1f));

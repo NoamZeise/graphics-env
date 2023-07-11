@@ -74,13 +74,16 @@ void Render::UseLoadedResources(){_RENDER_FN(UseLoadedResources())}
   void Render::BeginAnim3DDraw() { _RENDER_FN(BeginAnim3DDraw()) }
   void Render::Begin2DDraw() { _RENDER_FN(Begin2DDraw()) }
   void Render::DrawModel(Resource::Model model, glm::mat4 modelMatrix,
-                 glm::mat4 normalMatrix) {
-    _RENDER_FN(DrawModel(model, modelMatrix, normalMatrix))
+                         glm::mat4 normalMatrix){
+      _RENDER_FN(DrawModel(model, modelMatrix, normalMatrix))}
+  void Render::DrawModel(Resource::Model model, glm::mat4 modelMatrix,
+			 glm::mat4 normalMatrix, glm::vec4 colour) {
+      _RENDER_FN(DrawModel(model, modelMatrix, normalMatrix, colour))
   }
   void Render::DrawAnimModel(Resource::Model model, glm::mat4 modelMatrix,
                      glm::mat4 normalMatrix,
                      Resource::ModelAnimation *animation) {
-    _RENDER_FN(DrawAnimModel(model, modelMatrix, normalMatrix, animation))
+	  _RENDER_FN(DrawAnimModel(model, modelMatrix, normalMatrix, animation))
   }
   void Render::DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix,
                 glm::vec4 colour, glm::vec4 texOffset) {
