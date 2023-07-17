@@ -13,6 +13,7 @@
 namespace vkenv{
     class Render;
 }
+
 namespace glenv {
     class GLRender;
 }
@@ -27,6 +28,7 @@ enum class RenderFramework {
    VULKAN,
    OPENGL,
 };
+
 
 #define pFrameworkSwitch(render, vk, gl) switch(render->getRenderFramework()) { \
    case RenderFramework::VULKAN: vk; break;    \

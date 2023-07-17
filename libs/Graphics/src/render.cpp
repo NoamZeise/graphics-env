@@ -1,29 +1,66 @@
 #include "render.h"
+
+#ifndef NO_OPENGL
 #include "../../OpenGLEnvironment/src/render.h"
+#else
+namespace glenv {
+    class Render{};
+}
+#endif
+#ifndef NO_VULKAN
 #include "../../VulkanEnvironment/src/render.h"
+#else
+    namespace vkenv {
+	class Render{};
+    }
+#endif
 #include <iostream>
 
-#define _RENDER_NO_FN(vk, gl) switch(renderer) { \
-   case RenderFramework::VULKAN: vk; break;    \
-        case RenderFramework::OPENGL: gl; break;    \
+#ifndef NO_VULKAN
+#define _VK_NO_FN(vk) vk
+#define _VK_FN(...) return vkRender->__VA_ARGS__
+#else
+#include <stdexcept>    
+#define _VK_NO_FN(vk)
+#define _VK_FN(...) throw std::runtime_error("NO_VULKAN defined, tried to use render fn")
+#endif
+
+#ifndef NO_OPENGL
+#define _GL_NO_FN(gl) gl
+#define _GL_FN(...) return glRender->__VA_ARGS__
+#else
+#include <stdexcept>    
+#define _GL_NO_FN(gl)
+#define _GL_FN(...) throw std::runtime_error("NO_OPENGL defined, tried to use render fn")
+#endif
+
+
+#define _RENDER_NO_FN(vk, gl) switch(renderer) {	\
+    case RenderFramework::VULKAN: _VK_NO_FN(vk); break;	\
+    case RenderFramework::OPENGL: _GL_NO_FN(gl); break;	\
     }
 
+//use ogl as default to stop complaints for no return values 
 #define _RENDER_FN(...) switch(renderer) { \
-        case RenderFramework::VULKAN: return vkRender->__VA_ARGS__; break;    \
-        case RenderFramework::OPENGL: \
-        default: return glRender->__VA_ARGS__; break;		\
-    }
+    case RenderFramework::VULKAN: _VK_FN(__VA_ARGS__); break;	\
+    case RenderFramework::OPENGL:					\
+    default: _GL_FN(__VA_ARGS__);}
 
 Render::Render(RenderFramework preferredRenderer) {
     switch (preferredRenderer) {
         case RenderFramework::VULKAN:
+	    #ifndef NO_VULKAN
             if(vkenv::Render::LoadVulkan()) {
                 renderer = RenderFramework::VULKAN;
                 break;
             }
-            std::cout << "Failed to load Vulkan, trying OpenGL\n";
+	    std::cout << "Failed to load Vulkan, trying OpenGL\n";
+	    #else
+	    std::cout << "Failed to load vulkan, NO_VULKAN was defined!\n";
+	    #endif
 
         case RenderFramework::OPENGL:
+	    #ifndef NO_OPENGL
             if(glenv::GLRender::LoadOpenGL()) {
                 renderer = RenderFramework::OPENGL;
                 break;
@@ -32,6 +69,9 @@ Render::Render(RenderFramework preferredRenderer) {
                 std::cout <<"Failed to load OpenGL\n";
                 noApiLoaded = true;
             }
+	    #else
+	    std::cout << "Failed to load OpenGL, NO_OPENGL was defined!\n";	    
+	    #endif
             break;
     }
 }
