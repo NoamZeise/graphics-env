@@ -9,8 +9,9 @@
 #include <render.h>
 #include <GameHelper/timer.h>
 #include <GameHelper/input.h>
+#ifndef NO_AUDIO
 #include <audio.h>
-
+#endif
 enum class cursorState {
     normal,
     hidden,
@@ -42,8 +43,9 @@ struct Manager {
     int winHeight;
     gamehelper::Timer timer;
     gamehelper::Input input;
+#ifndef NO_AUDIO
     audio::Manager audio;
-
+#endif
     glm::vec2 screenToRenderSpace(glm::vec2 pos);
     glm::vec2 mousePos();
 };

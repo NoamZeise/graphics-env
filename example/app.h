@@ -12,14 +12,8 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #endif
 #include <glm/glm.hpp>
-
-#include <GameHelper/input.h>
-#include <GameHelper/timer.h>
-#include <audio.h>
-
-#include <GameHelper/camera.h>
-
 #include <manager.h>
+#include <GameHelper/camera.h>
 
 #define TIME_APP_DRAW_UPDATE
 //#define MULTI_UPDATE_ON_SLOW_DRAW

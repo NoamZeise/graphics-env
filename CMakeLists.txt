@@ -13,6 +13,10 @@ if(NO_FREETYPE)
   add_compile_definitions(NO_FREETYPE)
 endif()
 
+if(NO_AUDIO)
+  add_compile_definitions(NO_AUDIO)
+endif()
+
 if(NO_VULKAN)
   add_compile_definitions(NO_VULKAN)
 endif()
