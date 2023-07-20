@@ -84,35 +84,34 @@ void App::controls() {
 	glfwSetWindowShouldClose(manager->window, GLFW_TRUE);
     }
     const float speed = 0.001f;
-    if (manager->input.kb.hold(GLFW_KEY_INSERT)) {
+    if (manager->input.kb.press(GLFW_KEY_INSERT)) {
 	lightDir.x += speed * manager->timer.FrameElapsed();
     }
-    if (manager->input.kb.hold(GLFW_KEY_HOME)) {
+    if (manager->input.kb.press(GLFW_KEY_HOME)) {
 	lightDir.x -= speed * manager->timer.FrameElapsed();
     }
-    if (manager->input.kb.hold(GLFW_KEY_DELETE)) {
+    if (manager->input.kb.press(GLFW_KEY_DELETE)) {
 	lightDir.z += speed * manager->timer.FrameElapsed();
     }
-    if (manager->input.kb.hold(GLFW_KEY_END)) {
+    if (manager->input.kb.press(GLFW_KEY_END)) {
 	lightDir.z -= speed * manager->timer.FrameElapsed();
     }
-    if (manager->input.kb.hold(GLFW_KEY_PAGE_UP)) {
+    if (manager->input.kb.press(GLFW_KEY_PAGE_UP)) {
 	lightDir.y += speed * manager->timer.FrameElapsed();
     }
-    if (manager->input.kb.hold(GLFW_KEY_PAGE_DOWN)) {
+    if (manager->input.kb.press(GLFW_KEY_PAGE_DOWN)) {
 	lightDir.y -= speed * manager->timer.FrameElapsed();
     }
-    if (manager->input.kb.hold(GLFW_KEY_G)) {
+    if (manager->input.kb.press(GLFW_KEY_G)) {
 	manager->render->setTargetResolution(glm::vec2(1000, 100));
     }
-    if (manager->input.kb.hold(GLFW_KEY_H)) {
-	manager->render->setForceTargetRes(false);
+    if (manager->input.kb.press(GLFW_KEY_H)) {
+	manager->render->setTargetResolution(glm::vec2(0.0f, 0.0f));
     }
-    if (manager->input.kb.hold(GLFW_KEY_V)) {
-	manager->render->setVsync(true);
-    }
-    if (manager->input.kb.hold(GLFW_KEY_B)) {
-	manager->render->setVsync(false);
+    if (manager->input.kb.press(GLFW_KEY_V)) {
+	RenderConfig renderConf = manager->render->getRenderConf();
+	renderConf.vsync = !renderConf.vsync;
+	manager->render->setRenderConf(renderConf);
     }
     if(!sceneChangeInProgress) {
 	if(manager->input.kb.hold(GLFW_KEY_1)) {

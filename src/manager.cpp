@@ -52,9 +52,7 @@ Manager::Manager(RenderFramework renderer,
     if(state.fixedWindowRatio)
 	glfwSetWindowAspectRatio(window, winWidth, winHeight);
 
-    render->LoadRender(window);
-    if(state.framebufferWidth != 0 && state.framebufferHeight != 0)
-	render->setTargetResolution(glm::vec2(state.framebufferWidth, state.framebufferHeight));
+    render->LoadRender(window, state.conf);
 }
 
 Manager::~Manager() {
@@ -84,11 +82,10 @@ void Manager::toggleFullscreen() {
 }
 
 glm::vec2 Manager::screenToRenderSpace(glm::vec2 pos) {
-    if(render->isTargetResForced())
-      return glm::vec2(
-	      pos.x * (render->getTargetResolution().x / (float)winWidth),
-	      pos.y * (render->getTargetResolution().y / (float)winHeight)
-          );
+    glm::vec2 targetRes = render->getTargetResolution();
+    if(targetRes.x != 0.0 && targetRes.y != 0.0)
+      return glm::vec2(pos.x * (targetRes.x / (float)winWidth),
+		       pos.y * (targetRes.y / (float)winHeight));
     return pos;
 }
 

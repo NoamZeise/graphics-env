@@ -7,6 +7,7 @@
 #include <glm/glm.hpp>
 
 #include <render.h>
+#include <graphics/render_config.h>
 #include <GameHelper/timer.h>
 #include <GameHelper/input.h>
 #ifndef NO_AUDIO
@@ -21,12 +22,10 @@ enum class cursorState {
 struct ManagerState {
     int windowWidth = 800;
     int windowHeight = 600;
-    // Zero to use window resolution
-    int framebufferWidth = 0;
-    int framebufferHeight = 0;
     bool startFullscreen = false;
     bool fixedWindowRatio = false;
     cursorState cursor = cursorState::normal;
+    RenderConfig conf;
 };
 
 struct Manager {
