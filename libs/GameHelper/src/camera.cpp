@@ -34,6 +34,14 @@ namespace camera {
 	  _position -= _front * velocity;
       if(input.kb.hold(GLFW_KEY_D))
 	  _position += _right * velocity;
+
+      glm::vec2 controller(input.c.axis(0, GLFW_GAMEPAD_AXIS_LEFT_X),
+			   input.c.axis(0, GLFW_GAMEPAD_AXIS_LEFT_Y));
+      controller.x = abs(controller.x) > 0.1 ? controller.x : 0;
+      controller.y = abs(controller.y) > 0.1 ? controller.y : 0;
+      _position += _front * velocity * -controller.y;
+      _position += _right * velocity * controller.x;
+      
       if(input.kb.hold(GLFW_KEY_SPACE))
 	  _position += _worldUp * velocity;
       if(input.kb.hold(GLFW_KEY_LEFT_SHIFT))
@@ -42,6 +50,15 @@ namespace camera {
       //mouse
       _pitch   -= (float)input.m.dy() * _sensitivity;
       _yaw 	 -= (float)input.m.dx() * _sensitivity;
+
+      controller = glm::vec2(input.c.axis(0, GLFW_GAMEPAD_AXIS_RIGHT_X),
+			     input.c.axis(0, GLFW_GAMEPAD_AXIS_RIGHT_Y));
+
+      controller.x = abs(controller.x) > 0.1 ? controller.x : 0;
+      controller.y = abs(controller.y) > 0.1 ? controller.y : 0;
+      
+      _pitch -= controller.y;
+      _yaw -= controller.x;
 
       if(_pitch > 89.0f)
 	  _pitch = 89.0f;

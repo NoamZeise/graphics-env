@@ -13,6 +13,7 @@
 #ifndef NO_AUDIO
 #include <audio.h>
 #endif
+
 enum class cursorState {
     normal,
     hidden,

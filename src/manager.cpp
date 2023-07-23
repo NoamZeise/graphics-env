@@ -34,6 +34,7 @@ Manager::Manager(RenderFramework renderer,
     glfwSetScrollCallback(window, scrollCallback);
     glfwSetKeyCallback(window, keyCallback);
     glfwSetMouseButtonCallback(window, mouseBtnCallback);
+    input.c.init();
 
     int cursor;
     switch(state.cursor) {
