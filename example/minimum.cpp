@@ -59,7 +59,7 @@ int main() {
 								tex.dim.x * 5,
 								tex.dim.y * 5)));
 	    manager.render->DrawString(font, "Graphics Environment", glm::vec2(220.0f, 50.0f),
-				       50.0f, 1.0f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+				       50.0f, 1.0f, glm::vec4(1.0f, 0.5f, 1.0f, 1.0f));
 	    std::atomic<bool> drawSubmitted;
 	    manager.render->EndDraw(drawSubmitted);
 	}
