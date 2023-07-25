@@ -40,3 +40,7 @@ if(NOT VKENV_BUILD_STATIC)
     $<TARGET_FILE_DIR:glfw>
     $<TARGET_FILE_DIR:MyApp>)
 endif()
+
+
+add_executable(minimum minimum.cpp)
+target_link_libraries(minimum GraphicsEnv)
