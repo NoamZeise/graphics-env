@@ -4,7 +4,7 @@ A 2D and 3D renderer with vulkan or opengl backend, add rendering and update cod
 ## Features:
 
 * Simultaneous 2D and 3D rendering
-* Import and Draw .fbx models -> only supports base colour image textures
+* Import and Draw 3D models, or import/generate your own (limited support for materials)
 * Import and Draw image textures 
 * Import and Draw fonts
 * Play .wav and .ogg audio files
@@ -68,6 +68,14 @@ cmake .. -DGRAPHICS_BUILD_EXAMPLE=true
 cmake --build .
 ```
 Then the built binary should be in /build/examples/. Note that PortAudio and Libsndfile dlls wont be built with this, so on windows you'll need to copy the dlls for those into the same path as the example binary.
+
+# Enabling other 3D model formats
+
+To use formats other than `.obj` and `.fbx`, you must set `ASSIMP_BUILD_XYZ_IMPORTER` to true, where `XYZ` is your format, before loading the cmake files for this project.
+
+For example to enable the gltf format, you would have `set(ASSIMP_BUILD_GLTF_IMPORTER TRUE)` somewhere in your cmake file before calling `add_subdirectory(Graphics-Environment)`. Check the [assimp](https://assimp.org/) docs for more info on supported formats.
+
+You should then be able to load these newly enabled formats the same as you load the default ones.
 
 # Todo list:
 bugs:
