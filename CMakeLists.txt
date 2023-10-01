@@ -44,6 +44,6 @@ set(CMAKE_CXX_STANDARD 14)
 add_subdirectory(libs)
 add_subdirectory(src)
 
-if(GRAPHICS_BUILD_EXAMPLE)
+if(GRAPHICS_BUILD_EXAMPLES)
   add_subdirectory(example)
 endif()

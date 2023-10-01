@@ -10,6 +10,7 @@ class ControllerManager {
  public:
     ControllerManager();
     ~ControllerManager();
+    // Called after glfwInit() in manager
     void init();
     void update();
 

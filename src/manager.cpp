@@ -1,6 +1,7 @@
 #include <manager.h>
 
 #include <stdexcept>
+#include <iostream>
 
 void framebufferSizeCallback(GLFWwindow *window, int width, int height);
 void mouseCallback(GLFWwindow *window, double xpos, double ypos);
@@ -9,18 +10,22 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mode
 void mouseBtnCallback(GLFWwindow *window, int button, int action, int mods);
 void errorCallback(int error, const char *description);
 
-Manager::Manager(RenderFramework renderer,
-		 ManagerState state) {
+Manager::Manager(ManagerState state) {
     winWidth = state.windowWidth;
     winHeight = state.windowHeight;
 
     glfwSetErrorCallback(errorCallback);
     if(!glfwInit())
 	throw std::runtime_error("Failed to initialize GLFW!");
-    render = new Render(renderer);
+    render = new Render(state.defaultRenderer);
     if(render->NoApiLoaded())
 	throw std::runtime_error("Failed to load any graphics apis!");
 
+    if(state.hideWindowOnCreate) {
+	std::cout << "hidden\n";
+	glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    }
+    
     window = glfwCreateWindow(winWidth, winHeight, "App",
 			      state.startFullscreen ? glfwGetPrimaryMonitor() : NULL,
 			      nullptr);
@@ -80,6 +85,13 @@ void Manager::setFullscreen(bool fullscreen) {
 
 void Manager::toggleFullscreen() {
     setFullscreen(glfwGetWindowMonitor(window) == NULL);
+}
+
+void Manager::setWindowSize(int width, int height) {
+    winWidth = width;
+    winHeight = height;
+    if(glfwGetWindowMonitor(window) == NULL)
+	glfwSetWindowSize(window, winWidth, winHeight);
 }
 
 glm::vec2 Manager::screenToRenderSpace(glm::vec2 pos) {

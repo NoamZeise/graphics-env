@@ -64,7 +64,7 @@ Download the [Vulkan SDK](https://www.lunarg.com/vulkan-sdk/), for getting the v
 git clone --recurse-submodules https://github.com/NoamZeise/Graphics-Environment.git
 cd Graphics-Environment
 mkdir build && cd build
-cmake .. -DGRAPHICS_BUILD_EXAMPLE=true
+cmake .. -DGRAPHICS_BUILD_EXAMPLES=true
 cmake --build .
 ```
 Then the built binary should be in /build/examples/. Note that PortAudio and Libsndfile dlls wont be built with this, so on windows you'll need to copy the dlls for those into the same path as the example binary.

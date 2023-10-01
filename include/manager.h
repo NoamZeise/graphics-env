@@ -26,16 +26,18 @@ struct ManagerState {
     bool startFullscreen = false;
     bool fixedWindowRatio = false;
     cursorState cursor = cursorState::normal;
+    bool hideWindowOnCreate = false;
+    RenderFramework defaultRenderer = RenderFramework::VULKAN;
     RenderConfig conf;
 };
 
 struct Manager {
-    Manager(RenderFramework renderer,
-	    ManagerState state);
+    Manager(ManagerState state);
     ~Manager();
     void update();
     void setFullscreen(bool fullscreen);
     void toggleFullscreen();
+    void setWindowSize(int width, int height);
     
     GLFWwindow *window;
     Render* render;

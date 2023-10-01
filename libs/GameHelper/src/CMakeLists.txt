@@ -3,6 +3,8 @@ add_library(GameHelper
   keyboard.cpp
   mouse.cpp
   controller.cpp
+  timer.cpp
+  random.cpp
 )
 target_include_directories(GameHelper PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 add_dependencies(GameHelper glm glfw)

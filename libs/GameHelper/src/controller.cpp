@@ -66,7 +66,7 @@ static void joyCallback(int jid, int event) {
 
 ControllerManager::ControllerManager() {
     controllers = new ControllerHolder();
-    for(int i = 0; i < GLFW_JOYSTICK_LAST; i++)
+    for(int i = GLFW_JOYSTICK_1; i < GLFW_JOYSTICK_LAST; i++)
 	controllersConnected[i] = false;
 }
 
@@ -74,6 +74,8 @@ ControllerManager::~ControllerManager() {
     delete controllers;
 }
 
+// cleaner to init pointers here instead of manager.h
+// as we need to set the pointer for the joystick callback and each of the controllers.
 void ControllerManager::init() {
     glfwSetJoystickCallback(joyCallback);
     for(int i = GLFW_JOYSTICK_1; i <= GLFW_JOYSTICK_LAST; i++) {

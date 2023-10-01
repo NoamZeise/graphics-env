@@ -15,7 +15,7 @@
 int main() {
     ManagerState state;
     state.cursor = cursorState::disabled;
-    Manager manager(RenderFramework::VULKAN, state);
+    Manager manager(state);
 
     Resource::Model monkey = manager.render->Load3DModel("models/monkey.obj");
     glm::mat4 monkeyMat = glm::translate(glm::rotate(glm::mat4(1.0f), glm::radians(270.0f),

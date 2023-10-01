@@ -12,7 +12,6 @@ namespace camera {
       if(viewUpdated) {
 	  view = glm::lookAt(_position, _position + _front, _up);
 	  viewUpdated = false;
-	  return view;
       }
       return view;
   }
@@ -21,10 +20,13 @@ namespace camera {
       return _zoom;
   }
 
+  void FirstPerson::setPos(glm::vec3 pos) {
+      _position = pos;
+  }
 
   void FirstPerson::update(gamehelper::Input &input, gamehelper::Timer &timer) {
       viewUpdated = true;
-      //keyboard
+
       float velocity = _speed * timer.FrameElapsed();
       if(input.kb.hold(GLFW_KEY_W))
 	  _position += _front * velocity;
@@ -40,9 +42,8 @@ namespace camera {
       if(input.kb.hold(GLFW_KEY_LEFT_SHIFT))
 	  _position -= _worldUp * velocity;
 
-      //mouse
-      _pitch   -= (float)input.m.dy() * _sensitivity;
-      _yaw 	 -= (float)input.m.dx() * _sensitivity;
+      _pitch -= (float)input.m.dy() * _sensitivity;
+      _yaw -= (float)input.m.dx() * _sensitivity;
 
       if(input.c.connected(0)) {
 	  glm::vec2 controller(input.c.axis(0, GLFW_GAMEPAD_AXIS_LEFT_X),
@@ -74,7 +75,6 @@ namespace camera {
       if(_pitch < -89.0f)
 	  _pitch = -89.0f;
 
-      //scroll
       _zoom -= (float)input.m.scroll() * timer.FrameElapsed();
       if(_zoom < 1.0f)
 	  _zoom = 1.0f;
@@ -82,7 +82,6 @@ namespace camera {
 	  _zoom = 100.0f;
 
       calculateVectors();
-      //std::cout << "X:" << _position.x << " Y:" << _position.y << " Z:" << _position.z << std::endl;
   }
 
   void FirstPerson::calculateVectors() {

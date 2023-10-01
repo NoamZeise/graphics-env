@@ -8,7 +8,8 @@
 
 App::App(RenderFramework defaultFramework) {
     ManagerState state;
-    manager = new Manager(defaultFramework, state);
+    state.defaultRenderer = defaultFramework;
+    manager = new Manager(state);
 
     loadAssets();
 

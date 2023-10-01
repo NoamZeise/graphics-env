@@ -7,21 +7,10 @@ namespace gamehelper {
 
 class Timer {
 public:
-  Timer() {
-    start = std::chrono::high_resolution_clock::now();
-    lastUpdate = start;
-    currentUpdate = start;
-  }
-  void Update() {
-    lastUpdate = currentUpdate;
-    currentUpdate = std::chrono::high_resolution_clock::now();
-    frameElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(currentUpdate - lastUpdate).count();
-  }
-
-  long long FrameElapsed() {
-      return frameElapsed;
-  }
-
+    Timer();
+    void Update();
+    // return previous frame time in milliseconds
+    long long FrameElapsed();
 private:
 
 #ifdef _MSC_VER
@@ -31,7 +20,7 @@ private:
 	std::chrono::_V2::system_clock,
 	std::chrono::duration<long int, std::ratio<1, 1000000000>>>;
 #endif
-  
+
     timeDuration start;
     timeDuration lastUpdate;
     timeDuration currentUpdate;
