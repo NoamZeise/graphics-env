@@ -21,12 +21,10 @@ Manager::Manager(ManagerState state) {
     if(render->NoApiLoaded())
 	throw std::runtime_error("Failed to load any graphics apis!");
 
-    if(state.hideWindowOnCreate) {
-	std::cout << "hidden\n";
+    if(state.hideWindowOnCreate)
 	glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    }
     
-    window = glfwCreateWindow(winWidth, winHeight, "App",
+    window = glfwCreateWindow(winWidth, winHeight, state.windowTitle.c_str(),
 			      state.startFullscreen ? glfwGetPrimaryMonitor() : NULL,
 			      nullptr);
     if(!window)

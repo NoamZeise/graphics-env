@@ -3,6 +3,7 @@
 
 #include <thread>
 #include <atomic>
+#include <string>
 
 #include <glm/glm.hpp>
 
@@ -23,6 +24,7 @@ enum class cursorState {
 struct ManagerState {
     int windowWidth = 800;
     int windowHeight = 600;
+    std::string windowTitle = "App";
     bool startFullscreen = false;
     bool fixedWindowRatio = false;
     cursorState cursor = cursorState::normal;

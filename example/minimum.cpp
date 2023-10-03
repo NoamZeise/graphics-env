@@ -15,6 +15,7 @@
 int main() {
     ManagerState state;
     state.cursor = cursorState::disabled;
+    state.windowTitle = "minimum";
     Manager manager(state);
 
     Resource::Model monkey = manager.render->Load3DModel("models/monkey.obj");

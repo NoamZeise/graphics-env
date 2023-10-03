@@ -9,6 +9,7 @@
 App::App(RenderFramework defaultFramework) {
     ManagerState state;
     state.defaultRenderer = defaultFramework;
+    state.windowTitle = "Test App";
     manager = new Manager(state);
 
     loadAssets();
