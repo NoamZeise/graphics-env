@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
 #ifndef NDEBUG
       std::cout << "In debug mode" << std::endl;
 #endif
-      RenderFramework framework = RenderFramework::VULKAN;
+      RenderFramework framework = RenderFramework::Vulkan;
       for(int i = 1; i < argc; i++) {
 	  bool argHandled = false;
 	  argHandled |= frameworkArg(argc, argv, i, &framework);
@@ -55,11 +55,11 @@ bool frameworkArg(int argc, char** argv, int &i, RenderFramework *framework) {
     if(i + 1 < argc) {
       i++;
       if(strcmp(argv[i], "opengl") == 0) {
-	*framework = RenderFramework::OPENGL;
+	*framework = RenderFramework::OpenGL;
 	std::cout << "default framework opengl selected\n";
       }
       else if(strcmp(argv[i], "vulkan") == 0) {
-	*framework = RenderFramework::VULKAN;
+	*framework = RenderFramework::Vulkan;
 	std::cout << "default framework vulkan selected\n";
       } else {
 	  std::cerr << "unrecognised framework passed, 'vulkan' or 'opengl'\n";

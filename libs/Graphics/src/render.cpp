@@ -36,22 +36,22 @@ namespace glenv {
 
 
 #define _RENDER_NO_FN(vk, gl) switch(renderer) {	\
-    case RenderFramework::VULKAN: _VK_NO_FN(vk); break;	\
-    case RenderFramework::OPENGL: _GL_NO_FN(gl); break;	\
+    case RenderFramework::Vulkan: _VK_NO_FN(vk); break;	\
+    case RenderFramework::OpenGL: _GL_NO_FN(gl); break;	\
     }
 
 //use ogl as default to stop complaints for no return values 
 #define _RENDER_FN(...) switch(renderer) { \
-    case RenderFramework::VULKAN: _VK_FN(__VA_ARGS__); break;	\
-    case RenderFramework::OPENGL:					\
+    case RenderFramework::Vulkan: _VK_FN(__VA_ARGS__); break;	\
+    case RenderFramework::OpenGL:					\
     default: _GL_FN(__VA_ARGS__);}
 
 Render::Render(RenderFramework preferredRenderer) {
     switch (preferredRenderer) {
-        case RenderFramework::VULKAN:
+        case RenderFramework::Vulkan:
 	    #ifndef NO_VULKAN
             if(vkenv::Render::LoadVulkan()) {
-                renderer = RenderFramework::VULKAN;
+                renderer = RenderFramework::Vulkan;
                 break;
             }
 	    std::cout << "Failed to load Vulkan, trying OpenGL\n";
@@ -59,10 +59,10 @@ Render::Render(RenderFramework preferredRenderer) {
 	    std::cout << "Failed to load vulkan, NO_VULKAN was defined!\n";
 	    #endif
 
-        case RenderFramework::OPENGL:
+        case RenderFramework::OpenGL:
 	    #ifndef NO_OPENGL
             if(glenv::GLRender::LoadOpenGL()) {
-                renderer = RenderFramework::OPENGL;
+                renderer = RenderFramework::OpenGL;
                 break;
             }
             else {
@@ -153,7 +153,7 @@ void Render::FramebufferResize() { _RENDER_FN(FramebufferResize()) }
 void Render::set3DViewMatrixAndFov(glm::mat4 view, float fov, glm::vec4 camPos) {
     _RENDER_FN(set3DViewMatrixAndFov(view, fov, camPos))}
 void Render::set2DViewMatrixAndScale(glm::mat4 view, float scale) {_RENDER_FN(set2DViewMatrixAndScale(view, scale))}
-void Render::setLightDirection(glm::vec4 lightDir) {_RENDER_FN(setLightDirection(lightDir))}
+void Render::setLightingProps(BPLighting lighting) {_RENDER_FN(setLightingProps(lighting))}
 void Render::setTargetResolution(glm::vec2 resolution){_RENDER_FN(setTargetResolution(resolution))}
 
 glm::vec2 Render::getTargetResolution(){_RENDER_FN(getTargetResolution())}

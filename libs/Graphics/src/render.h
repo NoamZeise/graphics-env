@@ -9,6 +9,8 @@
 
 #include <graphics/resources.h>
 #include <graphics/render_config.h>
+#include <graphics/shader_structs.h>
+
 #include <glm/glm.hpp>
 
 namespace vkenv{
@@ -26,14 +28,14 @@ namespace glenv {
  */
 
 enum class RenderFramework {
-   VULKAN,
-   OPENGL,
+   Vulkan,
+   OpenGL,
 };
 
 
 #define pFrameworkSwitch(render, vk, gl) switch(render->getRenderFramework()) { \
-   case RenderFramework::VULKAN: vk; break;    \
-        case RenderFramework::OPENGL: gl; break;    \
+   case RenderFramework::Vulkan: vk; break;    \
+        case RenderFramework::OpenGL: gl; break;    \
 }
 
 class Render {
@@ -79,7 +81,7 @@ public:
     
     void set3DViewMatrixAndFov(glm::mat4 view, float fov, glm::vec4 camPos);
     void set2DViewMatrixAndScale(glm::mat4 view, float scale);
-    void setLightDirection(glm::vec4 lightDir);
+    void setLightingProps(BPLighting lighting);
 
     void setRenderConf(RenderConfig renderConf);
     RenderConfig getRenderConf();

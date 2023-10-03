@@ -16,17 +16,20 @@ int main() {
     ManagerState state;
     state.cursor = cursorState::disabled;
     state.windowTitle = "minimum";
+    //state.defaultRenderer = RenderFramework::OpenGL;
     Manager manager(state);
-
+    
     Resource::Model monkey = manager.render->Load3DModel("models/monkey.obj");
     glm::mat4 monkeyMat = glm::translate(glm::rotate(glm::mat4(1.0f), glm::radians(270.0f),
 						     glm::vec3(-1.0f, 0.0f, 0.0f)),
 					 glm::vec3(0.0f, -8.0f, -10.0f));
+    
     std::vector<Resource::ModelAnimation> wolfAnims;
     Resource::Model wolf = manager.render->LoadAnimatedModel("models/wolf.fbx", &wolfAnims);
     Resource::ModelAnimation anim = wolfAnims[0];
     glm::mat4 wolfMat = glm::translate(glm::scale(monkeyMat, glm::vec3(0.1f)),
 				       glm::vec3(-25.0f, -50.0f, -80.0f));
+    
     Resource::Font font = manager.render->LoadFont("textures/Roboto-Black.ttf");
     Resource::Texture tex = manager.render->LoadTexture("textures/tile.png");
     manager.render->LoadResourcesToGPU();

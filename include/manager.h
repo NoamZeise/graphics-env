@@ -29,7 +29,7 @@ struct ManagerState {
     bool fixedWindowRatio = false;
     cursorState cursor = cursorState::normal;
     bool hideWindowOnCreate = false;
-    RenderFramework defaultRenderer = RenderFramework::VULKAN;
+    RenderFramework defaultRenderer = RenderFramework::Vulkan;
     RenderConfig conf;
 };
 

@@ -4,6 +4,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <graphics/glm_helper.h>
+#include <graphics/shader_structs.h>
 #include <iostream>
 
 App::App(RenderFramework defaultFramework) {
@@ -137,7 +138,9 @@ void App::controls() {
 	    }
 	}
     }
-    manager->render->setLightDirection(lightDir);
+    BPLighting lighting;
+    lighting.direction = lightDir;
+    manager->render->setLightingProps(lighting);
 }
 
 void App::postUpdate() {
