@@ -11,13 +11,13 @@ App::App(RenderFramework defaultFramework) {
     ManagerState state;
     state.defaultRenderer = defaultFramework;
     state.windowTitle = "Test App";
+    state.cursor = cursorState::disabled;
     manager = new Manager(state);
-
+    
     loadAssets();
-
+    
     fpcam = camera::FirstPerson(glm::vec3(3.0f, 0.0f, 2.0f));
     finishedDrawSubmit = true;
-
     manager->audio.Play("audio/test.wav", false, 1.0f);
 }
 
@@ -121,9 +121,10 @@ void App::controls() {
 	    if(current != Scene::Test1) {
 		assetsLoaded = false;
 		pFrameworkSwitch(manager->render,
-				 assetLoadThread = std::thread(&App::loadTestScene1, this, std::ref(assetsLoaded)),
-				 loadTestScene1(assetsLoaded)
-				 );
+				 assetLoadThread =
+				 std::thread(&App::loadTestScene1, this, std::ref(assetsLoaded)),
+				 loadTestScene1(assetsLoaded));
+			
 		sceneChangeInProgress = true;
 	    }
 	}
@@ -131,9 +132,9 @@ void App::controls() {
 	    if(current != Scene::Test2) {
 		assetsLoaded = false;
 		pFrameworkSwitch(manager->render,
-				 assetLoadThread = std::thread(&App::loadTestScene2, this, std::ref(assetsLoaded)),
-				 loadTestScene2(assetsLoaded)
-				 );
+				 assetLoadThread =
+				 std::thread(&App::loadTestScene2, this, std::ref(assetsLoaded)),
+				 loadTestScene2(assetsLoaded));
 		sceneChangeInProgress = true;
 	    }
 	}
@@ -152,7 +153,6 @@ void App::draw() {
 #ifdef TIME_APP_DRAW_UPDATE
   auto start = std::chrono::high_resolution_clock::now();
 #endif
-
 #ifdef MULTI_UPDATE_ON_SLOW_DRAW
   if (!finishedDrawSubmit)
     return;
@@ -165,6 +165,7 @@ void App::draw() {
       drawTestScene1();
   if(current==Scene::Test2)
       drawTestScene2();
+
 
   #ifdef TIME_APP_DRAW_UPDATE
   Resource::Font font;
@@ -185,7 +186,7 @@ void App::draw() {
 		       manager->render->EndDraw(finishedDrawSubmit);
 		       finishedDrawSubmit = true;
 		   }
-  );
+		   );
 
 #ifdef TIME_APP_DRAW_UPDATE
   auto stop = std::chrono::high_resolution_clock::now();
@@ -196,6 +197,7 @@ void App::draw() {
 }
 
 void App::loadTestScene1(std::atomic<bool> &loaded) {
+  std::cout << "loading scene 1\n";
   testModel1 = manager->render->Load3DModel("models/testScene.fbx");
   monkeyModel1 = manager->render->Load3DModel("models/monkey.obj");
   colouredCube1 = manager->render->Load3DModel("models/ROOM.fbx");
@@ -285,6 +287,7 @@ void App::drawTestScene1() {
 }
 
 void App::loadTestScene2(std::atomic<bool> &loaded) {
+    std::cout << "loading scene 2\n";
   monkeyModel2 = manager->render->Load3DModel("models/monkey.obj");
   colouredCube2 = manager->render->Load3DModel("models/ROOM.fbx");
   testFont2 = manager->render->LoadFont("textures/Roboto-Black.ttf");
