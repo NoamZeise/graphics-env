@@ -84,16 +84,56 @@ void Render::LoadRender(GLFWwindow *window){
 		  glRender = new glenv::GLRender(window, renderConf));
 }
 
-    void Render::LoadRender(GLFWwindow *window, RenderConfig renderConf){
-        _RENDER_NO_FN(vkRender = new vkenv::Render(window, renderConf),
-                      glRender = new glenv::GLRender(window, renderConf))}
+void Render::LoadRender(GLFWwindow *window, RenderConfig renderConf){
+    _RENDER_NO_FN(vkRender = new vkenv::Render(window, renderConf),
+                  glRender = new glenv::GLRender(window, renderConf))}
 
+Resource::ResourcePool Render::CreateResourcePool() {
+    _RENDER_FN(CreateResourcePool());
+}
+void Render::DestroyResourcePool(Resource::ResourcePool pool) {
+    _RENDER_FN(DestroyResourcePool(pool));
+}
+void Render::setResourcePoolInUse(Resource::ResourcePool pool, bool usePool) {
+    _RENDER_FN(setResourcePoolInUse(pool, usePool));
+} 
 
 Resource::Texture Render::LoadTexture(std::string filepath){
     _RENDER_FN(LoadTexture(filepath))}
 
+Resource::Texture Render::LoadTexture(Resource::ResourcePool pool, std::string filepath) {
+    _RENDER_FN(LoadTexture(pool, filepath));
+}
+// Load 2D image data, takes ownership of data, 4 channels
+Resource::Texture Render::LoadTexture(unsigned char* data, int width, int height) {
+    _RENDER_FN(LoadTexture(data, width, height));
+}
+Resource::Texture Render::LoadTexture(Resource::ResourcePool pool, unsigned char* data,
+			      int width, int height) {
+    _RENDER_FN(LoadTexture(pool, data, width, height));
+}
+
 Resource::Font Render::LoadFont(std::string filepath){
     _RENDER_FN(LoadFont(filepath))}
+
+Resource::Model Render::LoadModel(Resource::ModelType type, std::string filepath,
+				  std::vector<Resource::ModelAnimation> *pAnimations) {
+    _RENDER_FN(LoadModel(type, filepath, pAnimations));
+}
+Resource::Model Render::LoadModel(Resource::ResourcePool pool, Resource::ModelType type,
+				std::string filepath,
+				  std::vector<Resource::ModelAnimation> *pAnimations) {
+    _RENDER_FN(LoadModel(pool, type, filepath, pAnimations));
+}
+Resource::Model Render::LoadModel(Resource::ModelType type, ModelInfo::Model& model,
+				  std::vector<Resource::ModelAnimation> *pAnimations) {
+    _RENDER_FN(LoadModel(type, model, pAnimations));
+}
+Resource::Model Render::LoadModel(Resource::ResourcePool pool, Resource::ModelType type,
+				  ModelInfo::Model& model,
+				  std::vector<Resource::ModelAnimation> *pAnimations) {
+    _RENDER_FN(LoadModel(pool, type, model, pAnimations));
+}
 
 Resource::Model Render::Load3DModel(std::string filepath){
     _RENDER_FN(Load3DModel(filepath))}
@@ -105,9 +145,11 @@ Resource::Model Render::LoadAnimatedModel(std::string filepath, std::vector<Reso
     _RENDER_FN(LoadAnimatedModel(filepath, pGetAnimations))
 	}
 
-void Render::LoadResourcesToGPU() { _RENDER_FN(LoadResourcesToGPU()) }
+void Render::LoadResourcesToGPU(){_RENDER_FN(LoadResourcesToGPU())}
+void Render::LoadResourcesToGPU(Resource::ResourcePool pool) {
+    _RENDER_FN(LoadResourcesToGPU(pool));
+}
 void Render::UseLoadedResources(){_RENDER_FN(UseLoadedResources())}
-
 
 void Render::Begin3DDraw() { _RENDER_FN(Begin3DDraw()) }
 void Render::BeginAnim3DDraw() { _RENDER_FN(BeginAnim3DDraw()) }

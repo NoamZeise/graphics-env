@@ -2,41 +2,52 @@
 #include <GameHelper/camera.h>
 #include <graphics/glm_helper.h>
 #include <glm/gtc/matrix_inverse.hpp> //for inverseTranspose
+#include <cstring>
 
-// This example shows the main functionality of the graphics environment
-// With a minimum amount of code around it.
-//
-// The program draws a 3D model, and animated 3D model,
-// a texture that tiles, and some text.
-// It also plays audio and uses the 3D first person camera to
-// move through the scene. (so you can use a keyboard/mouse or a controller)
-// Press Esc to exit.
+// This example shows the resource pool functionality
 
-int main() {
+int main(int argc, char** argv) {
+    RenderFramework framework = RenderFramework::Vulkan;
+    for(int i = 0; i < argc; i++)
+	if(strcmp(argv[i], "opengl"))
+	    framework = RenderFramework::OpenGL;
     ManagerState state;
     state.cursor = cursorState::disabled;
-    state.windowTitle = "minimum";
-    state.conf.multisampling = true; 
-    state.defaultRenderer = RenderFramework::OpenGL;
+    state.windowTitle = std::string("Asset Pools Examples: ") +
+	(framework == RenderFramework::Vulkan ? "vulkan" : "opengl");
+    state.conf.multisampling = true;
+    state.conf.sample_shading = true;
+    state.conf.vsync = true;
+    state.defaultRenderer = framework;
     Manager manager(state);
-    Resource::Model monkey = manager.render->Load3DModel("models/monkey.obj");
+
+    //no pool, loads to default pool
+    Resource::Font font = manager.render->LoadFont("textures/Roboto-Black.ttf");
+
+    //create a new pool
+    Resource::ResourcePool pool1 = manager.render->CreateResourcePool();
+
+    Resource::Model monkey = manager.render->LoadModel(pool1, Resource::ModelType::m3D,
+						       "models/monkey.obj", nullptr);
     glm::mat4 monkeyMat = glm::translate(glm::rotate(glm::mat4(1.0f), glm::radians(270.0f),
 						     glm::vec3(-1.0f, 0.0f, 0.0f)),
 					 glm::vec3(0.0f, -8.0f, -10.0f));
     
+    //    Resource::ResourcePool pool2 = manager.render->CreateResourcePool();
     std::vector<Resource::ModelAnimation> wolfAnims;
-    Resource::Model wolf = manager.render->LoadAnimatedModel("models/wolf.fbx", &wolfAnims);
+    Resource::Model wolf = manager.render->LoadModel(pool1, Resource::ModelType::m3D_Anim,
+						     "models/wolf.fbx", &wolfAnims);
     Resource::ModelAnimation anim = wolfAnims[0];
     glm::mat4 wolfMat = glm::translate(glm::scale(monkeyMat, glm::vec3(0.1f)),
 				       glm::vec3(-25.0f, -50.0f, -80.0f));
     
-    Resource::Font font = manager.render->LoadFont("textures/Roboto-Black.ttf");
-    Resource::Texture tex = manager.render->LoadTexture("textures/tile.png");
+    Resource::Texture tex = manager.render->LoadTexture(pool1, "textures/tile.png");
     manager.render->LoadResourcesToGPU();
+    manager.render->LoadResourcesToGPU(pool1);
+    //manager.render->LoadResourcesToGPU(pool2);
     manager.render->UseLoadedResources();
 
     camera::FirstPerson cam;
-    manager.audio.Play("audio/test.wav", false, 1.0f);
     
     while(!glfwWindowShouldClose(manager.window)) {
 	manager.update();

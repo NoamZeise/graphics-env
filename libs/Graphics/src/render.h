@@ -46,18 +46,39 @@ public:
     void LoadRender(GLFWwindow *window);
     void LoadRender(GLFWwindow *window, RenderConfig renderConf);
 
+    Resource::ResourcePool CreateResourcePool();
+    void DestroyResourcePool(Resource::ResourcePool pool);
+    void setResourcePoolInUse(Resource::ResourcePool pool, bool usePool);
+
     Resource::Texture LoadTexture(std::string filepath);
+    Resource::Texture LoadTexture(Resource::ResourcePool pool, std::string filepath);
+    // Load 2D image data, takes ownership of data, 4 channels
+    Resource::Texture LoadTexture(unsigned char* data, int width, int height);
+    Resource::Texture LoadTexture(Resource::ResourcePool pool, unsigned char* data,
+				  int width, int height);
     Resource::Font LoadFont(std::string filepath);
+    Resource::Model LoadModel(Resource::ModelType type, std::string filepath,
+			      std::vector<Resource::ModelAnimation> *pAnimations);
+    Resource::Model LoadModel(Resource::ResourcePool pool, Resource::ModelType type,
+			      std::string filepath,
+			      std::vector<Resource::ModelAnimation> *pAnimations);
+    Resource::Model LoadModel(Resource::ModelType type, ModelInfo::Model& model,
+			      std::vector<Resource::ModelAnimation> *pAnimations);
+    Resource::Model LoadModel(Resource::ResourcePool pool, Resource::ModelType type,
+			      ModelInfo::Model& model,
+			      std::vector<Resource::ModelAnimation> *pAnimations);
     Resource::Model Load3DModel(std::string filepath);
     Resource::Model Load3DModel(ModelInfo::Model& model);
     Resource::Model LoadAnimatedModel(std::string filepath, std::vector<Resource::ModelAnimation> *pGetAnimations);
 	
     void LoadResourcesToGPU();
+    void LoadResourcesToGPU(Resource::ResourcePool pool);
     void UseLoadedResources();
 
     void Begin3DDraw();
     void BeginAnim3DDraw() ;
     void Begin2DDraw();
+    
     void DrawModel(Resource::Model model, glm::mat4 modelMatrix,
 		   glm::mat4 normalMatrix);
     void DrawModel(Resource::Model model, glm::mat4 modelMatrix,

@@ -45,3 +45,8 @@ endif()
 add_executable(minimum minimum.cpp)
 target_link_options(minimum PRIVATE ${SUBSYSTEM_LINKER_OPTIONS})
 target_link_libraries(minimum GraphicsEnv)
+
+add_executable(assetPools asset_pools.cpp)
+target_link_options(assetPools PRIVATE ${SUBSYSTEM_LINKER_OPTIONS})
+target_link_libraries(assetPools GraphicsEnv)
+

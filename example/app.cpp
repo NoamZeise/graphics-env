@@ -120,21 +120,14 @@ void App::controls() {
 	if(manager->input.kb.hold(GLFW_KEY_1)) {
 	    if(current != Scene::Test1) {
 		assetsLoaded = false;
-		pFrameworkSwitch(manager->render,
-				 assetLoadThread =
-				 std::thread(&App::loadTestScene1, this, std::ref(assetsLoaded)),
-				 loadTestScene1(assetsLoaded));
-			
+		assetLoadThread = std::thread(&App::loadTestScene1, this, std::ref(assetsLoaded));
 		sceneChangeInProgress = true;
 	    }
 	}
 	if(manager->input.kb.hold(GLFW_KEY_2)) {
 	    if(current != Scene::Test2) {
 		assetsLoaded = false;
-		pFrameworkSwitch(manager->render,
-				 assetLoadThread =
-				 std::thread(&App::loadTestScene2, this, std::ref(assetsLoaded)),
-				 loadTestScene2(assetsLoaded));
+		assetLoadThread = std::thread(&App::loadTestScene2, this, std::ref(assetsLoaded));
 		sceneChangeInProgress = true;
 	    }
 	}

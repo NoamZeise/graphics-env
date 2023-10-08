@@ -51,14 +51,14 @@ int main(int argc, char** argv) {
 
 
 bool frameworkArg(int argc, char** argv, int &i, RenderFramework *framework) {
-  if(strcmp(argv[i], "-r") == 0) {
+  if(strcmp(argv[i], "-r")) {
     if(i + 1 < argc) {
       i++;
-      if(strcmp(argv[i], "opengl") == 0) {
+      if(strcmp(argv[i], "opengl")) {
 	*framework = RenderFramework::OpenGL;
 	std::cout << "default framework opengl selected\n";
       }
-      else if(strcmp(argv[i], "vulkan") == 0) {
+      else if(strcmp(argv[i], "vulkan")) {
 	*framework = RenderFramework::Vulkan;
 	std::cout << "default framework vulkan selected\n";
       } else {
