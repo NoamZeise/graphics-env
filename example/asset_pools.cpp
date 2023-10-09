@@ -9,8 +9,8 @@
 int main(int argc, char** argv) {
     RenderFramework framework = RenderFramework::Vulkan;
     for(int i = 0; i < argc; i++)
-	if(strcmp(argv[i], "opengl"))
-	    framework = RenderFramework::OpenGL;
+    	if(strcmp(argv[i], "opengl") == 0)
+    	    framework = RenderFramework::OpenGL;
     ManagerState state;
     state.cursor = cursorState::disabled;
     state.windowTitle = std::string("Asset Pools Examples: ") +
@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
 						     glm::vec3(-1.0f, 0.0f, 0.0f)),
 					 glm::vec3(0.0f, -8.0f, -10.0f));
     
-    //    Resource::ResourcePool pool2 = manager.render->CreateResourcePool();
+    Resource::ResourcePool pool2 = manager.render->CreateResourcePool();
     std::vector<Resource::ModelAnimation> wolfAnims;
     Resource::Model wolf = manager.render->LoadModel(pool1, Resource::ModelType::m3D_Anim,
 						     "models/wolf.fbx", &wolfAnims);
@@ -41,10 +41,10 @@ int main(int argc, char** argv) {
     glm::mat4 wolfMat = glm::translate(glm::scale(monkeyMat, glm::vec3(0.1f)),
 				       glm::vec3(-25.0f, -50.0f, -80.0f));
     
-    Resource::Texture tex = manager.render->LoadTexture(pool1, "textures/tile.png");
+    Resource::Texture tex = manager.render->LoadTexture(pool2, "textures/tile.png");
     manager.render->LoadResourcesToGPU();
     manager.render->LoadResourcesToGPU(pool1);
-    //manager.render->LoadResourcesToGPU(pool2);
+    manager.render->LoadResourcesToGPU(pool2);
     manager.render->UseLoadedResources();
 
     camera::FirstPerson cam;
