@@ -82,6 +82,5 @@ bugs:
 * instability reported on some AMD GPUs (unable to test this directly)
 
 features:
-* make multiple render passes optional
 * define new shader pipelines outside of render
-* unload old and load new textures while using renderer
+* better model material support (right now just diffuse colour)
