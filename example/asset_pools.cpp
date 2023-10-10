@@ -6,6 +6,19 @@
 
 // This example shows the resource pool functionality
 
+struct ModelDraw {
+    Resource::Model model;
+    glm::mat4 drawMat;
+    glm::mat4 normalMat;
+    Resource::ModelAnimation anim;
+    bool animated = false;
+    ModelDraw(){}
+    ModelDraw(Resource::Model model, glm::mat4 mat);
+    ModelDraw(Resource::Model model, glm::mat4 mat, Resource::ModelAnimation anim);
+    void Update(gamehelper::Timer &timer);
+    void Draw(Render *render);
+};
+
 int main(int argc, char** argv) {
     RenderFramework framework = RenderFramework::Vulkan;
     for(int i = 0; i < argc; i++)
@@ -27,21 +40,29 @@ int main(int argc, char** argv) {
     //create a new pool
     Resource::ResourcePool pool1 = manager.render->CreateResourcePool();
 
-    Resource::Model monkey = manager.render->LoadModel(pool1, Resource::ModelType::m3D,
-						       "models/monkey.obj", nullptr);
-    glm::mat4 monkeyMat = glm::translate(glm::rotate(glm::mat4(1.0f), glm::radians(270.0f),
-						     glm::vec3(-1.0f, 0.0f, 0.0f)),
-					 glm::vec3(0.0f, -8.0f, -10.0f));
+    glm::mat4 base = glm::rotate(glm::mat4(1.0f), glm::radians(270.0f),
+				 glm::vec3(-1.0f, 0.0f, 0.0f));
     
+    //use this pool to load a model
+    ModelDraw monkey = ModelDraw(
+	    manager.render->LoadModel(pool1, Resource::ModelType::m3D, "models/monkey.obj", nullptr),
+	    glm::translate(base, glm::vec3(0.0f, -8.0f, -10.0f)));
+
+    //create another pool
     Resource::ResourcePool pool2 = manager.render->CreateResourcePool();
+
+    // use this pool 2 to load a wolf with animations
     std::vector<Resource::ModelAnimation> wolfAnims;
-    Resource::Model wolf = manager.render->LoadModel(pool1, Resource::ModelType::m3D_Anim,
+    Resource::Model wolfModel = manager.render->LoadModel(pool1, Resource::ModelType::m3D_Anim,
 						     "models/wolf.fbx", &wolfAnims);
-    Resource::ModelAnimation anim = wolfAnims[0];
-    glm::mat4 wolfMat = glm::translate(glm::scale(monkeyMat, glm::vec3(0.1f)),
-				       glm::vec3(-25.0f, -50.0f, -80.0f));
+    ModelDraw wolf = ModelDraw(wolfModel,
+			       glm::translate(glm::scale(base, glm::vec3(0.1f)),
+					      glm::vec3(-25.0f, -50.0f, -80.0f)),
+			       wolfAnims[0]);
     
     Resource::Texture tex = manager.render->LoadTexture(pool2, "textures/tile.png");
+    
+    // load staged resources into gpu so we can use them for drawing
     manager.render->LoadResourcesToGPU();
     manager.render->LoadResourcesToGPU(pool1);
     manager.render->LoadResourcesToGPU(pool2);
@@ -51,7 +72,7 @@ int main(int argc, char** argv) {
     
     while(!glfwWindowShouldClose(manager.window)) {
 	manager.update();
-	anim.Update(manager.timer.FrameElapsed());
+	wolf.Update(manager.timer);
 	if(manager.input.kb.press(GLFW_KEY_ESCAPE))
 	    glfwSetWindowShouldClose(manager.window, GLFW_TRUE);
 	cam.update(manager.input, manager.timer);
@@ -60,9 +81,9 @@ int main(int argc, char** argv) {
 
 	if(manager.winWidth != 0 && manager.winHeight != 0) {
 	    manager.render->BeginAnim3DDraw();
-	    manager.render->DrawAnimModel(wolf, wolfMat, glm::inverseTranspose(wolfMat), &anim);
+	    wolf.Draw(manager.render);
 	    manager.render->Begin3DDraw();
-	    manager.render->DrawModel(monkey, monkeyMat, glm::inverseTranspose(monkeyMat));
+	    monkey.Draw(manager.render);
 	    manager.render->Begin2DDraw();
             manager.render->DrawQuad(tex,
 				     glmhelper::calcMatFromRect(
@@ -79,4 +100,30 @@ int main(int argc, char** argv) {
 	    manager.render->EndDraw(drawSubmitted);
 	}
     }
+}
+
+
+ModelDraw::ModelDraw(Resource::Model model, glm::mat4 mat) {
+    this->model = model;
+    this->drawMat = mat;
+    this->normalMat = glm::inverseTranspose(mat);
+}
+
+ModelDraw::ModelDraw(Resource::Model model, glm::mat4 mat, Resource::ModelAnimation anim) {
+    this->model = model;
+    this->drawMat = mat;
+    this->normalMat = glm::inverseTranspose(mat);
+    this->anim = anim;
+    this->animated = true;
+}
+void ModelDraw::Draw(Render *render) {
+    if(animated)
+	render->DrawAnimModel(model, drawMat, normalMat, &anim);
+    else
+	render->DrawModel(model, drawMat, normalMat);
+}
+
+void ModelDraw::Update(gamehelper::Timer &timer) {
+    if(animated)
+	anim.Update(timer.FrameElapsed());
 }
