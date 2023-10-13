@@ -207,8 +207,6 @@ void App::loadTestScene1(std::atomic<bool> &loaded) {
 
 void App::drawTestScene1() {
 
-  manager->render->Begin3DDraw();
-
   auto model = glm::translate(
       glm::scale(
 		 glm::rotate(glm::rotate(glm::mat4(1.0f), rotate, glm::vec3(0, 0, 1)),
@@ -252,8 +250,6 @@ void App::drawTestScene1() {
                      glm::vec3(4.0f));
   manager->render->DrawModel(colouredCube1, model, glm::inverseTranspose(model));
 
-  manager->render->BeginAnim3DDraw();
-
   model = glm::scale(glm::rotate(glm::translate(glm::mat4(1.0f),
                                                 glm::vec3(0.0f, 10.0f, 6.0f)),
                                  glm::radians(270.0f),
@@ -261,8 +257,6 @@ void App::drawTestScene1() {
                      glm::vec3(0.1f));
   
   manager->render->DrawAnimModel(wolf1, model, glm::inverseTranspose(model), &wolfAnim1);
-
-  manager->render->Begin2DDraw();
 
 
   manager->render->DrawString(testFont1, "Scene 1", glm::vec2(10, 100), 40, -1.0f, glm::vec4(1), 0.0f);
@@ -288,7 +282,6 @@ void App::loadTestScene2(std::atomic<bool> &loaded) {
 }
 
 void App::drawTestScene2() {
-    manager->render->Begin3DDraw();
   auto model = glm::translate(
       glm::scale(
 		 glm::rotate(glm::rotate(glm::mat4(1.0f), rotate, glm::vec3(0, 0, 1)),
@@ -339,9 +332,6 @@ void App::drawTestScene2() {
                                  glm::vec3(-1.0f, 0.0f, 0.0f)),
                      glm::vec3(1.0f));
   manager->render->DrawModel(colouredCube2, model, glm::inverseTranspose(model));
-      
-
-  manager->render->Begin2DDraw();
 
   manager->render->DrawString(testFont2, "Scene 2", glm::vec2(10, 100), 40, -0.4f, glm::vec4(1), 0.0f);
 

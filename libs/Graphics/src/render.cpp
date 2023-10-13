@@ -151,9 +151,6 @@ void Render::LoadResourcesToGPU(Resource::ResourcePool pool) {
 }
 void Render::UseLoadedResources(){_RENDER_FN(UseLoadedResources())}
 
-void Render::Begin3DDraw() { _RENDER_FN(Begin3DDraw()) }
-void Render::BeginAnim3DDraw() { _RENDER_FN(BeginAnim3DDraw()) }
-void Render::Begin2DDraw() { _RENDER_FN(Begin2DDraw()) }
 void Render::DrawModel(Resource::Model model, glm::mat4 modelMatrix,
 		       glm::mat4 normalMatrix){
     _RENDER_FN(DrawModel(model, modelMatrix, normalMatrix))}

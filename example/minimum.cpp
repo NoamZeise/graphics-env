@@ -48,11 +48,8 @@ int main() {
 	manager.render->set3DViewMatrixAndFov(cam.getViewMatrix(), cam.getZoom(), camPos);
 
 	if(manager.winWidth != 0 && manager.winHeight != 0) {
-	    manager.render->BeginAnim3DDraw();
 	    manager.render->DrawAnimModel(wolf, wolfMat, glm::inverseTranspose(wolfMat), &anim);
-	    manager.render->Begin3DDraw();
 	    manager.render->DrawModel(monkey, monkeyMat, glm::inverseTranspose(monkeyMat));
-	    manager.render->Begin2DDraw();
             manager.render->DrawQuad(tex,
 				     glmhelper::calcMatFromRect(
 					     glm::vec4(10.0f, 10.0f, 200.0f, 200.0f),

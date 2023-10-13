@@ -80,11 +80,8 @@ int main(int argc, char** argv) {
 	manager.render->set3DViewMatrixAndFov(cam.getViewMatrix(), cam.getZoom(), camPos);
 
 	if(manager.winWidth != 0 && manager.winHeight != 0) {
-	    manager.render->BeginAnim3DDraw();
 	    wolf.Draw(manager.render);
-	    manager.render->Begin3DDraw();
 	    monkey.Draw(manager.render);
-	    manager.render->Begin2DDraw();
             manager.render->DrawQuad(tex,
 				     glmhelper::calcMatFromRect(
 					     glm::vec4(10.0f, 10.0f, 200.0f, 200.0f),

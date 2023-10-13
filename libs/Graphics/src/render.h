@@ -74,10 +74,6 @@ public:
     void LoadResourcesToGPU();
     void LoadResourcesToGPU(Resource::ResourcePool pool);
     void UseLoadedResources();
-
-    void Begin3DDraw();
-    void BeginAnim3DDraw() ;
-    void Begin2DDraw();
     
     void DrawModel(Resource::Model model, glm::mat4 modelMatrix,
 		   glm::mat4 normalMatrix);
