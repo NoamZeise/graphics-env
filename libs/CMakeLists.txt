@@ -1,4 +1,3 @@
-add_subdirectory(Graphics)
 if(NOT NO_AUDIO)
   add_subdirectory(audio)
 endif()

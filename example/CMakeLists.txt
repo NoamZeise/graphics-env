@@ -1,4 +1,5 @@
 add_executable(MyApp main.cpp app.cpp)
+target_link_options(MyApp PRIVATE ${SUBSYSTEM_LINKER_OPTIONS})
 target_link_libraries(MyApp GraphicsEnv)
 
 if(UNIX) # want linux binary to check current dir for libraries

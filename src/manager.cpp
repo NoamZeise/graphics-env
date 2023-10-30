@@ -2,6 +2,14 @@
 
 #include <stdexcept>
 #include <iostream>
+#include <graphics/logger.h>
+
+#ifndef NO_OPENGL
+#include "../libs/OpenGLEnvironment/src/render.h"
+#endif
+#ifndef NO_VULKAN
+#include "../libs/VulkanEnvironment/src/render.h"
+#endif
 
 void framebufferSizeCallback(GLFWwindow *window, int width, int height);
 void mouseCallback(GLFWwindow *window, double xpos, double ypos);
@@ -10,6 +18,8 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mode
 void mouseBtnCallback(GLFWwindow *window, int button, int action, int mods);
 void errorCallback(int error, const char *description);
 
+RenderFramework chooseRenderFramework(RenderFramework preferred);
+
 Manager::Manager(ManagerState state) {
     winWidth = state.windowWidth;
     winHeight = state.windowHeight;
@@ -17,9 +27,8 @@ Manager::Manager(ManagerState state) {
     glfwSetErrorCallback(errorCallback);
     if(!glfwInit())
 	throw std::runtime_error("Failed to initialize GLFW!");
-    render = new Render(state.defaultRenderer);
-    if(render->NoApiLoaded())
-	throw std::runtime_error("Failed to load any graphics apis!");
+    
+    framework = chooseRenderFramework(state.defaultRenderer);
 
     if(state.hideWindowOnCreate)
 	glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
@@ -56,7 +65,18 @@ Manager::Manager(ManagerState state) {
     if(state.fixedWindowRatio)
 	glfwSetWindowAspectRatio(window, winWidth, winHeight);
 
-    render->LoadRender(window, state.conf);
+    switch(framework) {
+    case RenderFramework::Vulkan:
+#ifndef NO_VULKAN
+	render = static_cast<Render*>(new vkenv::RenderVk(window, state.conf));
+#endif
+	break;
+    case RenderFramework::OpenGL:
+#ifndef NO_OPENGL
+	render = static_cast<Render*>(new glenv::RenderGl(window, state.conf));
+#endif
+	break;
+    }
 }
 
 Manager::~Manager() {
@@ -105,8 +125,38 @@ glm::vec2 Manager::mousePos() {
 	    glm::vec2(input.m.x(), input.m.y()));
 }
 
+RenderFramework Manager::backend() {
+    return framework;
+}
 
-//GLFW CALLBACKS
+// ---- HELPERS ----
+
+RenderFramework chooseRenderFramework(RenderFramework preferred) {
+    switch (preferred) {
+    case RenderFramework::Vulkan:
+#ifndef NO_VULKAN
+	if(vkenv::RenderVk::LoadVulkan())
+	    return RenderFramework::Vulkan;
+	LOG_ERROR("Failed to load Vulkan, trying OpenGL\n");
+#else
+	LOG_ERROR("Failed to load vulkan, NO_VULKAN was defined!\n");
+#endif	
+    case RenderFramework::OpenGL:
+#ifndef NO_OPENGL
+	if(glenv::RenderGl::LoadOpenGL())
+	    return RenderFramework::OpenGL;
+	else
+	    LOG_ERROR("Failed to load OpenGL\n");
+#else
+	LOG_ERROR("Failed to load OpenGL, NO_OPENGL was defined!\n");
+#endif
+    }
+    throw std::runtime_error("Failed to load any graphics apis!");
+}
+
+
+
+// ---- GLFW CALLBACKS ----
 
 void framebufferSizeCallback(GLFWwindow *window, int width, int height) {
   Manager *app = reinterpret_cast<Manager *>(glfwGetWindowUserPointer(window));

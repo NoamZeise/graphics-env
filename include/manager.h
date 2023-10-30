@@ -5,20 +5,23 @@
 #include <atomic>
 #include <string>
 
-#include <glm/glm.hpp>
-
-#include <render.h>
-#include <graphics/render_config.h>
+#include <graphics/render.h>
 #include <GameHelper/timer.h>
 #include <GameHelper/input.h>
+#include <glm/glm.hpp>
 #ifndef NO_AUDIO
 #include <audio.h>
 #endif
 
 enum class cursorState {
-    normal,
-    hidden,
-    disabled,
+  normal,
+  hidden,
+  disabled,
+};
+
+enum class RenderFramework {
+   Vulkan,
+   OpenGL,
 };
 
 struct ManagerState {
@@ -40,6 +43,7 @@ struct Manager {
     void setFullscreen(bool fullscreen);
     void toggleFullscreen();
     void setWindowSize(int width, int height);
+    RenderFramework backend();
     
     GLFWwindow *window;
     Render* render;
@@ -52,6 +56,8 @@ struct Manager {
 #endif
     glm::vec2 screenToRenderSpace(glm::vec2 pos);
     glm::vec2 mousePos();
+private:
+    RenderFramework framework;
 };
 
 #endif

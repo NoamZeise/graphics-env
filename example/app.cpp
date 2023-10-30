@@ -1,5 +1,4 @@
 #include "app.h"
-#include "render.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
@@ -172,14 +171,10 @@ void App::draw() {
 		      glm::vec2(10.0, 40.0), 15, 5.0f, glm::vec4(1.0f));
   #endif
 
-  pFrameworkSwitch(manager->render,
-		   submitDraw = std::thread(
-			   &Render::EndDraw, manager->render, std::ref(finishedDrawSubmit)),
-		   {
-		       manager->render->EndDraw(finishedDrawSubmit);
-		       finishedDrawSubmit = true;
-		   }
-		   );
+  submitDraw = std::thread(
+	  &Render::EndDraw, manager->render, std::ref(finishedDrawSubmit));
+  if(manager->backend() == RenderFramework::OpenGL)
+      submitDraw.join();
 
 #ifdef TIME_APP_DRAW_UPDATE
   auto stop = std::chrono::high_resolution_clock::now();
