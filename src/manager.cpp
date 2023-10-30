@@ -69,13 +69,15 @@ Manager::Manager(ManagerState state) {
     case RenderFramework::Vulkan:
 #ifndef NO_VULKAN
 	render = static_cast<Render*>(new vkenv::RenderVk(window, state.conf));
-#endif
 	break;
+#endif
     case RenderFramework::OpenGL:
 #ifndef NO_OPENGL
 	render = static_cast<Render*>(new glenv::RenderGl(window, state.conf));
-#endif
 	break;
+#endif
+    default:
+	throw std::runtime_error("Graphics Env manager: No renderer could be created!");
     }
 }
 
