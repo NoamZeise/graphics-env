@@ -4,12 +4,13 @@
 #include <glm/gtc/matrix_inverse.hpp>
 #include <graphics/glm_helper.h>
 #include <graphics/shader_structs.h>
-#include <iostream>
+#include <graphics/logger.h>
 
 App::App(RenderFramework defaultFramework) {
     ManagerState state;
     state.defaultRenderer = defaultFramework;
-    state.windowTitle = "Test App";
+    state.windowTitle = std::string("Test App ") +
+	(defaultFramework == RenderFramework::Vulkan ? "vulkan" : "opengl");
     state.cursor = cursorState::disabled;
     manager = new Manager(state);
     
@@ -171,11 +172,12 @@ void App::draw() {
 		      glm::vec2(10.0, 40.0), 15, 5.0f, glm::vec4(1.0f));
   #endif
 
-  submitDraw = std::thread(
-	  &Render::EndDraw, manager->render, std::ref(finishedDrawSubmit));
-  if(manager->backend() == RenderFramework::OpenGL)
-      submitDraw.join();
-
+  if(manager->backend() == RenderFramework::Vulkan)
+      submitDraw = std::thread(
+	      &Render::EndDraw, manager->render, std::ref(finishedDrawSubmit));
+  else
+      manager->render->EndDraw(finishedDrawSubmit);
+  
 #ifdef TIME_APP_DRAW_UPDATE
   auto stop = std::chrono::high_resolution_clock::now();
   monitored_draw_stats = "draw: " + std::to_string(
