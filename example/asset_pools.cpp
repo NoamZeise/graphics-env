@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
     Resource::Font font = manager.render->LoadFont("textures/Roboto-Black.ttf");
 
     //create a new pool
-    Resource::ResourcePool pool1 = manager.render->CreateResourcePool();
+    Resource::Pool pool1 = manager.render->CreateResourcePool();
 
     glm::mat4 base = glm::rotate(glm::mat4(1.0f), glm::radians(270.0f),
 				 glm::vec3(-1.0f, 0.0f, 0.0f));
@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
 	    glm::translate(base, glm::vec3(0.0f, -8.0f, -10.0f)));
 
     //create another pool
-    Resource::ResourcePool pool2 = manager.render->CreateResourcePool();
+    Resource::Pool pool2 = manager.render->CreateResourcePool();
 
     // use this pool 2 to load a wolf with animations
     std::vector<Resource::ModelAnimation> wolfAnims;
