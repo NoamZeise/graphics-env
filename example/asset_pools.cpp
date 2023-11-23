@@ -38,14 +38,16 @@ int main(int argc, char** argv) {
     Resource::Font font = manager.render->LoadFont("textures/Roboto-Black.ttf");
 
     //create a new pool
-    Resource::Pool pool1 = manager.render->CreateResourcePool();
+    Resource::Pool pool1_res = manager.render->CreateResourcePool();
+    ResourcePool* pool1 = manager.render->pool(pool1_res);
 
     glm::mat4 base = glm::rotate(glm::mat4(1.0f), glm::radians(270.0f),
 				 glm::vec3(-1.0f, 0.0f, 0.0f));
     
     //use this pool to load a model
     ModelDraw monkey = ModelDraw(
-	    manager.render->LoadModel(pool1, Resource::ModelType::m3D, "models/monkey.obj", nullptr),
+	    pool1->model()->LoadModel(
+		    Resource::ModelType::m3D, "models/monkey.obj", nullptr),
 	    glm::translate(base, glm::vec3(0.0f, -8.0f, -10.0f)));
 
     //create another pool
@@ -53,8 +55,8 @@ int main(int argc, char** argv) {
 
     // use this pool 2 to load a wolf with animations
     std::vector<Resource::ModelAnimation> wolfAnims;
-    Resource::Model wolfModel = manager.render->LoadModel(pool1, Resource::ModelType::m3D_Anim,
-						     "models/wolf.fbx", &wolfAnims);
+    Resource::Model wolfModel = pool1->model()->LoadModel(
+	    Resource::ModelType::m3D_Anim, "models/wolf.fbx", &wolfAnims);
     ModelDraw wolf = ModelDraw(wolfModel,
 			       glm::translate(glm::scale(base, glm::vec3(0.1f)),
 					      glm::vec3(-25.0f, -50.0f, -80.0f)),
@@ -64,7 +66,7 @@ int main(int argc, char** argv) {
     
     // load staged resources into gpu so we can use them for drawing
     manager.render->LoadResourcesToGPU();
-    manager.render->LoadResourcesToGPU(pool1);
+    manager.render->LoadResourcesToGPU(pool1_res);
     manager.render->LoadResourcesToGPU(pool2);
     manager.render->UseLoadedResources();
 
