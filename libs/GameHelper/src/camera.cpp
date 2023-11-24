@@ -27,7 +27,7 @@ namespace camera {
   void FirstPerson::update(gamehelper::Input &input, gamehelper::Timer &timer) {
       viewUpdated = true;
 
-      float velocity = _speed * timer.FrameElapsed();
+      float velocity = _speed * timer.dt();
       if(input.kb.hold(GLFW_KEY_W))
 	  _position += _front * velocity;
       if(input.kb.hold(GLFW_KEY_A))
@@ -75,7 +75,7 @@ namespace camera {
       if(_pitch < -89.0f)
 	  _pitch = -89.0f;
 
-      _zoom -= (float)input.m.scroll() * timer.FrameElapsed();
+      _zoom -= (float)input.m.scroll() * timer.dt();
       if(_zoom < 1.0f)
 	  _zoom = 1.0f;
       if(_zoom > 100.0f)

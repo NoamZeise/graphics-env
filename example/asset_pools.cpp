@@ -15,7 +15,7 @@ struct ModelDraw {
     ModelDraw(){}
     ModelDraw(Resource::Model model, glm::mat4 mat);
     ModelDraw(Resource::Model model, glm::mat4 mat, Resource::ModelAnimation anim);
-    void Update(gamehelper::Timer &timer);
+    void Update(float time);
     void Draw(Render *render);
 };
 
@@ -35,38 +35,38 @@ int main(int argc, char** argv) {
     Manager manager(state);
 
     //no pool, loads to default pool
-    Resource::Font font = manager.render->LoadFont("textures/Roboto-Black.ttf");
+    ResourcePool* defaultPool = manager.render->pool();
+    Resource::Font font = defaultPool->font()->load("textures/Roboto-Black.ttf");
 
     //create a new pool
-    Resource::Pool pool1_res = manager.render->CreateResourcePool();
-    ResourcePool* pool1 = manager.render->pool(pool1_res);
+    ResourcePool* pool1 = manager.render->CreateResourcePool();
 
     glm::mat4 base = glm::rotate(glm::mat4(1.0f), glm::radians(270.0f),
 				 glm::vec3(-1.0f, 0.0f, 0.0f));
     
     //use this pool to load a model
     ModelDraw monkey = ModelDraw(
-	    pool1->model()->LoadModel(
-		    Resource::ModelType::m3D, "models/monkey.obj", nullptr),
+	    pool1->model()->load("models/monkey.obj"),
 	    glm::translate(base, glm::vec3(0.0f, -8.0f, -10.0f)));
 
     //create another pool
-    Resource::Pool pool2 = manager.render->CreateResourcePool();
+    ResourcePool* pool2 = manager.render->CreateResourcePool();
 
     // use this pool 2 to load a wolf with animations
     std::vector<Resource::ModelAnimation> wolfAnims;
-    Resource::Model wolfModel = pool1->model()->LoadModel(
+    Resource::Model wolfModel = pool1->model()->load(
 	    Resource::ModelType::m3D_Anim, "models/wolf.fbx", &wolfAnims);
-    ModelDraw wolf = ModelDraw(wolfModel,
-			       glm::translate(glm::scale(base, glm::vec3(0.1f)),
-					      glm::vec3(-25.0f, -50.0f, -80.0f)),
-			       wolfAnims[0]);
+    ModelDraw wolf = ModelDraw(
+	    wolfModel,
+	    glm::translate(glm::scale(base, glm::vec3(0.1f)),
+			   glm::vec3(-25.0f, -50.0f, -80.0f)),
+	    wolfAnims[0]);
     
-    Resource::Texture tex = manager.render->LoadTexture(pool2, "textures/tile.png");
+    Resource::Texture tex = pool2->tex()->load("textures/tile.png");
     
     // load staged resources into gpu so we can use them for drawing
-    manager.render->LoadResourcesToGPU();
-    manager.render->LoadResourcesToGPU(pool1_res);
+    manager.render->LoadResourcesToGPU(defaultPool);
+    manager.render->LoadResourcesToGPU(pool1);
     manager.render->LoadResourcesToGPU(pool2);
     manager.render->UseLoadedResources();
 
@@ -74,7 +74,9 @@ int main(int argc, char** argv) {
     
     while(!glfwWindowShouldClose(manager.window)) {
 	manager.update();
-	wolf.Update(manager.timer);
+	
+	wolf.Update(manager.timer.dt());
+	
 	if(manager.input.kb.press(GLFW_KEY_ESCAPE))
 	    glfwSetWindowShouldClose(manager.window, GLFW_TRUE);
 	cam.update(manager.input, manager.timer);
@@ -122,7 +124,7 @@ void ModelDraw::Draw(Render *render) {
 	render->DrawModel(model, drawMat, normalMat);
 }
 
-void ModelDraw::Update(gamehelper::Timer &timer) {
+void ModelDraw::Update(float time) {
     if(animated)
-	anim.Update(timer.FrameElapsed());
+	anim.Update(time);
 }

@@ -87,7 +87,7 @@ Manager::~Manager() {
 }
 
 void Manager::update() {
-    timer.Update();
+    timer.update();
     input.update();
     glfwPollEvents();
 }

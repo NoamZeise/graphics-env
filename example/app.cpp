@@ -32,7 +32,7 @@ void App::loadAssets() {
 	loadTestScene1(assetsLoaded);
     if(current == Scene::Test2)
 	loadTestScene2(assetsLoaded);
-    manager->render->LoadResourcesToGPU();
+    manager->render->LoadResourcesToGPU(Resource::Pool(0));
     manager->render->UseLoadedResources();
 }
 
@@ -58,17 +58,17 @@ void App::update() {
       if(submitDraw.joinable()) 
 	  submitDraw.join();
       std::cout << "loading done\n";
-      manager->render->LoadResourcesToGPU();
+      manager->render->LoadResourcesToGPU(Resource::Pool(0));
       manager->render->UseLoadedResources();
       sceneChangeInProgress = false;
       current = current == Scene::Test1 ? Scene::Test2 : Scene::Test1;
   }
 
   if(current == Scene::Test1) {
-      wolfAnim1.Update(manager->timer.FrameElapsed());
+      wolfAnim1.Update(manager->timer.dt());
   }
 
-  rotate += manager->timer.FrameElapsed() * 0.001f;
+  rotate += manager->timer.dt() * 0.001f;
   
   fpcam.update(manager->input, manager->timer);
 
@@ -88,22 +88,22 @@ void App::controls() {
     }
     const float speed = 0.001f;
     if (manager->input.kb.press(GLFW_KEY_INSERT)) {
-	lightDir.x += speed * manager->timer.FrameElapsed();
+	lightDir.x += speed * manager->timer.dt();
     }
     if (manager->input.kb.press(GLFW_KEY_HOME)) {
-	lightDir.x -= speed * manager->timer.FrameElapsed();
+	lightDir.x -= speed * manager->timer.dt();
     }
     if (manager->input.kb.press(GLFW_KEY_DELETE)) {
-	lightDir.z += speed * manager->timer.FrameElapsed();
+	lightDir.z += speed * manager->timer.dt();
     }
     if (manager->input.kb.press(GLFW_KEY_END)) {
-	lightDir.z -= speed * manager->timer.FrameElapsed();
+	lightDir.z -= speed * manager->timer.dt();
     }
     if (manager->input.kb.press(GLFW_KEY_PAGE_UP)) {
-	lightDir.y += speed * manager->timer.FrameElapsed();
+	lightDir.y += speed * manager->timer.dt();
     }
     if (manager->input.kb.press(GLFW_KEY_PAGE_DOWN)) {
-	lightDir.y -= speed * manager->timer.FrameElapsed();
+	lightDir.y -= speed * manager->timer.dt();
     }
     if (manager->input.kb.press(GLFW_KEY_G)) {
 	manager->render->setTargetResolution(glm::vec2(1000, 100));
@@ -188,17 +188,18 @@ void App::draw() {
 
 void App::loadTestScene1(std::atomic<bool> &loaded) {
   std::cout << "loading scene 1\n";
-  testModel1 = manager->render->Load3DModel("models/testScene.fbx");
-  monkeyModel1 = manager->render->Load3DModel("models/monkey.obj");
-  colouredCube1 = manager->render->Load3DModel("models/ROOM.fbx");
+  ResourcePool* p = manager->render->pool();
+  testModel1 = p->model()->load("models/testScene.fbx");
+  monkeyModel1 = p->model()->load("models/monkey.obj");
+  colouredCube1 =p->model()->load("models/ROOM.fbx");
   std::vector<Resource::ModelAnimation> animations;
-  wolf1 = manager->render->LoadAnimatedModel("models/wolf.fbx", &animations);
+  wolf1 = p->model()->load(Resource::ModelType::m3D_Anim, "models/wolf.fbx", &animations);
   if(animations.size() > 2)
       wolfAnim1 = animations[1];
   else
       throw std::runtime_error("wolf anim had unexpected number of animations");
-  testTex1 = manager->render->LoadTexture("textures/error.png");
-  testFont1 = manager->render->LoadFont("textures/Roboto-Black.ttf");
+  testTex1 = p->tex()->load("textures/error.png");
+  testFont1 = p->font()->load("textures/Roboto-Black.ttf");
   loaded = true;
 }
 
@@ -272,10 +273,11 @@ void App::drawTestScene1() {
 
 void App::loadTestScene2(std::atomic<bool> &loaded) {
     std::cout << "loading scene 2\n";
-  monkeyModel2 = manager->render->Load3DModel("models/monkey.obj");
-  colouredCube2 = manager->render->Load3DModel("models/ROOM.fbx");
-  testFont2 = manager->render->LoadFont("textures/Roboto-Black.ttf");
-  loaded = true;
+    ResourcePool *p = manager->render->pool();
+    monkeyModel2 = p->model()->load("models/monkey.obj");
+    colouredCube2 = p->model()->load("models/ROOM.fbx");
+    testFont2 = p->font()->load("textures/Roboto-Black.ttf");
+    loaded = true;
 }
 
 void App::drawTestScene2() {
