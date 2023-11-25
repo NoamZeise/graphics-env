@@ -106,10 +106,16 @@ void App::controls() {
 	lightDir.y -= speed * manager->timer.dt();
     }
     if (manager->input.kb.press(GLFW_KEY_G)) {
-	manager->render->setTargetResolution(glm::vec2(1000, 100));
+	RenderConfig conf = manager->render->getRenderConf();
+	conf.target_resolution[0] = 1000;
+	conf.target_resolution[1] = 100;
+	manager->render->setRenderConf(conf);
     }
     if (manager->input.kb.press(GLFW_KEY_H)) {
-	manager->render->setTargetResolution(glm::vec2(0.0f, 0.0f));
+	RenderConfig conf = manager->render->getRenderConf();
+	conf.target_resolution[0] = 0;
+	conf.target_resolution[1] = 0;
+	manager->render->setRenderConf(conf);
     }
     if (manager->input.kb.press(GLFW_KEY_V)) {
 	RenderConfig renderConf = manager->render->getRenderConf();

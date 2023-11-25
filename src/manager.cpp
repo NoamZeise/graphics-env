@@ -115,10 +115,11 @@ void Manager::setWindowSize(int width, int height) {
 }
 
 glm::vec2 Manager::screenToRenderSpace(glm::vec2 pos) {
-    glm::vec2 targetRes = render->getTargetResolution();
-    if(targetRes.x != 0.0 && targetRes.y != 0.0)
-      return glm::vec2(pos.x * (targetRes.x / (float)winWidth),
-		       pos.y * (targetRes.y / (float)winHeight));
+    RenderConfig conf = render->getRenderConf();
+    
+    if(conf.target_resolution[0] != 0.0 && conf.target_resolution[1] != 0.0)
+      return glm::vec2(pos.x * (conf.target_resolution[0] / (float)winWidth),
+		       pos.y * (conf.target_resolution[1] / (float)winHeight));
     return pos;
 }
 
