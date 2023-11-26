@@ -17,7 +17,7 @@ namespace camera {
   }
 
   float FirstPerson::getZoom() {
-      return _zoom;
+      return glm::radians(_zoom);
   }
 
   void FirstPerson::setPos(glm::vec3 pos) {

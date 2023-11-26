@@ -39,7 +39,7 @@ void App::loadAssets() {
 void App::run() {
   while (!glfwWindowShouldClose(manager->window)) {
     update();
-    if (manager->winWidth != 0 && manager->winHeight != 0)
+    if (manager->winActive())
       draw();
   }
 }
@@ -144,8 +144,8 @@ void App::controls() {
 }
 
 void App::postUpdate() {
-  manager->render->set3DViewMatrixAndFov(fpcam.getViewMatrix(), fpcam.getZoom(),
-                                 glm::vec4(fpcam.getPos(), 0.0));
+  manager->fov = fpcam.getZoom();
+  manager->render->set3DViewMat(fpcam.getViewMatrix(), fpcam.getPos());
 }
 
 void App::draw() {
@@ -263,17 +263,17 @@ void App::drawTestScene1() {
   manager->render->DrawAnimModel(wolf1, model, glm::inverseTranspose(model), &wolfAnim1);
 
 
-  manager->render->DrawString(testFont1, "Scene 1", glm::vec2(10, 100), 40, -1.0f, glm::vec4(1), 0.0f);
+  manager->render->DrawString(testFont1, "Scene 1", glm::vec2(10, 100), 40, 1.0f, glm::vec4(1), 0.0f);
   if(sceneChangeInProgress) {
-    manager->render->DrawString(testFont1, "Loading", glm::vec2(200, 400), 40, -1.0f, glm::vec4(1), 0.0f);
+    manager->render->DrawString(testFont1, "Loading", glm::vec2(200, 400), 40, 1.0f, glm::vec4(1), 0.0f);
    }
 
      manager->render->DrawQuad(
-	     testTex1, glmhelper::calcMatFromRect(glm::vec4(400, 100, 100, 100), 0, -1),
+	     testTex1, glmhelper::calcMatFromRect(glm::vec4(400, 100, 100, 100), 0, 1),
       glm::vec4(1), glm::vec4(0, 0, 1, 1));
 
   manager->render->DrawQuad(testTex1,
-                    glmhelper::calcMatFromRect(glm::vec4(0, 0, 400, 400), 0, 0),
+                    glmhelper::calcMatFromRect(glm::vec4(0, 0, 400, 400), 0, 1),
                     glm::vec4(1, 0, 1, 0.3), glm::vec4(0, 0, 1, 1));
 }
 
@@ -338,9 +338,9 @@ void App::drawTestScene2() {
                      glm::vec3(1.0f));
   manager->render->DrawModel(colouredCube2, model, glm::inverseTranspose(model));
 
-  manager->render->DrawString(testFont2, "Scene 2", glm::vec2(10, 100), 40, -0.4f, glm::vec4(1), 0.0f);
+  manager->render->DrawString(testFont2, "Scene 2", glm::vec2(10, 100), 40, 1.0f, glm::vec4(1), 0.0f);
 
   if(sceneChangeInProgress) {
-      manager->render->DrawString(testFont2, "Loading", glm::vec2(200, 400), 40, -0.4f, glm::vec4(1), 0.0f);
+      manager->render->DrawString(testFont2, "Loading", glm::vec2(200, 400), 40, 1.0f, glm::vec4(1), 0.0f);
   }    
 }

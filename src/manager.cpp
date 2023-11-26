@@ -90,6 +90,24 @@ void Manager::update() {
     timer.update();
     input.update();
     glfwPollEvents();
+
+    glm::mat4 proj3d =
+	glm::perspective(
+		fov,
+		render->offscreenSize().x / render->offscreenSize().y,
+		render->getRenderConf().depth_range_3D[0],
+		render->getRenderConf().depth_range_3D[1]);
+    render->set3DProjMat(proj3d);
+    glm::mat4 proj2d =
+	glm::ortho(0.0f,
+		   render->offscreenSize().x * scale2d,
+		   render->offscreenSize().y * scale2d,
+		   0.0f,
+		   render->getRenderConf().depth_range_2D[0],
+		   render->getRenderConf().depth_range_2D[1]);
+
+
+    render->set2DProjMat(proj2d);
 }
 
 void Manager::setFullscreen(bool fullscreen) {
@@ -107,11 +125,15 @@ void Manager::toggleFullscreen() {
     setFullscreen(glfwGetWindowMonitor(window) == NULL);
 }
 
-void Manager::setWindowSize(int width, int height) {
+void Manager::setWindowSize(int width, int height, bool updateGlfw) {
     winWidth = width;
     winHeight = height;
-    if(glfwGetWindowMonitor(window) == NULL)
+    if(updateGlfw && glfwGetWindowMonitor(window) == NULL)
 	glfwSetWindowSize(window, winWidth, winHeight);
+}
+
+void Manager::setWindowSize(int width, int height) {
+    setWindowSize(width, height, true);
 }
 
 glm::vec2 Manager::screenToRenderSpace(glm::vec2 pos) {
@@ -131,6 +153,10 @@ glm::vec2 Manager::mousePos() {
 RenderFramework Manager::backend() {
     return framework;
 }
+
+glm::vec2 Manager::winSize() { return glm::vec2(winWidth, winHeight); }
+
+bool Manager::winActive() { return winHeight != 0 && winWidth != 0; }
 
 // ---- HELPERS ----
 
@@ -162,32 +188,31 @@ RenderFramework chooseRenderFramework(RenderFramework preferred) {
 // ---- GLFW CALLBACKS ----
 
 void framebufferSizeCallback(GLFWwindow *window, int width, int height) {
-  Manager *app = reinterpret_cast<Manager *>(glfwGetWindowUserPointer(window));
-  app->winWidth = width;
-  app->winHeight = height;
+  Manager *manager = reinterpret_cast<Manager *>(glfwGetWindowUserPointer(window));
+  manager->setWindowSize(width, height, false);
   if(width != 0 && height != 0)
-      app->render->FramebufferResize();
+      manager->render->FramebufferResize();
 }
 
 void mouseCallback(GLFWwindow *window, double xpos, double ypos) {
-  Manager *app = reinterpret_cast<Manager *>(glfwGetWindowUserPointer(window));
-  app->input.m.mousePosCallback(xpos, ypos);
+  Manager *manager = reinterpret_cast<Manager *>(glfwGetWindowUserPointer(window));
+  manager->input.m.mousePosCallback(xpos, ypos);
 }
 void scrollCallback(GLFWwindow *window, double xoffset, double yoffset) {
-  Manager *app = reinterpret_cast<Manager *>(glfwGetWindowUserPointer(window));
-  app->input.m.mouseScrollCallback(xoffset, yoffset);
+  Manager *manager = reinterpret_cast<Manager *>(glfwGetWindowUserPointer(window));
+  manager->input.m.mouseScrollCallback(xoffset, yoffset);
 }
 
 void keyCallback(GLFWwindow *window, int key, int scancode, int action,
                        int mode) {
-  Manager *app = reinterpret_cast<Manager *>(glfwGetWindowUserPointer(window));
-  app->input.kb.handleKey(key, scancode, action);
+  Manager *manager = reinterpret_cast<Manager *>(glfwGetWindowUserPointer(window));
+  manager->input.kb.handleKey(key, scancode, action);
 }
 
 void mouseBtnCallback(GLFWwindow *window, int button, int action,
                                 int mods) {
-  Manager *app = reinterpret_cast<Manager *>(glfwGetWindowUserPointer(window));
-  app->input.m.mouseButtonCallback(button, action, mods);
+  Manager *manager = reinterpret_cast<Manager *>(glfwGetWindowUserPointer(window));
+  manager->input.m.mouseButtonCallback(button, action, mods);
 }
 
 void errorCallback(int error, const char *description) {

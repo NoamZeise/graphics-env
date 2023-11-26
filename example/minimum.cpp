@@ -16,7 +16,7 @@ int main() {
     ManagerState state;
     state.cursor = cursorState::disabled;
     state.windowTitle = "minimum";
-    state.conf.multisampling = true; 
+    state.conf.multisampling = true;
     state.defaultRenderer = RenderFramework::OpenGL;
     Manager manager(state);
     ResourcePool* pool = manager.render->pool();
@@ -45,10 +45,10 @@ int main() {
 	if(manager.input.kb.press(GLFW_KEY_ESCAPE))
 	    glfwSetWindowShouldClose(manager.window, GLFW_TRUE);
 	cam.update(manager.input, manager.timer);
-	glm::vec4 camPos = glm::vec4(cam.getPos().x, cam.getPos().y, cam.getPos().z, 0.0f);
-	manager.render->set3DViewMatrixAndFov(cam.getViewMatrix(), cam.getZoom(), camPos);
+	manager.fov = cam.getZoom();
+	manager.render->set3DViewMat(cam.getViewMatrix(), cam.getPos());
 
-	if(manager.winWidth != 0 && manager.winHeight != 0) {
+	if(manager.winActive()) {
 	    manager.render->DrawAnimModel(wolf, wolfMat, glm::inverseTranspose(wolfMat), &anim);
 	    manager.render->DrawModel(monkey, monkeyMat, glm::inverseTranspose(monkeyMat));
             manager.render->DrawQuad(tex,

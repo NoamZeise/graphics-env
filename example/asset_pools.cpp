@@ -80,23 +80,23 @@ int main(int argc, char** argv) {
 	if(manager.input.kb.press(GLFW_KEY_ESCAPE))
 	    glfwSetWindowShouldClose(manager.window, GLFW_TRUE);
 	cam.update(manager.input, manager.timer);
-	glm::vec4 camPos = glm::vec4(cam.getPos().x, cam.getPos().y, cam.getPos().z, 0.0f);
-	manager.render->set3DViewMatrixAndFov(cam.getViewMatrix(), cam.getZoom(), camPos);
+	manager.fov = cam.getZoom();
+	manager.render->set3DViewMat(cam.getViewMatrix(), cam.getPos());
 
-	if(manager.winWidth != 0 && manager.winHeight != 0) {
+	if(manager.winActive()) {
 	    wolf.Draw(manager.render);
 	    monkey.Draw(manager.render);
             manager.render->DrawQuad(tex,
 				     glmhelper::calcMatFromRect(
 					     glm::vec4(10.0f, 10.0f, 200.0f, 200.0f),
-					     0.0f, 0.0f),
+					     0.0f, 1.0f),
 				     glm::vec4(1.0f),
 				     glmhelper::getTextureOffset(
 					     tex.dim, glm::vec4(0.0f, 0.0f,
 								tex.dim.x * 5,
 								tex.dim.y * 5)));
 	    manager.render->DrawString(font, "Graphics Environment", glm::vec2(220.0f, 50.0f),
-				       50.0f, 1.0f, glm::vec4(1.0f, 0.5f, 1.0f, 1.0f));
+				       50.0f, 0.1f, glm::vec4(1.0f, 0.5f, 1.0f, 1.0f));
 	    std::atomic<bool> drawSubmitted;
 	    manager.render->EndDraw(drawSubmitted);
 	}

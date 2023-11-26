@@ -42,15 +42,18 @@ struct Manager {
     void update();
     void setFullscreen(bool fullscreen);
     void toggleFullscreen();
+    void setWindowSize(int width, int height, bool updateGlfw);
     void setWindowSize(int width, int height);
+    glm::vec2 winSize();
+    bool winActive();
     RenderFramework backend();
     
     GLFWwindow *window;
     Render* render;
-    int winWidth;
-    int winHeight;
     gamehelper::Timer timer;
     gamehelper::Input input;
+    float fov = 45.0f;
+    float scale2d = 1.0f;
 #ifndef NO_AUDIO
     audio::Manager audio;
 #endif
@@ -58,6 +61,8 @@ struct Manager {
     glm::vec2 mousePos();
 private:
     RenderFramework framework;
+    int winWidth;
+    int winHeight;
 };
 
 #endif
