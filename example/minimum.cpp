@@ -17,7 +17,8 @@ int main() {
     state.cursor = cursorState::disabled;
     state.windowTitle = "minimum";
     state.conf.multisampling = true;
-    state.defaultRenderer = RenderFramework::OpenGL;
+    state.conf.sample_shading = true;
+    state.defaultRenderer = RenderFramework::Vulkan;
     Manager manager(state);
     ResourcePool* pool = manager.render->pool();
     Resource::Model monkey = pool->model()->load("models/monkey.obj");
@@ -26,10 +27,11 @@ int main() {
 					 glm::vec3(0.0f, -8.0f, -10.0f));
     
     std::vector<Resource::ModelAnimation> wolfAnims;
-    Resource::Model wolf = pool->model()->load(Resource::ModelType::m3D_Anim, "models/wolf.fbx", &wolfAnims);
+    Resource::Model wolf = pool->model()->load(
+	    Resource::ModelType::m3D_Anim, "models/wolf.fbx", &wolfAnims);
     Resource::ModelAnimation anim = wolfAnims[0];
-    glm::mat4 wolfMat = glm::translate(glm::scale(monkeyMat, glm::vec3(0.1f)),
-				       glm::vec3(-25.0f, -50.0f, -80.0f));
+    glm::mat4 wolfMat = glm::translate(
+	    glm::scale(monkeyMat, glm::vec3(0.1f)), glm::vec3(-25.0f, -50.0f, -80.0f));
     
     Resource::Font font = pool->font()->load("textures/Roboto-Black.ttf");
     Resource::Texture tex = pool->tex()->load("textures/tile.png");
@@ -54,13 +56,12 @@ int main() {
             manager.render->DrawQuad(tex,
 				     glmhelper::calcMatFromRect(
 					     glm::vec4(10.0f, 10.0f, 200.0f, 200.0f),
-					     0.0f, 0.0f),
+					     0.0f, 0.5f),
 				     glm::vec4(1.0f),
 				     glmhelper::getTextureOffset(
-					     tex.dim, glm::vec4(0.0f, 0.0f,
-								tex.dim.x * 5,
-								tex.dim.y * 5)));
-	    manager.render->DrawString(font, "Graphics Environment", glm::vec2(220.0f, 50.0f),
+					     tex.dim,
+					     glm::vec4(0.0f, 0.0f, tex.dim.x * 5, tex.dim.y * 5)));
+	    manager.render->DrawString(font, "Minimum Example", glm::vec2(220.0f, 50.0f),
 				       50.0f, 1.0f, glm::vec4(1.0f, 0.5f, 1.0f, 1.0f));
 	    std::atomic<bool> drawSubmitted;
 	    manager.render->EndDraw(drawSubmitted);
