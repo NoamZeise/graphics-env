@@ -1,4 +1,4 @@
-#include <GameHelper/random.h>
+#include <game/random.h>
 
 #include <random>
 #include <ctime>

@@ -1,4 +1,4 @@
-#include <GameHelper/keyboard.h>
+#include <game/keyboard.h>
 #include <iostream>
 
 #ifndef NDEBUG

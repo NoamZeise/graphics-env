@@ -1,6 +1,7 @@
-#include <GameHelper/camera.h>
+#include <game/camera.h>
 
 #include <GLFW/glfw3.h>
+#include <glm/gtc/matrix_transform.hpp>
 
 namespace camera {
   FirstPerson::FirstPerson(glm::vec3 position) {
@@ -24,7 +25,7 @@ namespace camera {
       _position = pos;
   }
 
-  void FirstPerson::update(gamehelper::Input &input, gamehelper::Timer &timer) {
+  void FirstPerson::update(Input &input, Timer &timer) {
       viewUpdated = true;
 
       float velocity = _speed * timer.dt();

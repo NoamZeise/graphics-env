@@ -6,8 +6,8 @@
 #include <string>
 
 #include <graphics/render.h>
-#include <GameHelper/timer.h>
-#include <GameHelper/input.h>
+#include <game/timer.h>
+#include <game/input.h>
 #include <glm/glm.hpp>
 #ifndef NO_AUDIO
 #include <audio.h>
@@ -50,8 +50,8 @@ struct Manager {
     
     GLFWwindow *window;
     Render* render;
-    gamehelper::Timer timer;
-    gamehelper::Input input;
+    Timer timer;
+    Input input;
     float fov = 45.0f;
     float scale2d = 1.0f;
 #ifndef NO_AUDIO

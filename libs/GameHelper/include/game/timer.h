@@ -3,8 +3,6 @@
 
 #include <chrono>
 
-namespace gamehelper {
-
 class Timer {
 public:
     Timer();
@@ -25,7 +23,5 @@ private:
     timeDuration currentUpdate;
     long long elapsed = 0;
 };
-
-}
 
 #endif

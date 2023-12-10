@@ -5,17 +5,13 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #endif
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
-
-#include <iostream>
 
 #include "input.h"
 #include "timer.h"
 
 namespace camera {
+  
   class FirstPerson {
-
   public:
       FirstPerson() { _position = glm::vec3(0.0f, 0.0f, 0.0f); };
       FirstPerson(glm::vec3 position);
@@ -23,9 +19,7 @@ namespace camera {
       float getZoom();
       glm::vec3 getPos() { return _position; }
       void setPos(glm::vec3 pos);
-      virtual void update(gamehelper::Input &input, gamehelper::Timer &timer);
-
-
+      virtual void update(Input &input, Timer &timer);
   protected:
       glm::vec3 _position;
       glm::vec3 _front;
@@ -41,7 +35,6 @@ namespace camera {
       float _speed = 0.01f;
       float _sensitivity = 0.05f;
       float _zoom = 45.0f;
-
 
       void calculateVectors();
   };

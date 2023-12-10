@@ -1,5 +1,5 @@
 #include <manager.h>
-#include <GameHelper/camera.h>
+#include <game/camera.h>
 #include <graphics/glm_helper.h>
 #include <glm/gtc/matrix_inverse.hpp> //for inverseTranspose
 

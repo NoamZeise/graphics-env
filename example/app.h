@@ -5,7 +5,7 @@
 #include <thread>
 
 #include <manager.h>
-#include <GameHelper/camera.h>
+#include <game/camera.h>
 
 #define TIME_APP_DRAW_UPDATE
 //#define MULTI_UPDATE_ON_SLOW_DRAW

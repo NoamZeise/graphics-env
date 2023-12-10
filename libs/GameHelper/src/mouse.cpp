@@ -1,4 +1,4 @@
-#include <GameHelper/mouse.h>
+#include <game/mouse.h>
 
 #ifdef NDEBUG
 #include <iostream>
