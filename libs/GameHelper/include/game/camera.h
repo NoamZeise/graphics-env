@@ -1,5 +1,5 @@
-#ifndef FREE_CAMERA_H
-#define FREE_CAMERA_H
+#ifndef GAME_CAMERA_H
+#define GAME_CAMERA_H
 
 #ifndef GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -40,8 +40,6 @@ namespace camera {
   };
 
 
-}	//namesapce end
-
-
+} // namesapce end
 
 #endif

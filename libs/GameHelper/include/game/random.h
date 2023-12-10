@@ -1,7 +1,7 @@
-#ifndef GAMEHELPER_RANDOM_H
-#define GAMEHELPER_RANDOM_H
+#ifndef GAME_RANDOM_H
+#define GAME_RANDOM_H
 
-namespace gamehelper {
+namespace game {
     namespace random {
 	double real();
 	double posReal();

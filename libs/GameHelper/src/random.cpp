@@ -3,7 +3,7 @@
 #include <random>
 #include <ctime>
 
-namespace gamehelper {
+namespace game {
   
 class Random {
 public:
@@ -27,7 +27,7 @@ private:
 
 }
 
-gamehelper::Random randGen;
+game::Random randGen;
 
 namespace gamehelper {
 namespace random {
