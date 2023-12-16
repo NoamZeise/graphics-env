@@ -29,7 +29,7 @@ private:
 
 game::Random randGen;
 
-namespace gamehelper {
+namespace game {
 namespace random {
   double real() {
       return randGen.Real();
