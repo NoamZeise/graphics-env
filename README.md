@@ -11,6 +11,7 @@ A 2D and 3D renderer with vulkan or opengl backend, add rendering and update cod
 * Optional Resource Pools - keep some assets loaded, load and unload other assets
 
 ## Projects using this framework:
+* [Meditative Marble](https://github.com/NoamZeise/MeditativeMarble) - 2023 - 3D physics and procedurally loading world 
 * [Space Flight Explorer](https://github.com/NoamZeise/gbjam11) - 2023 - 3D Space Sim, GameBoy Graphics and Controls
 * [Robyn Hood](https://github.com/NoamZeise/Robyn-Hood) - 2022 - 2D On-rails Stealth Game
 * [Trials of The Pharaoh](https://github.com/NoamZeise/TrailsOfThePharaoh) - 2022 - 2D Light Ray Puzzle Game
@@ -75,6 +76,12 @@ cmake --build .
 Then the built binary should be in /build/examples/. Note that PortAudio and Libsndfile dlls wont be built with this, so on windows you'll need to copy the dlls for those into the same path as the example binary.
 
 # FAQ
+
+### Common Build Errors
+
+* Missing <vulkan/...> error
+pass `-D VULKAN_HEADERS_INSTALL_DIR=/your/path/to/your/installed/vulkan/headers`
+to cmake when generating this project
 
 ### Enabling other 3D model formats
 
