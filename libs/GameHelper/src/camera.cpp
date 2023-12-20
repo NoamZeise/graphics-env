@@ -2,6 +2,7 @@
 
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 namespace camera {
   FirstPerson::FirstPerson(glm::vec3 position) {
@@ -95,4 +96,69 @@ namespace camera {
       _up = glm::normalize(glm::cross(_right, _front));
   }
 
-} //namespace end
+
+
+  /// --- Third Person Camera ---
+
+  ThirdPerson::ThirdPerson() {
+      pos = glm::vec3(1, 0, 0);
+      worldPos = pos;
+      updateView();
+  }
+
+  void ThirdPerson::setWorldUp(glm::vec3 worldUp) {
+      this->worldUp = glm::normalize(worldUp);
+      updateView();
+  }
+
+  void ThirdPerson::setTarget(glm::vec3 target, float radius) {
+      this->target = target;
+      this->radius = radius;
+      targetMat = glm::translate(glm::mat4(1.0f), -target);
+      this->worldPos = target + (pos * radius);
+      updateView();
+  }
+
+  void ThirdPerson::setPos(glm::vec3 pos) { this->pos = pos; }
+
+  void ThirdPerson::control(glm::vec2 ctrlDir) {
+      ctrlDir *= inputSensitivity;
+      if (ctrlDir.x != 0 || ctrlDir.y != 0) {
+          float updot = glm::dot(forward, worldUp);
+          if (updot > camlimit && ctrlDir.y < 0 ||
+              -updot > camlimit && ctrlDir.y > 0)
+              ctrlDir.y = 0;
+          auto qx = glm::quat(cos(ctrlDir.x), (float)sin(ctrlDir.x) * up);
+          auto qy = glm::quat(cos(ctrlDir.y), (float)sin(ctrlDir.y) * left);
+          auto q = qx * qy;
+          auto c = glm::conjugate(q);
+          pos = q * pos * c;
+      }
+      updateView();
+  }
+
+  void ThirdPerson::updateView() {
+      targetForward = glm::normalize(glm::dot(pos, worldUp) * worldUp - pos);
+      targetLeft = glm::normalize(glm::cross(worldUp, targetForward));
+      forward = pos;
+      glm::vec3 pos = this->pos * radius + this->target;
+      // we normalize here as worldUp and forward
+      // are not perpendicular in general
+      left = glm::normalize(glm::cross(worldUp, forward));
+      up = glm::cross(forward, left);
+      view = glm::mat4(1.0f);
+      view[0][0] = left.x;
+      view[1][0] = left.y;
+      view[2][0] = left.z;
+      view[3][0] = -glm::dot(left, pos);
+      view[0][1] = up.x;
+      view[1][1] = up.y;
+      view[2][1] = up.z;
+      view[3][1] = -glm::dot(up, pos);
+      view[0][2] = forward.x;
+      view[1][2] = forward.y;
+      view[2][2] = forward.z;
+      view[3][2] = -glm::dot(forward, pos);
+  }
+
+} // namespace camera
