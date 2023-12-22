@@ -46,9 +46,8 @@ int main() {
 	anim.Update(manager.timer.dt());
 	if(manager.input.kb.press(GLFW_KEY_ESCAPE))
 	    glfwSetWindowShouldClose(manager.window, GLFW_TRUE);
-	cam.update(manager.input, manager.timer);
-	manager.fov = cam.getZoom();
-	manager.render->set3DViewMat(cam.getViewMatrix(), cam.getPos());
+	cam.flycamUpdate(manager.input, manager.timer);
+	manager.render->set3DViewMat(cam.getView(), cam.getPos());
 
 	if(manager.winActive()) {
 	    manager.render->DrawAnimModel(wolf, wolfMat, glm::inverseTranspose(wolfMat), &anim);

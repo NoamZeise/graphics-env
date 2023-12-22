@@ -10,50 +10,63 @@
 #include "timer.h"
 
 namespace camera {
-  
-  class FirstPerson {
+
+  class Base {
   public:
-      FirstPerson() { _position = glm::vec3(0.0f, 0.0f, 0.0f); };
+      Base() {}
+      virtual glm::mat4 getView() = 0;
+      virtual glm::vec3 getPos() = 0;
+  };
+  
+  class FirstPerson : public Base {
+  public:
+      FirstPerson() : Base() {};
       FirstPerson(glm::vec3 position);
-      glm::mat4 getViewMatrix();
-      float getZoom();
-      glm::vec3 getPos() { return _position; }
+
+      void control(glm::vec2 ctrlDir);
+      /// simple camera for flying around the world
+      void flycamUpdate(Input &input, Timer &timer);
+      
+      glm::mat4 getView() override;
+      glm::vec3 getPos() override;
       void setPos(glm::vec3 pos);
-      virtual void update(Input &input, Timer &timer);
-  protected:
-      glm::vec3 _position;
-      glm::vec3 _front;
-      glm::vec3 _up;
-      glm::vec3 _right;
-      glm::vec3 _worldUp = glm::vec3(0.0f, 0.0f, 1.0f);
-      glm::mat4 view = glm::mat4(1.0f);
-      bool viewUpdated = true;
 
-      float _yaw = 200.0f;
-      float _pitch = -20.0f;
-
-      float _speed = 0.01f;
-      float _sensitivity = 0.05f;
-      float _zoom = 45.0f;
-
+      float inputSensitivity = 1.0f;
+      
+  private:
       void calculateVectors();
+      
+      glm::vec3 pos;
+      glm::vec3 worldUp = glm::vec3(0.0f, 0.0f, 1.0f);
+
+      float yaw = 200.0f;
+      float pitch = -20.0f;
+
+      glm::vec3 forward;
+      glm::vec3 left;
+      glm::vec3 up;
+      glm::mat4 view = glm::mat4(1.0f);
   };
 
-  class ThirdPerson {
+  class ThirdPerson : public Base {
   public:
+
       ThirdPerson();
       void control(glm::vec2 ctrlDir);
       void setTarget(glm::vec3 target, float radius);
-      glm::mat4 getView() { return view; }
       
-      glm::vec3 getPos() { return worldPos; }
-      void setPos(glm::vec3 pos);
-      glm::vec3 getLocalPos() { return pos; }
-      void setWorldUp(glm::vec3 worldUp);
-      glm::vec3 getWorldUp() { return worldUp; }
-      glm::vec3 getTargetForward() { return targetForward; }
-      glm::vec3 getTargetLeft() { return targetLeft; }
+      glm::mat4 getView() override;
+      glm::vec3 getPos() override;
+      /// set pos in relation to target (ie camPos = pos + target).
+      /// normalizes given pos
+      void      setPos(glm::vec3 pos);
+      glm::vec3 getWorldUp();
+      /// must be non-zero
+      void      setWorldUp(glm::vec3 worldUp);
+      glm::vec3 getTargetForward();
+      glm::vec3 getTargetLeft();
 
+      /// a constant that ctrlDir is multiplied by
       float inputSensitivity = 1.0f;
       /// how close can the camera get to the top/bottom
       /// of the target. Range is [0, 1].
@@ -64,13 +77,13 @@ namespace camera {
     
       glm::vec3 worldUp = glm::normalize(glm::vec3(0, 0, 1));
 
-      //local space props
+      // local space props
       glm::vec3 pos;
       glm::vec3 forward, up, left;
 
-      // target/world space stuff
       float radius = 1.0f;
       glm::vec3 target;
+      
       glm::mat4 targetMat = glm::mat4(1.0f);
       glm::vec3 worldPos;
       glm::mat4 view;

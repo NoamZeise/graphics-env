@@ -16,7 +16,7 @@ App::App(RenderFramework defaultFramework) {
     
     loadAssets();
     
-    fpcam = camera::FirstPerson(glm::vec3(3.0f, 0.0f, 2.0f));
+    fpcam = camera::FirstPerson(glm::vec3(3.0f, 0.0f, 3.0f));
     finishedDrawSubmit = true;
     manager->audio.Play("audio/test.wav", false, 1.0f);
 }
@@ -70,7 +70,7 @@ void App::update() {
 
   rotate += manager->timer.dt() * 0.001f;
   
-  fpcam.update(manager->input, manager->timer);
+  fpcam.flycamUpdate(manager->input, manager->timer);
 
   postUpdate();
 #ifdef TIME_APP_DRAW_UPDATE
@@ -144,8 +144,7 @@ void App::controls() {
 }
 
 void App::postUpdate() {
-  manager->fov = fpcam.getZoom();
-  manager->render->set3DViewMat(fpcam.getViewMatrix(), fpcam.getPos());
+  manager->render->set3DViewMat(fpcam.getView(), fpcam.getPos());
 }
 
 void App::draw() {

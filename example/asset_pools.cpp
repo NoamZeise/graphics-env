@@ -79,9 +79,8 @@ int main(int argc, char** argv) {
 	
 	if(manager.input.kb.press(GLFW_KEY_ESCAPE))
 	    glfwSetWindowShouldClose(manager.window, GLFW_TRUE);
-	cam.update(manager.input, manager.timer);
-	manager.fov = cam.getZoom();
-	manager.render->set3DViewMat(cam.getViewMatrix(), cam.getPos());
+	cam.flycamUpdate(manager.input, manager.timer);
+	manager.render->set3DViewMat(cam.getView(), cam.getPos());
 
 	if(manager.winActive()) {
 	    wolf.Draw(manager.render);
@@ -96,7 +95,7 @@ int main(int argc, char** argv) {
 								tex.dim.x * 5,
 								tex.dim.y * 5)));
 	    manager.render->DrawString(font, "Graphics Environment", glm::vec2(220.0f, 50.0f),
-				       50.0f, 0.1f, glm::vec4(1.0f, 0.5f, 1.0f, 1.0f));
+				       50.0f, 1.0f, glm::vec4(1.0f, 0.5f, 1.0f, 1.0f));
 	    std::atomic<bool> drawSubmitted;
 	    manager.render->EndDraw(drawSubmitted);
 	}
