@@ -17,6 +17,7 @@ struct ModelDraw {
     ModelDraw(Resource::Model model, glm::mat4 mat, Resource::ModelAnimation anim);
     void Update(float time);
     void Draw(Render *render);
+    void setMat(glm::mat4 mat);
 };
 
 int main(int argc, char** argv) {
@@ -48,6 +49,8 @@ int main(int argc, char** argv) {
     ModelDraw monkey = ModelDraw(
 	    pool1->model()->load("models/monkey.obj"),
 	    glm::translate(base, glm::vec3(0.0f, -8.0f, -10.0f)));
+    ModelDraw sphere = ModelDraw(
+	    pool1->model()->load("models/sphere.obj"), glm::mat4(1.0f));
 
     //create another pool
     ResourcePool* pool2 = manager.render->CreateResourcePool();
@@ -70,7 +73,10 @@ int main(int argc, char** argv) {
     manager.render->LoadResourcesToGPU(pool2);
     manager.render->UseLoadedResources();
 
-    camera::FirstPerson cam;
+    camera::ThirdPerson cam;
+    cam.setForward(glm::vec3(-1, 0, 0));
+    glm::vec3 spherePos(0, 1, 0);
+    float radius = 5.0f;
     
     while(!glfwWindowShouldClose(manager.window)) {
 	manager.update();
@@ -79,12 +85,35 @@ int main(int argc, char** argv) {
 	
 	if(manager.input.kb.press(GLFW_KEY_ESCAPE))
 	    glfwSetWindowShouldClose(manager.window, GLFW_TRUE);
-	cam.flycamUpdate(manager.input, manager.timer);
+
+	float speed = 0.01f * manager.timer.dt();
+	if(manager.input.kb.hold(GLFW_KEY_W))
+	    spherePos += cam.getTargetForward() * speed;
+	if(manager.input.kb.hold(GLFW_KEY_S))
+	    spherePos -= cam.getTargetForward() * speed;
+	if(manager.input.kb.hold(GLFW_KEY_A))
+	    spherePos += cam.getTargetLeft() * speed;
+	if(manager.input.kb.hold(GLFW_KEY_D))
+	    spherePos -= cam.getTargetLeft() * speed;
+	if(manager.input.kb.hold(GLFW_KEY_LEFT_SHIFT))
+	    spherePos -= cam.worldUp * speed;
+	if(manager.input.kb.hold(GLFW_KEY_SPACE))
+	    spherePos += cam.worldUp * speed;
+
+	sphere.setMat(glm::translate(glm::mat4(1.0f), spherePos));
+	radius -= manager.input.m.scroll() * manager.timer.dt() * 0.01f;
+	cam.setTarget(spherePos, radius);	
+	cam.control(
+		-glm::vec2(manager.input.m.dx(),manager.input.m.dy())
+		* (float)manager.timer.dt() * 0.0001f);
+
+	
 	manager.render->set3DViewMat(cam.getView(), cam.getPos());
 
 	if(manager.winActive()) {
 	    wolf.Draw(manager.render);
 	    monkey.Draw(manager.render);
+	    sphere.Draw(manager.render);
             manager.render->DrawQuad(tex,
 				     glmhelper::calcMatFromRect(
 					     glm::vec4(10.0f, 10.0f, 200.0f, 200.0f),
@@ -105,16 +134,15 @@ int main(int argc, char** argv) {
 
 ModelDraw::ModelDraw(Resource::Model model, glm::mat4 mat) {
     this->model = model;
-    this->drawMat = mat;
     this->normalMat = glm::inverseTranspose(mat);
+    setMat(mat);
 }
 
 ModelDraw::ModelDraw(Resource::Model model, glm::mat4 mat, Resource::ModelAnimation anim) {
     this->model = model;
-    this->drawMat = mat;
-    this->normalMat = glm::inverseTranspose(mat);
     this->anim = anim;
     this->animated = true;
+    setMat(mat);
 }
 void ModelDraw::Draw(Render *render) {
     if(animated)
@@ -126,4 +154,9 @@ void ModelDraw::Draw(Render *render) {
 void ModelDraw::Update(float time) {
     if(animated)
 	anim.Update(time);
+}
+
+void ModelDraw::setMat(glm::mat4 mat) {
+    this->drawMat = mat;
+    this->normalMat = glm::inverseTranspose(mat);
 }
