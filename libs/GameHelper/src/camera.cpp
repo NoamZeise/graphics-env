@@ -1,3 +1,4 @@
+
 #include <game/camera.h>
 
 #include <GLFW/glfw3.h>
@@ -92,7 +93,8 @@ namespace camera {
 	  controller.x = fabs(controller.x) > 0.15 ? controller.x : 0;
 	  controller.y = fabs(controller.y) > 0.15 ? controller.y : 0;
       }
-      control(-glm::vec2(input.m.dx(), input.m.dy()) * (float)timer.dt() * 0.00005f);
+      control((-glm::vec2(input.m.dx(), input.m.dy()) + controller)
+	      * (float)timer.dt() * 0.00005f);
   }
 
 
