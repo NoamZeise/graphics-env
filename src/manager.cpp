@@ -105,8 +105,6 @@ void Manager::update() {
 		   0.0f,
 		   render->getRenderConf().depth_range_2D[0],
 		   render->getRenderConf().depth_range_2D[1]);
-
-
     render->set2DProjMat(proj2d);
 }
 
@@ -125,15 +123,16 @@ void Manager::toggleFullscreen() {
     setFullscreen(glfwGetWindowMonitor(window) == NULL);
 }
 
-void Manager::setWindowSize(int width, int height, bool updateGlfw) {
+void Manager::setWindowSize(int width, int height) {
     winWidth = width;
     winHeight = height;
-    if(updateGlfw && glfwGetWindowMonitor(window) == NULL)
+    if(glfwGetWindowMonitor(window) == NULL)
 	glfwSetWindowSize(window, winWidth, winHeight);
 }
 
-void Manager::setWindowSize(int width, int height) {
-    setWindowSize(width, height, true);
+void Manager::_windowSizeCallback(int width, int height){
+    winWidth = width;
+    winHeight = height;
 }
 
 glm::vec2 Manager::screenToRenderSpace(glm::vec2 pos) {
@@ -189,7 +188,7 @@ RenderFramework chooseRenderFramework(RenderFramework preferred) {
 
 void framebufferSizeCallback(GLFWwindow *window, int width, int height) {
   Manager *manager = reinterpret_cast<Manager *>(glfwGetWindowUserPointer(window));
-  manager->setWindowSize(width, height, false);
+  manager->_windowSizeCallback(width, height);
   if(width != 0 && height != 0)
       manager->render->FramebufferResize();
 }

@@ -42,8 +42,10 @@ struct Manager {
     void update();
     void setFullscreen(bool fullscreen);
     void toggleFullscreen();
-    void setWindowSize(int width, int height, bool updateGlfw);
     void setWindowSize(int width, int height);
+    /// used by glfw callback to set the window size values
+    /// when the user changes the size of the window.
+    void _windowSizeCallback(int width, int height);
     glm::vec2 winSize();
     bool winActive();
     RenderFramework backend();

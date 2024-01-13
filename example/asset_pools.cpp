@@ -34,7 +34,6 @@ int main(int argc, char** argv) {
     state.conf.vsync = true;
     state.defaultRenderer = framework;
     Manager manager(state);
-
     //no pool, loads to default pool
     ResourcePool* defaultPool = manager.render->pool();
     Resource::Font font = defaultPool->font()->load("textures/Roboto-Black.ttf");
