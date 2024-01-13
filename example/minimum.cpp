@@ -2,6 +2,7 @@
 #include <game/camera.h>
 #include <graphics/glm_helper.h>
 #include <glm/gtc/matrix_inverse.hpp> //for inverseTranspose
+#include <graphics/logger.h>
 
 // This example shows the main functionality of the graphics environment
 // With a minimum amount of code around it.
@@ -39,6 +40,7 @@ int main() {
     manager.render->UseLoadedResources();
 
     camera::FirstPerson cam;
+    cam.setPos(glm::vec3(0, 0, 0));
     manager.audio.Play("audio/test.wav", false, 1.0f);
     
     while(!glfwWindowShouldClose(manager.window)) {
@@ -48,7 +50,7 @@ int main() {
 	    glfwSetWindowShouldClose(manager.window, GLFW_TRUE);
 	cam.flycamUpdate(manager.input, manager.timer);
 	manager.render->set3DViewMat(cam.getView(), cam.getPos());
-
+	
 	if(manager.winActive()) {
 	    manager.render->DrawAnimModel(wolf, wolfMat, glm::inverseTranspose(wolfMat), &anim);
 	    manager.render->DrawModel(monkey, monkeyMat, glm::inverseTranspose(monkeyMat));

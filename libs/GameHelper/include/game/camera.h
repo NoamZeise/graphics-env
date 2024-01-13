@@ -13,15 +13,18 @@ namespace camera {
 
   class Base {
   public:
-      Base() {}
+      Base();
       glm::mat4 getView() { return view; };
       glm::vec3 getPos() { return pos; };
-
+      /// normalizes given vector
+      /// if given the zero vector, will set
+      /// to some default direction.
+      void setForward(glm::vec3 forward);
       /// needs to be a normalized vector
       glm::vec3 worldUp = glm::vec3(0, 0, 1);
   protected:
       glm::vec3 pos;
-      glm::vec3 forward, left, up;
+      glm::vec3 forward = glm::vec3(1, 0, 0), left, up;
       /// calc camera basis vectors using forwards vector and given up
       /// also updates view
       void calcBasis();
@@ -34,8 +37,11 @@ namespace camera {
   public:
       FirstPerson();
       FirstPerson(glm::vec3 position);
+      /// move the camera's pitch and yaw
+      /// using the given `ctrlDir` vector
       void control(glm::vec2 ctrlDir);
       /// simple camera for flying around the world
+      /// an alternate to using the control fn
       void flycamUpdate(Input &input, Timer &timer);
       void setPos(glm::vec3 pos);
   };
@@ -45,12 +51,12 @@ namespace camera {
       ThirdPerson();
       void control(glm::vec2 ctrlDir);
       void setTarget(glm::vec3 target, float radius);
-      /// normalizes given vector
-      /// can't be the zero vector
-      void setForward(glm::vec3 forward);
+      /// camera perspective forward direction
       glm::vec3 getTargetForward();
+      /// camera perspective left direction
       glm::vec3 getTargetLeft();
-      /// how close can the camera get to the top/bottom
+      
+      /// how close can the camera can get to the top/bottom
       /// of the target. Range is [0, 1].
       float camlimit = 0.9;
   protected:
@@ -58,7 +64,7 @@ namespace camera {
       
       float radius = 1.0f;
       glm::vec3 target;
-      // for controlling target movement
+
       glm::vec3 targetForward;
       glm::vec3 targetLeft;
   };

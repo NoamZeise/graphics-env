@@ -9,9 +9,13 @@
 
 namespace camera {
 
+  const glm::vec3 DEFAULT_FORWARD = glm::vec3(1, 0, 0);
+  
+  Base::Base() { forward = DEFAULT_FORWARD; }
+  
   void Base::calcBasis() {
       if(forward == glm::vec3(0))
-	  forward = glm::vec3(1, 0, 0);
+	  forward = DEFAULT_FORWARD;
       left = glm::normalize(glm::cross(worldUp, forward));
       up = glm::cross(forward, left);
       updateView();
@@ -101,7 +105,6 @@ namespace camera {
   /// --- Third Person Camera ---
 
   ThirdPerson::ThirdPerson() : Base() {
-      forward = glm::vec3(1, 0, 0);
       updateView();
   }
 
@@ -111,11 +114,11 @@ namespace camera {
       updateView();
   }
 
-  void ThirdPerson::setForward(glm::vec3 forward) {
+  void Base::setForward(glm::vec3 forward) {
       if(forward != glm::vec3(0))
 	  this->forward = glm::normalize(forward);
       else
-	  this->forward = glm::vec3(1, 0, 0);
+	  this->forward = DEFAULT_FORWARD;
       updateView();
   }
 
