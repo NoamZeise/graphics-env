@@ -2,7 +2,6 @@
 #include <game/camera.h>
 #include <graphics/glm_helper.h>
 #include <glm/gtc/matrix_inverse.hpp> //for inverseTranspose
-#include <graphics/logger.h>
 
 // This example shows the main functionality of the graphics environment
 // With a minimum amount of code around it.

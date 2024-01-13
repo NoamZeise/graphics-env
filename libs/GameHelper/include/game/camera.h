@@ -19,7 +19,7 @@ namespace camera {
       /// normalizes given vector
       /// if given the zero vector, will set
       /// to some default direction.
-      void setForward(glm::vec3 forward);
+      virtual void setForward(glm::vec3 forward);
       /// needs to be a normalized vector
       glm::vec3 worldUp = glm::vec3(0, 0, 1);
   protected:
@@ -55,6 +55,7 @@ namespace camera {
       glm::vec3 getTargetForward();
       /// camera perspective left direction
       glm::vec3 getTargetLeft();
+      void setForward(glm::vec3 forward) override;
       
       /// how close can the camera can get to the top/bottom
       /// of the target. Range is [0, 1].

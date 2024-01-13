@@ -1,4 +1,3 @@
-
 #include <game/camera.h>
 
 #include <GLFW/glfw3.h>
@@ -35,6 +34,13 @@ namespace camera {
       view[1][2] = forward.y;
       view[2][2] = forward.z;
       view[3][2] = -glm::dot(forward, pos);
+  }
+
+  void Base::setForward(glm::vec3 forward) {
+      if(forward != glm::vec3(0))
+	  this->forward = glm::normalize(forward);
+      else
+	  this->forward = DEFAULT_FORWARD;
   }
   
 
@@ -114,11 +120,8 @@ namespace camera {
       updateView();
   }
 
-  void Base::setForward(glm::vec3 forward) {
-      if(forward != glm::vec3(0))
-	  this->forward = glm::normalize(forward);
-      else
-	  this->forward = DEFAULT_FORWARD;
+  void ThirdPerson::setForward(glm::vec3 forward) {
+      Base::setForward(forward);
       updateView();
   }
 

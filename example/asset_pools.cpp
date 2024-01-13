@@ -81,7 +81,6 @@ int main(int argc, char** argv) {
 	manager.update();
 	
 	wolf.Update(manager.timer.dt());
-	
 	if(manager.input.kb.press(GLFW_KEY_ESCAPE))
 	    glfwSetWindowShouldClose(manager.window, GLFW_TRUE);
 
