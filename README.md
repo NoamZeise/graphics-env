@@ -85,15 +85,15 @@ to cmake when generating this project
 
 ### Enabling other 3D model formats
 
-To use formats other than `.obj` and `.fbx`, you must set `ASSIMP_BUILD_XYZ_IMPORTER` to true, where `XYZ` is your format, before loading the cmake files for this project.
+To use formats other than those enabled by default, you must set `ASSIMP_BUILD_XYZ_IMPORTER` to true, where `XYZ` is your format, before loading the cmake files for this project.
 
-For example to enable the gltf format, you would have `set(ASSIMP_BUILD_GLTF_IMPORTER TRUE)` somewhere in your cmake file before calling `add_subdirectory(Graphics-Environment)`. Check the [assimp](https://assimp.org/) docs for more info on supported formats.
+For example to enable the blend format, you would have `set(ASSIMP_BUILD_BLEND_IMPORTER TRUE)` somewhere in your cmake file before calling `add_subdirectory(Graphics-Environment)`. Check the [assimp](https://assimp.org/) docs for more info on supported formats.
 
 You should then be able to load these newly enabled formats the same as you load the default ones.
 
 ### Proper export settings for 3D modelling software
 
-When exporting your model as fbx, ensure you are using relative paths to textures.
+When exporting your models, ensure you are using relative paths to textures.
 Also ensure that models are exported with the Z Up direction option.
 
 # Todo list:

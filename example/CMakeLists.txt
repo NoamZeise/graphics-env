@@ -10,6 +10,10 @@ add_executable(switch_scenes switch_scenes.cpp)
 target_link_options(switch_scenes PRIVATE ${SUBSYSTEM_LINKER_OPTIONS})
 target_link_libraries(switch_scenes GraphicsEnv)
 
+add_executable(animated_models animated_models.cpp)
+target_link_options(animated_models PRIVATE ${SUBSYSTEM_LINKER_OPTIONS})
+target_link_libraries(animated_models GraphicsEnv)
+
 # only need to copy files for one example
 # as they are all built in the same folder
 set(exec-name minimum)

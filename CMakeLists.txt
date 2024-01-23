@@ -19,7 +19,7 @@ endif()
 project(Graphics-Env-Proj VERSION 1.0)
 
 set(CMAKE_CXX_STANDARD 14)
-  
+
 add_subdirectory(libs)
 add_subdirectory(src)
 
