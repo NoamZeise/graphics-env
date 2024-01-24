@@ -1,6 +1,7 @@
 #include <manager.h>
 #include <game/camera.h>
 #include <graphics/glm_helper.h>
+#include <graphics/model_gen.h>
 #include <glm/gtc/matrix_inverse.hpp> //for inverseTranspose
 #include <cstring>
 
@@ -43,12 +44,16 @@ int main(int argc, char** argv) {
     glm::mat4 base = glm::rotate(glm::mat4(1.0f), glm::radians(270.0f),
 				 glm::vec3(-1.0f, 0.0f, 0.0f));
     
-    //use this pool to load a model
+    //use this pool to load models
     ModelDraw monkey = ModelDraw(
 	    pool1->model()->load("models/monkey.obj"),
 	    glm::translate(base, glm::vec3(0.0f, -8.0f, -10.0f)));
+    ModelInfo::Model sphereData = genSurface([](float a, float b){
+	return glm::vec3(sin(a)*cos(b), sin(a)*sin(b), cos(a));
+    }, true, 1.0, {0, 22.0/7, 0.1}, {0, 44.0/7, 0.1});
+    sphereData.meshes[0].diffuseColour = glm::vec4(0.5f, 0.7f, 0.0f, 1.0f);
     ModelDraw sphere = ModelDraw(
-	    pool1->model()->load("models/sphere.obj"), glm::mat4(1.0f));
+	    pool1->model()->load(sphereData), glm::mat4(1.0f));
 
     //create another pool
     ResourcePool* pool2 = manager.render->CreateResourcePool();

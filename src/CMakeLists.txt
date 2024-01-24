@@ -1,4 +1,7 @@
-add_library(GraphicsEnv manager.cpp)
+add_library(GraphicsEnv
+  manager.cpp
+  model_gen.cpp
+)
 add_dependencies(GraphicsEnv GameHelper OutfacingGraphics)
 target_link_libraries(GraphicsEnv PUBLIC GameHelper OutfacingGraphics)
 if(NOT NO_VULKAN)
