@@ -255,15 +255,13 @@ void App::controls() {
 	manager->render->setRenderConf(renderConf);
     }
     if(!sceneChangeInProgress) {
-	if(manager->input.kb.hold(GLFW_KEY_1)) {
+	if(manager->input.kb.hold(GLFW_KEY_N)) {
 	    if(current != Scene::Test1) {
 		assetsLoaded = false;
 		assetLoadThread = std::thread(&App::loadTestScene1, this, std::ref(assetsLoaded));
 		sceneChangeInProgress = true;
 	    }
-	}
-	if(manager->input.kb.hold(GLFW_KEY_2)) {
-	    if(current != Scene::Test2) {
+	    else if(current != Scene::Test2) {
 		assetsLoaded = false;
 		assetLoadThread = std::thread(&App::loadTestScene2, this, std::ref(assetsLoaded));
 		sceneChangeInProgress = true;
@@ -310,8 +308,7 @@ void App::draw() {
   #endif
 
   if(manager->backend() == RenderFramework::Vulkan)
-      submitDraw = std::thread(
-	      &Render::EndDraw, manager->render, std::ref(finishedDrawSubmit));
+      submitDraw = std::thread([=]{manager->render->EndDraw(finishedDrawSubmit);});
   else
       manager->render->EndDraw(finishedDrawSubmit);
   
@@ -394,7 +391,7 @@ void App::drawTestScene1() {
   manager->render->DrawAnimModel(wolf1, model, glm::inverseTranspose(model), &wolfAnim1);
 
 
-  manager->render->DrawString(testFont1, "Scene 1", glm::vec2(10, 100), 40, 1.0f, glm::vec4(1), 0.0f);
+  manager->render->DrawString(testFont1, "Scene 1 - N to switch", glm::vec2(10, 100), 30, 1.0f, glm::vec4(1), 0.0f);
   if(sceneChangeInProgress) {
     manager->render->DrawString(testFont1, "Loading", glm::vec2(200, 400), 40, 1.0f, glm::vec4(1), 0.0f);
    }
@@ -469,7 +466,7 @@ void App::drawTestScene2() {
                      glm::vec3(1.0f));
   manager->render->DrawModel(colouredCube2, model, glm::inverseTranspose(model));
 
-  manager->render->DrawString(testFont2, "Scene 2", glm::vec2(10, 100), 40, 1.0f, glm::vec4(1), 0.0f);
+  manager->render->DrawString(testFont2, "Scene 2 - N to switch", glm::vec2(10, 100), 30, 1.0f, glm::vec4(1), 0.0f);
 
   if(sceneChangeInProgress) {
       manager->render->DrawString(testFont2, "Loading", glm::vec2(200, 400), 40, 1.0f, glm::vec4(1), 0.0f);
