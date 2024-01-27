@@ -5,6 +5,17 @@ out vec4 colour;
 
 uniform sampler2D screenTexture;
 
+struct Props {
+  float time;
+};
+
+uniform Props ps;
+
 void main() {
-  colour = texture(screenTexture, inUV);
+  vec2 uv = inUV;
+  uv.x *= (1 - sin(ps.time));
+  uv.y *= (1 - sin(ps.time));
+  uv.x *= uv.x;
+  uv.y *= uv.y;
+  colour = texture(screenTexture, uv);
 }

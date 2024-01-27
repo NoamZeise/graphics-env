@@ -14,10 +14,11 @@ if(UNIX)
 endif()
 
 # copy resources folder to built executable path
-add_custom_command(TARGET ${exec-name} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-    "${CMAKE_CURRENT_LIST_DIR}/../resources"
-    $<TARGET_FILE_DIR:${exec-name}>)
+#add_custom_command(TARGET ${exec-name} POST_BUILD
+#    COMMAND ${CMAKE_COMMAND} -E copy_directory
+#    "${CMAKE_CURRENT_LIST_DIR}/../resources"
+#    $<TARGET_FILE_DIR:${exec-name}>)
+  
 
 
 # Copy any shared libs built by this project

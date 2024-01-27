@@ -17,6 +17,10 @@ layout(std140, set = 1, binding = 0) readonly buffer PerInstanceData
     Obj3DPerFrame data[];
 } pid;
 
+layout(set = 2, binding = 0) uniform propsUBO {
+  float time;
+} ps;
+
 
 layout(location = 0) in vec3 inPos;
 layout(location = 1) in vec3 inNormal;
@@ -32,6 +36,8 @@ void main()
 {
     outTexCoord = inTexCoord;
     vec4 fragPos = pid.data[gl_InstanceIndex].model * vec4(inPos, 1.0);
+    fragPos.y *= (1 - 0.3*sin(ps.time));
+    fragPos.z *= (1 - 0.3*sin(ps.time + 22.2));
     outNormal_world = vec3(pid.data[gl_InstanceIndex].normalMat_M * vec4(inNormal, 0.0));
 
     gl_Position = ubo.proj * ubo.view * fragPos;

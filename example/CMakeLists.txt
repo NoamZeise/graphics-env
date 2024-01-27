@@ -18,3 +18,8 @@ target_link_libraries(animated_models GraphicsEnv)
 # as they are all built in the same folder
 set(exec-name minimum)
 include("${CMAKE_CURRENT_SOURCE_DIR}/../cmake/copy-resources.cmake")
+
+add_custom_command(TARGET ${exec-name} POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_directory
+  "${CMAKE_CURRENT_LIST_DIR}/../resources"
+  $<TARGET_FILE_DIR:${exec-name}>)
