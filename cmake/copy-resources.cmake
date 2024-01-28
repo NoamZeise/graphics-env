@@ -49,3 +49,8 @@ if(NOT VKENV_BUILD_STATIC)
     $<TARGET_FILE_DIR:glfw>
     $<TARGET_FILE_DIR:${exec-name}>)
 endif()
+
+  add_custom_command(TARGET ${exec-name} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    $<TARGET_FILE_DIR:glm>
+    $<TARGET_FILE_DIR:${exec-name}>)
