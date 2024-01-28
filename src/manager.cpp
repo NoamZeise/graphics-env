@@ -99,12 +99,17 @@ void Manager::update() {
 		render->getRenderConf().depth_range_3D[1]);
     render->set3DProjMat(proj3d);
     glm::mat4 proj2d =
-	glm::ortho(0.0f,
+	(framework == RenderFramework::Vulkan) ? glm::ortho(0.0f,
+		   render->offscreenSize().x * scale2d,
+		   render->offscreenSize().y * scale2d,
+		   0.0f,							    render->getRenderConf().depth_range_2D[0],
+							    render->getRenderConf().depth_range_2D[1]) :
+	 glm::ortho(0.0f,
 		   render->offscreenSize().x * scale2d,
 		   render->offscreenSize().y * scale2d,
 		   0.0f,
-		   render->getRenderConf().depth_range_2D[0],
-		   render->getRenderConf().depth_range_2D[1]);
+		   render->getRenderConf().depth_range_2D[1],
+		   render->getRenderConf().depth_range_2D[0]);;
     render->set2DProjMat(proj2d);
 }
 
