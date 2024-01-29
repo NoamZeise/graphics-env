@@ -59,7 +59,7 @@ namespace camera {
       
       /// how close can the camera can get to the top/bottom
       /// of the target. Range is [0, 1].
-      float camlimit = 0.9;
+      float camlimit = 0.9f;
   protected:
       void updateView();
       
