@@ -3,6 +3,7 @@
 
 #include <manager.h>
 #include <game/camera.h>
+#include <iostream>
 
 #define TIME_APP_DRAW_UPDATE
 //#define MULTI_UPDATE_ON_SLOW_DRAW

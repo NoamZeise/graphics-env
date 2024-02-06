@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
     AnimatedModel robot("models/robot.gltf", pool->model(), 0.1f,
 			glm::vec3(140.0f, -5.0f, 20.0f), "textures/robot/");
     Resource::Font font = pool->font()->load("textures/Roboto-Black.ttf");
-    
+
     manager.render->LoadResourcesToGPU(pool);
     manager.render->UseLoadedResources();
 
@@ -85,6 +85,7 @@ int main(int argc, char** argv) {
 	if(manager.winActive()) {
 	    wolf.draw(manager.render);
 	    robot.draw(manager.render);
+
 	    manager.render->DrawString(font, "Press N to cycle animations",
 				       glm::vec2(20.0f, 30.0f),
 				       20.0f, 1.0f, glm::vec4(1.0f, 0.5f, 1.0f, 1.0f));
