@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.21)
 
 include("cmake/project-setup.cmake")
 
@@ -33,6 +33,6 @@ set(CMAKE_CXX_STANDARD 14)
 add_subdirectory(libs)
 add_subdirectory(src)
 
-if(GRAPHICS_BUILD_EXAMPLES)
+if(GRAPHICS_BUILD_EXAMPLES OR PROJECT_IS_TOP_LEVEL)
   add_subdirectory(example)
 endif()
