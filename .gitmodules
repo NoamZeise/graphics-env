@@ -1,9 +1,12 @@
 [submodule "libs/Graphics/libs/VulkanEnvironment"]
 	path = libs/VulkanEnvironment
 	url = https://github.com/NoamZeise/Vulkan-Environment.git
+	shallow = true
 [submodule "libs/Graphics/libs/OpenGlEnvironment"]
 	path = libs/OpenGLEnvironment
 	url = https://github.com/NoamZeise/OpenGL-Environment.git
+	shallow = true
 [submodule "libs/GameHelper/libs/audio"]
 	path = libs/audio
 	url = https://github.com/NoamZeise/audio.git
+	shallow = true
