@@ -3,13 +3,10 @@
 #include <graphics/glm_helper.h>
 #include <glm/gtc/matrix_inverse.hpp>
 
-// This example shows the main functionality of the graphics environment
-// With a minimum amount of code around it.
+// This example shows minimum functionality of the graphics environment
+// With none of the optional libs
 //
-// The program draws a 3D model, and animated 3D model,
-// a texture that tiles, and some text.
-// It also plays audio and uses the 3D first person camera to
-// move through the scene. (so you can use a keyboard/mouse or a controller)
+// The program draws a textured quad
 // Press Esc to exit.
 
 int main() {
