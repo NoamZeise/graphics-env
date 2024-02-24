@@ -36,7 +36,7 @@ double Mouse::dx() { return this->state.x - this->prevState.x; }
 
 double Mouse::dy() { return this->state.y - this->prevState.y; }
 
-double Mouse::y() { return this->state.x; }
+double Mouse::y() { return this->state.y; }
 
 double Mouse::scroll() { return this->state.scroll; }
 
