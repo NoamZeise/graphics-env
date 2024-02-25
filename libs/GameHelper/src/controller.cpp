@@ -55,6 +55,7 @@ ControllerState::ControllerState() {
 static void joyCallback(int jid, int event) {
     if(event == GLFW_CONNECTED && glfwJoystickIsGamepad(jid)) {
 	std::cout << "controller connected id: " << jid << std::endl;
+	controllerStateChanged = true;
 	controllersConnected[jid] = true;
     }
     if(event == GLFW_DISCONNECTED && controllersConnected[jid]) {
