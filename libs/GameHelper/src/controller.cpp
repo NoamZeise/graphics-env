@@ -107,13 +107,13 @@ void ControllerManager::update() {
 	controllerStateChanged = false;
     }
     for(int i = 0; i < controllers->c.size(); i++) {
+	controllers->c[i].prev = controllers->c[i].current;
 	GLFWgamepadstate state;
 	if(glfwGetGamepadState(controllers->c[i].ID, &state)) {
 	    for(int b = 0; b <= GLFW_GAMEPAD_BUTTON_LAST; b++)
 		controllers->c[i].current.button[b] = state.buttons[b];
 	    for(int a = 0; a < GLFW_GAMEPAD_AXIS_LAST; a++)
 		controllers->c[i].current.axis[a] = state.axes[a];
-	    controllers->c[i].prev = controllers->c[i].current;
 	}
     }
 }
@@ -124,7 +124,6 @@ bool ControllerManager::connected(int controller) {
 
 bool ControllerManager::hold(int controller, int btn) {
     if(!connected(controller)) {
-	std::cerr << "no controller connected to that slot\n";
 	return false;
     }
     return controllers->c[controller].hold(btn);
@@ -132,7 +131,6 @@ bool ControllerManager::hold(int controller, int btn) {
 
 bool ControllerManager::press(int controller, int btn) {
     if(!connected(controller)) {
-	std::cerr << "no controller connected to that slot\n";
 	return false;
     }
     return controllers->c[controller].press(btn);
@@ -140,7 +138,6 @@ bool ControllerManager::press(int controller, int btn) {
 
 float ControllerManager::axis(int controller, int axis) {
     if(!connected(controller)) {
-	std::cerr << "no controller connected to that slot\n";
 	return false;
     }
     return controllers->c[controller].axis(axis);
