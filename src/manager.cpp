@@ -139,8 +139,9 @@ glm::vec2 Manager::screenToRenderSpace(glm::vec2 pos) {
     RenderConfig conf = render->getRenderConf();
     
     if(conf.target_resolution[0] != 0.0 && conf.target_resolution[1] != 0.0)
-      return glm::vec2(pos.x * (conf.target_resolution[0] / (float)winWidth),
-		       pos.y * (conf.target_resolution[1] / (float)winHeight));
+      return glm::vec2(
+	      pos.x * (conf.target_resolution[0] / (float)winWidth),
+	      pos.y * (conf.target_resolution[1] / (float)winHeight));
     return pos;
 }
 

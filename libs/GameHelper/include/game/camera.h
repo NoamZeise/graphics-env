@@ -56,6 +56,7 @@ namespace camera {
       /// camera perspective left direction
       glm::vec3 getTargetLeft();
       void setForward(glm::vec3 forward) override;
+      glm::vec3 getForward() { return forward; }
       
       /// how close can the camera can get to the top/bottom
       /// of the target. Range is [0, 1].
