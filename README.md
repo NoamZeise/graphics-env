@@ -1,16 +1,24 @@
-# Work in progress Game Framework
-A 2D and 3D renderer with vulkan or opengl backend, add rendering and update code into app.cpp. Works with Windows or Linux.
+# Work in progress graphics library
+A 2D and 3D renderer with vulkan or opengl backend.
+See `examples/` folder for simple programs using this library.
+More complete programs are listed below.
 
 ## Features:
 
+Graphics Features
 * Import and Draw 3D models, or generate your own (limited support for materials)
 * Import and Draw image textures, or generate your own
 * Import and Draw fonts
-* Play .wav and .ogg audio files
 * 3D Skeletal Animation
 * Optional Resource Pools - keep some assets loaded, load and unload other assets
+Non-Graphics Features
+* Simple keyboard/mouse/controller input 
+* First and Third person cameras
+* audio playback
 
 ## Projects using this framework:
+* [Orbbit](https://github.com/NoamZeise/dsg-2024) - 2024 - 2D/3D planet gravity game
+* [Cat Flat](https://github.com/NoamZeise/GGJ2024) - 2024 - 2D physics based fish frying game
 * [Meditative Marble](https://github.com/NoamZeise/MeditativeMarble) - 2023 - 3D physics and procedurally loading world 
 * [Space Flight Explorer](https://github.com/NoamZeise/gbjam11) - 2023 - 3D Space Sim, GameBoy Graphics and Controls
 * [Robyn Hood](https://github.com/NoamZeise/Robyn-Hood) - 2022 - 2D On-rails Stealth Game
@@ -19,7 +27,7 @@ A 2D and 3D renderer with vulkan or opengl backend, add rendering and update cod
 ## External libraries and their uses:
 
 included - this project is a submodule or included in the repo
-OPTIONAL - this library can be toggled with cmake options
+OPTIONAL - this library can be toggled with a cmake flag
 external - requires downloading external libraries
 
 * included: [volk](https://github.com/zeux/volk) dynamically loads pointers to vulkan from driver
@@ -28,9 +36,9 @@ external - requires downloading external libraries
 * included: [stb_image.h](https://github.com/nothings/stb) handles image loading
 * included OPTIONAL:   [Assimp](https://github.com/assimp/assimp) handles model loading
 * included OPTIONAL:   [freetype2](https://freetype.org/) handles font loading
-* external:   [Vulkan SDK](https://vulkan.lunarg.com/) for vulkan type definitions, used by volk
-* external:   [libsndfile](https://github.com/libsndfile/libsndfile) handles audio file loading
-* external:   [portaudio](http://www.portaudio.com/) handles cross platform audio playback
+* external OPTIONAL:   [Vulkan SDK](https://vulkan.lunarg.com/) for vulkan type definitions, used by volk
+* external OPTIONAL:   [libsndfile](https://github.com/libsndfile/libsndfile) handles audio file loading
+* external OPTIONAL:   [portaudio](http://www.portaudio.com/) handles cross platform audio playback
 
 # setup
 
@@ -70,10 +78,20 @@ Download the [Vulkan SDK](https://www.lunarg.com/vulkan-sdk/), for getting the v
 git clone --recurse-submodules https://github.com/NoamZeise/Graphics-Environment.git
 cd Graphics-Environment
 mkdir build && cd build
-cmake .. -DGRAPHICS_BUILD_EXAMPLES=true
+cmake ..
 cmake --build .
 ```
-Then the built binary should be in /build/examples/. Note that PortAudio and Libsndfile dlls wont be built with this, so on windows you'll need to copy the dlls for those into the same path as the example binary.
+Then example binaries should be in `examples/` within the build folder . Note that _PortAudio_ and _Libsndfile_ dlls wont be built with this, so on windows you'll need to copy the dlls for those into the same path as the example binaries.
+
+## Cmake Flags
+
+* NO\_AUDIO -> don't link to _sndfile_ or _portaudio_. Audio functions will not work.
+* NO\_FREETYPE -> don't build or link to _freetype_. Font loading/drawing will not work.
+* NO\_ASSIMP -> don't build or link to _assimp_. Loading 3D models from file will not work. 
+* NO\_VULKAN -> don't build or link to Vulkan backend.
+* NO\_OPENGL -> don't build or link to OpenGL backend
+* GRAPHICS\_BUILD\_STATIC -> build everything statically
+
 
 # FAQ
 

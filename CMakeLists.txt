@@ -34,5 +34,5 @@ add_subdirectory(libs)
 add_subdirectory(src)
 
 if(GRAPHICS_BUILD_EXAMPLES OR PROJECT_IS_TOP_LEVEL)
-  add_subdirectory(example)
+  add_subdirectory(examples)
 endif()
