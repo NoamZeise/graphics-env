@@ -2,8 +2,8 @@ add_library(GraphicsEnv
   manager.cpp
   model_gen.cpp
 )
-add_dependencies(GraphicsEnv GameHelper OutfacingGraphics)
-target_link_libraries(GraphicsEnv PUBLIC GameHelper OutfacingGraphics)
+add_dependencies(GraphicsEnv GameHelper graphics-api)
+target_link_libraries(GraphicsEnv PUBLIC GameHelper graphics-api)
 if(NOT NO_VULKAN)
   add_dependencies(GraphicsEnv VulkanEnvironment)
   target_link_libraries(GraphicsEnv PRIVATE VulkanEnvironment)

@@ -1,4 +1,4 @@
-#include <manager.h>
+#include <graphics/manager.h>
 #include <game/camera.h>
 #include <graphics/glm_helper.h>
 #include <graphics/model_gen.h>

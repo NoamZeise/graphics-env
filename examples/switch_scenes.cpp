@@ -1,7 +1,7 @@
 #include <atomic>
 #include <thread>
 
-#include <manager.h>
+#include <graphics/manager.h>
 #include <game/camera.h>
 #include <iostream>
 

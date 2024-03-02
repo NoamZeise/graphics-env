@@ -1,4 +1,4 @@
-#include <manager.h>
+#include <graphics/manager.h>
 #include <game/camera.h>
 #include <graphics/logger.h>
 #include <glm/gtc/matrix_inverse.hpp>
