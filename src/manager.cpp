@@ -5,10 +5,10 @@
 #include <graphics/logger.h>
 
 #ifndef NO_OPENGL
-#include "../libs/OpenGLEnvironment/src/render.h"
+#include "../libs/opengl/src/render.h"
 #endif
 #ifndef NO_VULKAN
-#include "../libs/VulkanEnvironment/src/render.h"
+#include "../libs/vulkan/src/render.h"
 #endif
 
 void framebufferSizeCallback(GLFWwindow *window, int width, int height);

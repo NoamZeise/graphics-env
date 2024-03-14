@@ -349,21 +349,18 @@ void App::drawTestScene1() {
 
   manager->render->DrawModel(monkeyModel1, model, glm::inverseTranspose(model));
 
-  model = glm::translate(model,
-			 glm::vec3(0, 3, 0));
+  model = glm::translate(model, glm::vec3(0, 3, 0));
 
   manager->render->DrawModel(monkeyModel1, model, glm::inverseTranspose(model),
 			     glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 
-    model = glm::translate(model,
-			 glm::vec3(0, 3, 0));
+  model = glm::translate(model, glm::vec3(0, 3, 0));
 
   manager->render->DrawModel(monkeyModel1, model, glm::inverseTranspose(model),
 			     glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
 
-    model = glm::translate(model,
-			 glm::vec3(0, 3, 0));
-
+  model = glm::translate(model, glm::vec3(0, 3, 0));
+  
   manager->render->DrawModel(monkeyModel1, model, glm::inverseTranspose(model),
 			     glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
 
