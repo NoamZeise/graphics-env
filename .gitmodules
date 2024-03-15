@@ -1,18 +1,24 @@
 [submodule "external/audio"]
 	path = external/audio
 	url = https://github.com/NoamZeise/audio.git
+	shallow = true
 [submodule "external/glfw"]
 	path = external/glfw
 	url = https://github.com/glfw/glfw.git
+	shallow = true
 [submodule "external/volk"]
 	path = external/volk
 	url = https://github.com/zeux/volk.git
+	shallow = true
 [submodule "external/glm"]
 	path = external/glm
 	url = https://github.com/NoamZeise/glm-light.git
+	shallow = true
 [submodule "external/assimp"]
 	path = external/assimp
 	url = https://github.com/NoamZeise/assimp-light.git
+	shallow = true
 [submodule "external/freetype"]
 	path = external/freetype
 	url = https://gitlab.freedesktop.org/freetype/freetype.git
+	shallow = true
