@@ -1,6 +1,6 @@
 function(add_example name sourcefile)
   add_executable(${name} ${sourcefile})
-  target_link_libraries(${name} GraphicsEnv)
+  target_link_libraries(${name} graphics-env)
 endfunction()
 
 add_example(minimum minimum.cpp)

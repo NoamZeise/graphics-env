@@ -4,23 +4,20 @@ file(GLOB OGL_RENDER_SOURCES
 	  parts/*
 )
 
+add_library(opengl-env ${OGL_RENDER_SOURCES})
 
-set(OpenGL-Render-Lib "OpenGL-Environment")
+add_dependencies(opengl-env resource-loader graphics-api glfw)
 
-add_library(${OpenGL-Render-Lib} ${OGL_RENDER_SOURCES})
+target_link_libraries(opengl-env PUBLIC graphics-api glfw)
 
-add_dependencies(${OpenGL-Render-Lib} resource-loader graphics-api glfw)
-
-target_link_libraries(${OpenGL-Render-Lib} PUBLIC graphics-api glfw)
-
-target_link_libraries(${OpenGL-Render-Lib} PRIVATE resource-loader)
+target_link_libraries(opengl-env PRIVATE resource-loader)
 
 if(NOT NO_FREETYPE)
-  add_dependencies(${OpenGL-Render-Lib} freetype)
-  target_link_libraries(${OpenGL-Render-Lib} PRIVATE freetype)
+  add_dependencies(opengl-env freetype)
+  target_link_libraries(opengl-env PRIVATE freetype)
 endif()
 
-target_include_directories(${OpenGL-Render-Lib} PUBLIC
+target_include_directories(opengl-env PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/../glad-include/
 )

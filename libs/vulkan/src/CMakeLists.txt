@@ -3,26 +3,23 @@ file(GLOB VK_RENDER_SOURCES
 	  resources/*
 	  parts/*
 	  parts/helper/*
-	  render_structs/*
 	  )
 
-set(Vulkan-Render-Lib "VulkanEnvironment")
+add_library(vulkan-env ${VK_RENDER_SOURCES})
+	  
+add_dependencies(vulkan-env resource-loader graphics-api glfw volk)
 
-add_library(${Vulkan-Render-Lib} ${VK_RENDER_SOURCES})
-
-add_dependencies(${Vulkan-Render-Lib} resource-loader graphics-api glfw volk)
-
-target_link_libraries(${Vulkan-Render-Lib} PRIVATE resource-loader)
+target_link_libraries(vulkan-env PRIVATE resource-loader)
 
 if(NOT NO_FREETYPE)
-  add_dependencies(${Vulkan-Render-Lib} freetype)
-  target_link_libraries(${Vulkan-Render-Lib} PRIVATE freetype)
+  add_dependencies(vulkan-env freetype)
+  target_link_libraries(vulkan-env PRIVATE freetype)
 endif()
 
-target_link_libraries(${Vulkan-Render-Lib} PUBLIC 
+target_link_libraries(vulkan-env PUBLIC 
   graphics-api
   glfw
   volk
 )
 
-target_include_directories(${Vulkan-Render-Lib} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include/)
+target_include_directories(vulkan-env PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include/)
