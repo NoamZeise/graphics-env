@@ -2,6 +2,9 @@
 #include <game/camera.h>
 #include <graphics/glm_helper.h>
 #include <glm/gtc/matrix_inverse.hpp>
+#include <cstring>
+
+#include <graphics/logger.h>
 
 // This example shows the main functionality of the graphics environment
 // With a minimum amount of code around it.
@@ -12,21 +15,25 @@
 // move through the scene. (so you can use a keyboard/mouse or a controller)
 // Press Esc to exit.
 
-int main() {
+#include "helper.h"
+
+int main(int argc, char** argv) {
     ManagerState state;
     state.cursor = cursorState::disabled;
     state.windowTitle = "basic example";
     state.conf.multisampling = true;
     state.conf.sample_shading = true;
-    
+    state.defaultRenderer = parseArgs(argc, argv, &state.windowTitle);
     Manager manager(state);
     ResourcePool* pool = manager.render->pool();
+    ResourcePool* pool2 = manager.render->CreateResourcePool();
 
     Resource::Model monkey = pool->model()->load("models/monkey.obj");
     glm::mat4 monkeyMat = glm::translate(glm::rotate(glm::mat4(1.0f), glm::radians(270.0f),
 						     glm::vec3(-1.0f, 0.0f, 0.0f)),
 					 glm::vec3(0.0f, -8.0f, -10.0f));
-    
+    glm::mat4 texturedMonkeyMat = glm::translate(monkeyMat, glm::vec3(3, 0, 0));
+    glm::mat4 texturedMonkeyMat2 = glm::translate(monkeyMat, glm::vec3(6, 0, 0));
     std::vector<Resource::ModelAnimation> wolfAnims;
     Resource::Model wolf = pool->model()->load(
 	    Resource::ModelType::m3D_Anim, "models/wolf.fbx", &wolfAnims);
@@ -36,17 +43,18 @@ int main() {
     
     Resource::Font font = pool->font()->load("textures/Roboto-Black.ttf");
     Resource::Texture tex = pool->tex()->load("textures/tile.png");
+    Resource::Texture tex2 = pool2->tex()->load("textures/error.png");
 
     manager.render->LoadResourcesToGPU(pool);
+    manager.render->LoadResourcesToGPU(pool2);
     manager.render->UseLoadedResources();
 
-    camera::FirstPerson cam;
-    cam.setPos(glm::vec3(0, 0, 0));
-    manager.audio.Play("audio/test.wav", false, 1.0f);
+    camera::FirstPerson cam(glm::vec3(0, 0, -8));
+    cam.setForward(glm::vec3(0, -1, 0));
+    //    manager.audio.Play("audio/test.wav", false, 1.0f);
 
     while(!glfwWindowShouldClose(manager.window)) {
 	manager.update();
-	
 	anim.Update(manager.timer.dt());
 	if(manager.input.kb.press(GLFW_KEY_ESCAPE))
 	    glfwSetWindowShouldClose(manager.window, GLFW_TRUE);
@@ -56,6 +64,10 @@ int main() {
 	if(manager.winActive()) {
 	    manager.render->DrawAnimModel(wolf, wolfMat, glm::inverseTranspose(wolfMat), &anim);
 	    manager.render->DrawModel(monkey, monkeyMat, glm::inverseTranspose(monkeyMat));
+	    manager.render->DrawModel(
+		    monkey, texturedMonkeyMat2, glm::inverseTranspose(texturedMonkeyMat2), tex2);
+	    manager.render->DrawModel(
+		    monkey, texturedMonkeyMat, glm::inverseTranspose(texturedMonkeyMat), tex);
             manager.render->DrawQuad(tex,
 				     glmhelper::calcMatFromRect(
 					     glm::vec4(10.0f, 10.0f, 200.0f, 200.0f),

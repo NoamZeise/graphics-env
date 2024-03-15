@@ -21,18 +21,15 @@ struct ModelDraw {
     void setMat(glm::mat4 mat);
 };
 
+#include "helper.h"
+
 int main(int argc, char** argv) {
-    RenderFramework framework = RenderFramework::Vulkan;
-    for(int i = 0; i < argc; i++)
-    	if(strcmp(argv[i], "opengl") == 0)
-    	    framework = RenderFramework::OpenGL;
     ManagerState state;
     state.cursor = cursorState::disabled;
-    state.windowTitle = std::string("Asset Pools Examples: ") +
-	(framework == RenderFramework::Vulkan ? "vulkan" : "opengl");
+    state.windowTitle = "Asset Pools Examples";
     state.conf.multisampling = true;
     state.conf.sample_shading = true;
-    state.defaultRenderer = framework;
+    state.defaultRenderer = parseArgs(argc, argv, &state.windowTitle);
     Manager manager(state);
     //no pool, loads to default pool
     ResourcePool* defaultPool = manager.render->pool();

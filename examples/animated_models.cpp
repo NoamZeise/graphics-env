@@ -2,7 +2,7 @@
 #include <game/camera.h>
 #include <graphics/logger.h>
 #include <glm/gtc/matrix_inverse.hpp>
-#include <cstring>
+#include "helper.h"
 
 struct AnimatedModel {
     AnimatedModel(std::string modelpath, ModelLoader* load, float scale, glm::vec3 translate, std::string texPath) {
@@ -46,13 +46,8 @@ int main(int argc, char** argv) {
     state.conf.multisampling = true;
     state.conf.sample_shading = true;
     state.conf.mip_mapping = false;
-    RenderFramework framework = RenderFramework::Vulkan;
-    for(int i = 0; i < argc; i++)
-    	if(strcmp(argv[i], "opengl") == 0)
-    	    framework = RenderFramework::OpenGL;
-    state.defaultRenderer = framework;
-    state.windowTitle = std::string("animated_models.cpp - ") +
-	(framework == RenderFramework::Vulkan ? "vulkan" : "opengl");
+    state.windowTitle = "Animated Models";
+    state.defaultRenderer = parseArgs(argc, argv, &state.windowTitle);
     Manager manager(state);
     ResourcePool* pool = manager.render->pool();
     

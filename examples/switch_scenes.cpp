@@ -65,38 +65,22 @@ private:
 };
 
 #include <stdexcept>
-#ifndef NDEBUG
-#include <iostream>
-#endif
+#include <graphics/logger.h>
 #include <fstream>
-#include <cstring>
 
-bool frameworkArg(int argc, char** argv, int &i, RenderFramework *framework);
+#include "helper.h"
 
 int main(int argc, char** argv) {
   try
     {
-#ifndef NDEBUG
-      std::cout << "In debug mode" << std::endl;
-#endif
-      RenderFramework framework = RenderFramework::Vulkan;
-      for(int i = 1; i < argc; i++) {
-	  bool argHandled = false;
-	  argHandled |= frameworkArg(argc, argv, i, &framework);
-	  if(!argHandled) {
-	      std::cerr << "passed unrecognised arg to app\n";
-	      std::cerr << "  recognised args: \n"
-		           "      -r [param] -> choose rendering framework\n";
-	      return 1;
-	  }
-      }
-      App app(framework);
+      std::string t("");
+      App app(parseArgs(argc, argv, &t));
       app.run();
     }
   catch (const std::exception& e)
     {
 #ifndef NDEBUG
-      std::cerr << e.what() << std::endl;
+	LOG_ERROR(e.what());
 #else
       std::ofstream crashFile("CrashInfo.txt");
       if (crashFile.is_open())
@@ -110,27 +94,6 @@ int main(int argc, char** argv) {
     }
 
   return EXIT_SUCCESS;
-}
-
-bool frameworkArg(int argc, char** argv, int &i, RenderFramework *framework) {
-  if(strcmp(argv[i], "-r") == 0) {
-    if(i + 1 < argc) {
-      i++;
-      if(strcmp(argv[i], "opengl") == 0) {
-	*framework = RenderFramework::OpenGL;
-	std::cout << "default framework opengl selected\n";
-      }
-      else if(strcmp(argv[i], "vulkan") == 0) {
-	*framework = RenderFramework::Vulkan;
-	std::cout << "default framework vulkan selected\n";
-      } else {
-	  std::cerr << "unrecognised framework passed, 'vulkan' or 'opengl'\n";
-	  return false;
-      }
-      return true;
-    }
-  }
-  return false;
 }
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -190,7 +153,7 @@ void App::update() {
 	  assetLoadThread.join();
       if(submitDraw.joinable()) 
 	  submitDraw.join();
-      std::cout << "loading done\n";
+      LOG("loading done");
       manager->render->LoadResourcesToGPU(Resource::Pool(0));
       manager->render->UseLoadedResources();
       sceneChangeInProgress = false;
@@ -322,7 +285,7 @@ void App::draw() {
 }
 
 void App::loadTestScene1(std::atomic<bool> &loaded) {
-  std::cout << "loading scene 1\n";
+  LOG("loading scene 1");
   ResourcePool* p = manager->render->pool();
   testModel1 = p->model()->load("models/testScene.fbx");
   monkeyModel1 = p->model()->load("models/monkey.obj");
@@ -404,7 +367,7 @@ void App::drawTestScene1() {
 }
 
 void App::loadTestScene2(std::atomic<bool> &loaded) {
-    std::cout << "loading scene 2\n";
+    LOG("loading scene 2");
     ResourcePool *p = manager->render->pool();
     monkeyModel2 = p->model()->load("models/monkey.obj");
     colouredCube2 = p->model()->load("models/ROOM.fbx");
