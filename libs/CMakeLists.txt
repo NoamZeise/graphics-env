@@ -1,3 +1,5 @@
-add_subdirectory(game-helper)
+add_subdirectory(render-api)
+add_subdirectory(internal-resource-loader)
 add_subdirectory(vulkan)
 add_subdirectory(opengl)
+add_subdirectory(game-helper)
