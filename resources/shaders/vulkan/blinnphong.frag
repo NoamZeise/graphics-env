@@ -4,7 +4,7 @@ layout(push_constant) uniform fragconstants
 {
     vec4 colour;
     vec4 texOffset;
-    uint texID;
+    int texID;
 } pc;
 
 layout(set = 3, binding = 0) uniform sampler texSamp;
@@ -34,7 +34,7 @@ void main()
     coord.y += pc.texOffset.y;
 
     vec4 objectColour = vec4(1);
-    if(pc.texID == 0)
+    if(pc.texID < 0)
         objectColour = pc.colour;
     else
         objectColour = texture(sampler2D(textures[pc.texID], texSamp), coord) * pc.colour;

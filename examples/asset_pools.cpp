@@ -18,6 +18,7 @@ struct ModelDraw {
     ModelDraw(Resource::Model model, glm::mat4 mat, Resource::ModelAnimation anim);
     void Update(float time);
     void Draw(Render *render);
+    void DrawOverride(Render *render, Resource::Texture orTex);
     void setMat(glm::mat4 mat);
 };
 
@@ -31,7 +32,7 @@ int main(int argc, char** argv) {
     state.conf.sample_shading = true;
     state.defaultRenderer = parseArgs(argc, argv, &state.windowTitle);
     Manager manager(state);
-    //no pool, loads to default pool
+    //get default pool
     ResourcePool* defaultPool = manager.render->pool();
     Resource::Font font = defaultPool->font()->load("textures/Roboto-Black.ttf");
 
@@ -41,10 +42,16 @@ int main(int argc, char** argv) {
     glm::mat4 base = glm::rotate(glm::mat4(1.0f), glm::radians(270.0f),
 				 glm::vec3(-1.0f, 0.0f, 0.0f));
     
-    //use this pool to load models
+    //use this pool to load some assets
+
+    Resource::Model monkeyModel = pool1->model()->load("models/monkey.obj");
     ModelDraw monkey = ModelDraw(
-	    pool1->model()->load("models/monkey.obj"),
-	    glm::translate(base, glm::vec3(0.0f, -8.0f, -10.0f)));
+	    monkeyModel, glm::translate(base, glm::vec3(-2.7f, -8.0f, -10.0f)));
+    ModelDraw monkey2 = ModelDraw(
+	    monkeyModel, glm::translate(base, glm::vec3(0.0f, -8.0f, -10.0f)));
+    ModelDraw monkey3 = ModelDraw(
+	    monkeyModel, glm::translate(base, glm::vec3(2.7f, -8.0f, -10.0f)));
+    
     ModelInfo::Model sphereData = genSurface([](float a, float b){
 	return glm::vec3(sin(a)*cos(b), sin(a)*sin(b), cos(a));
     }, true, 1.0, {0, 22.0/7, 0.1}, {0, 44.0/7, 0.1});
@@ -52,10 +59,12 @@ int main(int argc, char** argv) {
     ModelDraw sphere = ModelDraw(
 	    pool1->model()->load(sphereData), glm::mat4(1.0f));
 
+    Resource::Texture tex = pool1->tex()->load("textures/error.png");
+
     //create another pool
     ResourcePool* pool2 = manager.render->CreateResourcePool();
 
-    // use this pool 2 to load a wolf with animations
+    // use pool2 to load a wolf with animations
     std::vector<Resource::ModelAnimation> wolfAnims;
     Resource::Model wolfModel = pool1->model()->load(
 	    Resource::ModelType::m3D_Anim, "models/wolf.fbx", &wolfAnims);
@@ -65,7 +74,7 @@ int main(int argc, char** argv) {
 			   glm::vec3(-25.0f, -50.0f, -80.0f)),
 	    wolfAnims[0]);
     
-    Resource::Texture tex = pool2->tex()->load("textures/tile.png");
+    Resource::Texture tex2 = pool2->tex()->load("textures/tile.png");
     
     // load staged resources into gpu so we can use them for drawing
     manager.render->LoadResourcesToGPU(defaultPool);
@@ -112,8 +121,10 @@ int main(int argc, char** argv) {
 	if(manager.winActive()) {
 	    wolf.Draw(manager.render);
 	    monkey.Draw(manager.render);
+	    monkey2.DrawOverride(manager.render, tex);
+	    monkey3.DrawOverride(manager.render, tex2);
 	    sphere.Draw(manager.render);
-            manager.render->DrawQuad(tex,
+            manager.render->DrawQuad(tex2,
 				     glmhelper::calcMatFromRect(
 					     glm::vec4(10.0f, 10.0f, 200.0f, 200.0f),
 					     0.0f, 1.0f),
@@ -142,11 +153,16 @@ ModelDraw::ModelDraw(Resource::Model model, glm::mat4 mat, Resource::ModelAnimat
     this->animated = true;
     setMat(mat);
 }
+
 void ModelDraw::Draw(Render *render) {
     if(animated)
 	render->DrawAnimModel(model, drawMat, normalMat, &anim);
     else
 	render->DrawModel(model, drawMat, normalMat);
+}
+
+void ModelDraw::DrawOverride(Render *render, Resource::Texture orTex) {
+    render->DrawModel(model, drawMat, normalMat, glm::vec4(1), orTex);
 }
 
 void ModelDraw::Update(float time) {

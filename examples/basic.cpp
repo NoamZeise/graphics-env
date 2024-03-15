@@ -26,7 +26,6 @@ int main(int argc, char** argv) {
     state.defaultRenderer = parseArgs(argc, argv, &state.windowTitle);
     Manager manager(state);
     ResourcePool* pool = manager.render->pool();
-    ResourcePool* pool2 = manager.render->CreateResourcePool();
 
     Resource::Model monkey = pool->model()->load("models/monkey.obj");
     glm::mat4 monkeyMat = glm::translate(glm::rotate(glm::mat4(1.0f), glm::radians(270.0f),
@@ -43,10 +42,10 @@ int main(int argc, char** argv) {
     
     Resource::Font font = pool->font()->load("textures/Roboto-Black.ttf");
     Resource::Texture tex = pool->tex()->load("textures/tile.png");
-    Resource::Texture tex2 = pool2->tex()->load("textures/error.png");
+    Resource::Texture tex2 = pool->tex()->load("textures/error.png");
+
 
     manager.render->LoadResourcesToGPU(pool);
-    manager.render->LoadResourcesToGPU(pool2);
     manager.render->UseLoadedResources();
 
     camera::FirstPerson cam(glm::vec3(0, 0, -8));
