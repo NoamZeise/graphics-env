@@ -253,13 +253,7 @@ void App::draw() {
   if (submitDraw.joinable())
     submitDraw.join();
 
-  if(current==Scene::Test1)
-      drawTestScene1();
-  if(current==Scene::Test2)
-      drawTestScene2();
-
-
-  #ifdef TIME_APP_DRAW_UPDATE
+#ifdef TIME_APP_DRAW_UPDATE
   Resource::Font font;
   if(current == Scene::Test1)
       font = testFont1;
@@ -269,7 +263,12 @@ void App::draw() {
 		      glm::vec2(10.0, 20.0), 15, 5.0f, glm::vec4(1.0f));
   manager->render->DrawString(font, monitored_draw_stats,
 		      glm::vec2(10.0, 40.0), 15, 5.0f, glm::vec4(1.0f));
-  #endif
+#endif
+  
+  if(current==Scene::Test1)
+      drawTestScene1();
+  if(current==Scene::Test2)
+      drawTestScene2();
 
   if(manager->backend() == RenderFramework::Vulkan)
       submitDraw = std::thread([=]{manager->render->EndDraw(finishedDrawSubmit);});
@@ -362,7 +361,7 @@ void App::drawTestScene1() {
       glm::vec4(1), glm::vec4(0, 0, 1, 1));
 
   manager->render->DrawQuad(testTex1,
-                    glmhelper::calcMatFromRect(glm::vec4(0, 0, 400, 400), 0, 1),
+                    glmhelper::calcMatFromRect(glm::vec4(0, 0, 400, 400), 0, 0.1),
                     glm::vec4(1, 0, 1, 0.3), glm::vec4(0, 0, 1, 1));
 }
 
