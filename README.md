@@ -75,8 +75,8 @@ Download the [Vulkan SDK](https://www.lunarg.com/vulkan-sdk/), for getting the v
 # Build with example using CMake
 
 ```
-git clone --recurse-submodules https://github.com/NoamZeise/Graphics-Environment.git
-cd Graphics-Environment
+git clone --recurse-submodules https://github.com/NoamZeise/graphics-env.git
+cd graphics-env
 mkdir build && cd build
 cmake ..
 cmake --build .
@@ -105,7 +105,9 @@ to cmake when generating this project
 
 To use formats other than those enabled by default, you must set `ASSIMP_BUILD_XYZ_IMPORTER` to true, where `XYZ` is your format, before loading the cmake files for this project.
 
-For example to enable the blend format, you would have `set(ASSIMP_BUILD_BLEND_IMPORTER TRUE)` somewhere in your cmake file before calling `add_subdirectory(Graphics-Environment)`. Check the [assimp](https://assimp.org/) docs for more info on supported formats.
+For example to enable the blend format, you would have `set(ASSIMP_BUILD_BLEND_IMPORTER TRUE)` somewhere in your cmake file before calling `add_subdirectory(graphics-env)`. 
+Check the [assimp](https://assimp.org/) docs for more info 
+on supported formats.
 
 You should then be able to load these newly enabled formats the same as you load the default ones.
 
