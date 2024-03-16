@@ -31,10 +31,12 @@ int main(int argc, char** argv) {
 	    glfwSetWindowShouldClose(manager.window, GLFW_TRUE);
 	
 	if(manager.winActive()) {
+	    glm::vec2 mousePos = manager.mousePos();
+	    
             manager.render->DrawQuad(
 		    tex,
 		    glmhelper::calcMatFromRect(
-			    glm::vec4(10.0f, 10.0f, 200.0f, 200.0f), 0.0f, 0.5f),
+			    glm::vec4(mousePos.x, mousePos.y, 200.0f, 200.0f), 0.0f, 0.5f),
 		    glm::vec4(1.0f),
 		    glmhelper::getTextureOffset(
 			    tex.dim, glm::vec4(0.0f, 0.0f, tex.dim.x * 5, tex.dim.y * 5)));

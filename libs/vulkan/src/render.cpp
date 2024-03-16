@@ -1,6 +1,6 @@
 #include "render.h"
 
-#include "parts/render_style.h"
+#include "parts/pipeline.h"
 #include "parts/core.h"
 #include "parts/swapchain.h"
 #include "parts/command.h"

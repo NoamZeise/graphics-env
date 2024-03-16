@@ -27,11 +27,11 @@ enum class RenderFramework {
 struct ManagerState {
     int windowWidth = 800;
     int windowHeight = 600;
-    std::string windowTitle = "App";
+    std::string windowTitle = "graphics env program";
     bool startFullscreen = false;
     bool fixedWindowRatio = false;
-    cursorState cursor = cursorState::normal;
     bool hideWindowOnCreate = false;
+    cursorState cursor = cursorState::normal;
     RenderFramework defaultRenderer = RenderFramework::Vulkan;
     RenderConfig conf;
 };

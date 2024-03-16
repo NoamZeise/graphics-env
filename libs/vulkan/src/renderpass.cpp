@@ -149,13 +149,7 @@ VkResult AttachmentImage::CreateImage(VkDevice device,
     VkResult result = VK_SUCCESS;
     VkMemoryRequirements memReq;
     returnOnErr(part::create::Image(
-			device,
-			&image,
-			&memReq,
-			imageUsage,
-			extent,
-			imageFormat,
-			sampleCount, 1));
+        device, &image, &memReq, imageUsage, extent, imageFormat, sampleCount, 1));
     *pMemoryRequirements = vkhelper::correctMemoryAlignment(*pMemoryRequirements, memReq.alignment);
     this->memoryOffset = *pMemoryRequirements;
     *pMemoryRequirements += vkhelper::correctMemoryAlignment(memReq.size, memReq.alignment);
@@ -190,11 +184,8 @@ VkResult AttachmentImage::CreateImageView(VkDevice device,
 	vkBindImageMemory(device, image,
 			  attachmentMemory, memoryOffset);
     
-    VkResult result = part::create::ImageView(device,
-					      &view,
-					      image,
-					      imageFormat,
-					      imageAspect);
+    VkResult result = part::create::ImageView(
+	    device, &view, image, imageFormat, imageAspect);
     if(result == VK_SUCCESS)
 	state = state::imageview;
     return result;
@@ -443,7 +434,7 @@ VkSubpassDependency genSubpassDependancy(bool colour, bool depth, SubpassDependa
     dep.dstStageMask = 0;
     dep.dstAccessMask = 0;
     dep.dependencyFlags = 0;
-    //dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT; ??? TODO: check if needed
+    //dep.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;// ??? TODO: check if needed
     switch(depType) {
     case SubpassDependancyType::PreviousImageOps:
 	dep.srcSubpass = VK_SUBPASS_EXTERNAL;

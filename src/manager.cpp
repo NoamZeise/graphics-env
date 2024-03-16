@@ -124,10 +124,11 @@ void Manager::toggleFullscreen() {
 }
 
 void Manager::setWindowSize(int width, int height) {
-    winWidth = width;
-    winHeight = height;
-    if(glfwGetWindowMonitor(window) == NULL)
+    if(glfwGetWindowMonitor(window) == NULL) {
+	winWidth = width;
+	winHeight = height;
 	glfwSetWindowSize(window, winWidth, winHeight);
+    }
 }
 
 void Manager::_windowSizeCallback(int width, int height){
