@@ -306,17 +306,28 @@ VkResult RenderPass::createFramebufferImages(std::vector<VkImage> *swapchainImag
 
     VkDeviceSize imageMemReqs;
     for(int i = 0; i < framebuffers.size(); i++) {
-	framebuffers[i].attachments = attachImages;
-	framebuffers[i].device = this->device;
-	for(AttachmentImage &im: framebuffers[i].attachments) {
-	    if(im.isUsingExternalImage())
-		im.AddImage(swapchainImages->at(i));
-	    else {
-		msgAndReturnOnErr(
-			im.CreateImage(device, extent, pMemSize, pMemFlags),
-			"RenderPass Error: Failed to create framebuffer attachment image");
+	if(i == 0) {
+	    framebuffers[i].attachments = attachImages;
+	    framebuffers[i].device = this->device;
+	    for(AttachmentImage &im: framebuffers[i].attachments) {
+		if(im.isUsingExternalImage())
+		    im.AddImage(swapchainImages->at(i));
+		else {
+		    msgAndReturnOnErr(
+			    im.CreateImage(device, extent, pMemSize, pMemFlags),
+			    "RenderPass Error: Failed to create framebuffer attachment image");
+		}
 	    }
-	}   
+	} else {
+	    framebuffers[i].attachments = attachImages;
+	    framebuffers[i].device = this->device;
+	    for(int j = 0; j < attachImages.size(); j++) {
+		if(framebuffers[i].attachments[j].isUsingExternalImage())
+		    framebuffers[i].attachments[j]
+			.AddImage(swapchainImages->at(i));
+
+	    }
+	}
     }
     return result;
 }
@@ -330,18 +341,23 @@ VkResult RenderPass::createFramebuffers(VkDeviceMemory framebufferImageMemory) {
     fbCreateInfo.width = framebufferExtent.width;
     fbCreateInfo.height = framebufferExtent.height;
     fbCreateInfo.layers = 1;
-    for(auto& fb: framebuffers) {
-	std::vector<VkImageView> attachViews(fb.attachments.size());
+    for(int fi = 0; fi < framebuffers.size(); fi++) {
+	Framebuffer* fb = &framebuffers[fi];
+	std::vector<VkImageView> attachViews(fb->attachments.size());
 	for(int i = 0; i < attachViews.size(); i++) {
-	    msgAndReturnOnErr(fb.attachments[i].CreateImageView(device, framebufferImageMemory),
-			      "RenderPass Error: Failed to create image view for framebuffer");
-	    attachViews[i] = fb.attachments[i].getView();
+	    if(fb->attachments[i].isUsingExternalImage() || fi == 0) {
+		msgAndReturnOnErr(fb->attachments[i].CreateImageView(device, framebufferImageMemory),
+				  "RenderPass Error: Failed to create image view for framebuffer");
+		attachViews[i] = fb->attachments[i].getView();
+	    } else {
+		attachViews[i] = framebuffers[0].attachments[i].getView();
+	    }
 	}
 	fbCreateInfo.pAttachments = attachViews.data();
 	msgAndReturnOnErr(vkCreateFramebuffer(device, &fbCreateInfo,
-					      VK_NULL_HANDLE, &fb.framebuffer),
+					      VK_NULL_HANDLE, &fb->framebuffer),
 			  "RenderPass Error: Failed to create Framebuffer");
-	fb.framebufferCreated = true;
+	fb->framebufferCreated = true;
     }
 
     return result;
@@ -422,9 +438,11 @@ void setStageMask(VkPipelineStageFlags *pStageMask, bool colour, bool depth) {
 void setAccessMask(VkAccessFlags *pAccessMask, bool colour, bool depth) {
     *pAccessMask = 0;
     if(colour)
-	*pAccessMask |= VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	*pAccessMask |= VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
+	    VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
     if(depth)
-	*pAccessMask |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	*pAccessMask |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT |
+	    VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
 }
 
 VkSubpassDependency genSubpassDependancy(bool colour, bool depth, SubpassDependancyType depType) {
@@ -439,8 +457,12 @@ VkSubpassDependency genSubpassDependancy(bool colour, bool depth, SubpassDependa
     case SubpassDependancyType::PreviousImageOps:
 	dep.srcSubpass = VK_SUBPASS_EXTERNAL;
 	dep.dstSubpass = 0;
-	setStageMask(&dep.srcStageMask, colour, depth);
+	//	setStageMask(&dep.srcStageMask, colour, depth);
+	dep.srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT |
+	    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	setStageMask(&dep.dstStageMask, colour, depth);
+	dep.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT |
+	    VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 	setAccessMask(&dep.dstAccessMask, colour, depth);
 	break;
     case SubpassDependancyType::FutureShaderRead:

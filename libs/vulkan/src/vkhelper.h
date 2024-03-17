@@ -39,6 +39,8 @@ namespace vkhelper {
   VkResult submitCmdBuffAndWait(VkDevice device, VkQueue queue,
 				VkCommandBuffer* cmdbuff, VkFence fence,
 				std::mutex* queueSubmitMutex);
+
+  void insertDebugPipelineBarrier(VkCommandBuffer cmdBuff);
 };
 
 

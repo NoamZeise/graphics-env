@@ -194,7 +194,7 @@ bool swapchainRecreationRequired(VkResult result) {
 				     AttachmentUse::TransientAttachment,
 				     sampleCount, swapchainFormat));
 	      offscreenAttachments.push_back(
-		      AttachmentDesc(1, AttachmentType::Resolve,
+		      AttachmentDesc(2, AttachmentType::Resolve,
 				     AttachmentUse::PresentSrc,
 				     VK_SAMPLE_COUNT_1_BIT, swapchainFormat));
 	  }
@@ -203,10 +203,10 @@ bool swapchainRecreationRequired(VkResult result) {
 		      AttachmentDesc(0, AttachmentType::Colour,
 				     AttachmentUse::PresentSrc,
 				     VK_SAMPLE_COUNT_1_BIT, swapchainFormat));
-	  /* offscreenAttachments.push_back(
+	  offscreenAttachments.push_back(
 		  AttachmentDesc(1, AttachmentType::Depth,
 				 AttachmentUse::Attachment,
-				 sampleCount, offscreenDepthFormat));*/
+				 sampleCount, offscreenDepthFormat));
 	  
 	  LOG("making new renderpasses");
 	  offscreenRenderPass = new RenderPass(manager->deviceState.device, offscreenAttachments,
@@ -249,7 +249,7 @@ bool swapchainRecreationRequired(VkResult result) {
 			  attachmentMemoryFlags),
 		  "Render Error: Failed to Allocate Memory for Framebuffer Images");
       }
-
+      
       offscreenRenderPass->createFramebuffers(framebufferMemory);
       //  finalRenderPass->createFramebuffers(framebufferMemory);
 
@@ -421,8 +421,6 @@ bool swapchainRecreationRequired(VkResult result) {
       pipelineConf.useMultisampling = renderConf.multisampling;
       pipelineConf.msaaSamples = sampleCount;
       pipelineConf.useSampleShading = manager->deviceState.features.sampleRateShading;
-
-      pipelineConf.useDepthTest = false;
       
       part::create::GraphicsPipeline(
 	      manager->deviceState.device, &_pipeline3D,
@@ -616,6 +614,7 @@ void RenderVk::_startDraw() {
 	    checkResultAndThrow(result, "Render Error: failed to begin offscreen render pass!");
     checkResultAndThrow(frames[frameIndex]->startFrame(&currentCommandBuffer),
 			"Render Error: Failed to start command buffer.");
+  
     offscreenRenderPass->beginRenderPass(currentCommandBuffer, swapchainFrameIndex);
     
     currentBonesDynamicOffset = 0;
@@ -844,7 +843,7 @@ void RenderVk::_drawBatch() {
 void RenderVk::EndDraw(std::atomic<bool> &submit) {
   if (!_begunDraw)
     throw std::runtime_error("Tried to end draw before starting it");
-
+  
   _begunDraw = false;
   _drawBatch();
 

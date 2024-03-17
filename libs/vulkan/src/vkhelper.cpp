@@ -146,4 +146,15 @@ namespace vkhelper {
       return vkResetFences(device, 1, &fence);
   }
 
+  void insertDebugPipelineBarrier(VkCommandBuffer cmdBuff) {
+      VkMemoryBarrier barrier;
+      barrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
+      barrier.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT |
+	  VK_ACCESS_MEMORY_WRITE_BIT;
+      vkCmdPipelineBarrier(cmdBuff,
+			   VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+			   VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+			   0, 1, &barrier, 0, nullptr, 0, nullptr);
+  }
+
 }//namespace end
