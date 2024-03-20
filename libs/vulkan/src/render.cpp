@@ -282,15 +282,12 @@ bool swapchainRecreationRequired(VkResult result) {
       VP3D_Set.AddDescriptor(viewProjectionBinding);
       VP3D_Set.AddDescriptor(timeBinding);
       VP3D = new DescSet(VP3D_Set, swapchainFrameCount, manager->deviceState.device);
-
+      descriptorSets.push_back(VP3D);
+      
       descriptor::Set VP2D_Set("VP2D", descriptor::ShaderStage::Vertex);
       VP2D_Set.AddDescriptor(viewProjectionBinding);
       VP2D = new DescSet(VP2D_Set, swapchainFrameCount, manager->deviceState.device);
-
-      descriptor::Set Time_Set("Time", descriptor::ShaderStage::Vertex);
-      Time_Set.AddDescriptor(
-	      "Time Struct", descriptor::Type::UniformBuffer, sizeof(shaderStructs::timeUbo), 1);
-      
+      descriptorSets.push_back(VP2D);
 
       descriptor::Set PerFrame3D_Set("Per Frame 3D", descriptor::ShaderStage::Vertex);
       PerFrame3D_Set.AddSingleArrayStructDescriptor(
@@ -299,25 +296,28 @@ bool swapchainRecreationRequired(VkResult result) {
 	      sizeof(shaderStructs::PerFrame3D),
 	      Resource::MAX_3D_BATCH);
       perFrame3D = new DescSet(PerFrame3D_Set, swapchainFrameCount, manager->deviceState.device);
-      
+      descriptorSets.push_back(perFrame3D);
 
       descriptor::Set bones_Set("Bones Animation", descriptor::ShaderStage::Vertex);
       bones_Set.AddDescriptor("bones", descriptor::Type::UniformBufferDynamic,
 			      sizeof(shaderStructs::Bones), MAX_ANIMATIONS_PER_FRAME);
       bones = new DescSet(bones_Set, swapchainFrameCount, manager->deviceState.device);
+      descriptorSets.push_back(bones);
 
       descriptor::Set vert2D_Set("Per Frame 2D Vert", descriptor::ShaderStage::Vertex);
       vert2D_Set.AddSingleArrayStructDescriptor(
 	      "vert struct", descriptor::Type::StorageBuffer,
 	      sizeof(glm::mat4), Resource::MAX_2D_BATCH);
       perFrame2DVert = new DescSet(vert2D_Set, swapchainFrameCount, manager->deviceState.device);
-
+      descriptorSets.push_back(perFrame2DVert);
+      
       if(useFinalRenderpass) {
 	  descriptor::Set offscreenView_Set("Offscreen Transform", descriptor::ShaderStage::Vertex);
 	  offscreenView_Set.AddDescriptor("data", descriptor::Type::UniformBuffer,
 					  sizeof(glm::mat4), 1);
 	  offscreenTransform = new DescSet(
 		  offscreenView_Set, swapchainFrameCount, manager->deviceState.device);
+	  descriptorSets.push_back(offscreenTransform);
       }
 
       // fragment descriptor sets
@@ -326,6 +326,7 @@ bool swapchainRecreationRequired(VkResult result) {
       lighting_Set.AddDescriptor("Lighting properties", descriptor::Type::UniformBuffer,
 				 sizeof(lightingData), 1);
       lighting = new DescSet(lighting_Set, swapchainFrameCount, manager->deviceState.device);
+      descriptorSets.push_back(lighting);
 
       float minMipmapLevel = 100000.0f;
       for(int i = 0; i < pools->PoolCount(); i++) {
@@ -368,6 +369,7 @@ bool swapchainRecreationRequired(VkResult result) {
 					 Resource::MAX_TEXTURES_SUPPORTED,
 					 textureViews);
       textures = new DescSet(texture_Set, swapchainFrameCount, manager->deviceState.device);
+      descriptorSets.push_back(textures);
       
       descriptor::Set frag2D_Set("Per Frame 2D frag", descriptor::ShaderStage::Fragment);
       frag2D_Set.AddSingleArrayStructDescriptor(
@@ -375,10 +377,12 @@ bool swapchainRecreationRequired(VkResult result) {
 	      descriptor::Type::StorageBuffer,
 	      sizeof(shaderStructs::Frag2DData), Resource::MAX_2D_BATCH);
       perFrame2DFrag = new DescSet(frag2D_Set, swapchainFrameCount, manager->deviceState.device);
-
+      descriptorSets.push_back(perFrame2DFrag);
+      
       emptyDS = new DescSet(
 	      descriptor::Set("Empty", descriptor::ShaderStage::Vertex),
 	      swapchainFrameCount, manager->deviceState.device);
+      descriptorSets.push_back(emptyDS);
 
       std::vector<VkImageView> offscreenViews;
       if(useFinalRenderpass) {
@@ -398,15 +402,6 @@ bool swapchainRecreationRequired(VkResult result) {
 					       1, offscreenViews.data());
 	  offscreenTex = new DescSet(offscreen_Set, swapchainFrameCount,
 				     manager->deviceState.device);
-      }
-
-      descriptorSets = {
-	  VP3D, VP2D, perFrame3D, bones, emptyDS, perFrame2DVert,
-	  perFrame2DFrag, lighting, textures,
-      };
-      
-      if(useFinalRenderpass) {
-	  descriptorSets.push_back(offscreenTransform);
 	  descriptorSets.push_back(offscreenTex);
       }
       
