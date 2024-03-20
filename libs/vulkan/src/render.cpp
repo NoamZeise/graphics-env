@@ -195,7 +195,7 @@ bool swapchainRecreationRequired(VkResult result) {
 	  std::vector<AttachmentDesc> offscreenAttachments;
 	  if(renderConf.multisampling) {
 	      offscreenAttachments.push_back(
-		      AttachmentDesc(2, AttachmentType::Colour,
+		      AttachmentDesc(1, AttachmentType::Colour,
 				     AttachmentUse::TransientAttachment,
 				     sampleCount, swapchainFormat));
 	      offscreenAttachments.push_back(
@@ -208,10 +208,12 @@ bool swapchainRecreationRequired(VkResult result) {
 		      AttachmentDesc(0, AttachmentType::Colour,
 				     offscreenFinalAttachUse,
 				     VK_SAMPLE_COUNT_1_BIT, swapchainFormat));
-	  offscreenAttachments.push_back(
-		  AttachmentDesc(1, AttachmentType::Depth,
-				 AttachmentUse::Attachment,
-				 sampleCount, offscreenDepthFormat));
+	  if(renderConf.useDepthTest) {
+	      offscreenAttachments.push_back(
+		      AttachmentDesc(renderConf.multisampling ? 2 : 1, AttachmentType::Depth,
+				     AttachmentUse::Attachment,
+				     sampleCount, offscreenDepthFormat));
+	  }
 	  
 	  offscreenRenderPass = new RenderPass(manager->deviceState.device, offscreenAttachments,
 					       renderConf.clear_colour);
@@ -432,7 +434,7 @@ bool swapchainRecreationRequired(VkResult result) {
       pipelineConf.useMultisampling = renderConf.multisampling;
       pipelineConf.msaaSamples = sampleCount;
       pipelineConf.useSampleShading = manager->deviceState.features.sampleRateShading;
-      //pipelineConf.useDepthTest = renderConf.useDepthTest;
+      pipelineConf.useDepthTest = renderConf.useDepthTest;
 
       VkExtent2D renderExtent = useFinalRenderpass ? offscreenBufferExtent : swapchainExtent;
       

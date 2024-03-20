@@ -23,6 +23,7 @@ int main(int argc, char** argv) {
     state.windowTitle = "basic example";
     state.conf.multisampling = true;
     state.conf.sample_shading = true;
+    state.conf.useDepthTest = false;
     state.defaultRenderer = parseArgs(argc, argv, &state.windowTitle);
     Manager manager(state);
     ResourcePool* pool = manager.render->pool();

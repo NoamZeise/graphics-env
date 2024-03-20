@@ -15,6 +15,9 @@ struct RenderConfig {
     // (used automatically if target_res != {0, 0})
     bool useFinalBuffer = false;
 
+    // Use depth testing, ie further away things draw on top of nearer ones
+    bool useDepthTest = false;
+
     //Texture Loading Settings
     bool srgb = false;
     bool mip_mapping = false;
