@@ -1,9 +1,6 @@
 #include "render.h"
 
 #include "parts/pipeline.h"
-#include "parts/core.h"
-#include "parts/swapchain.h"
-#include "parts/command.h"
 #include "parts/descriptors.h"
 #include "pipeline.h"
 #include "pipeline_data.h"
@@ -77,7 +74,8 @@ RenderVk::~RenderVk() {
     delete pools;
     if(offscreenRenderPass != nullptr || finalRenderPass != nullptr) {
 	delete offscreenRenderPass;
-	//delete finalRenderPass;
+	if(usingFinalRenderPass)
+	    delete finalRenderPass;
 	vkFreeMemory(manager->deviceState.device, framebufferMemory, VK_NULL_HANDLE);
     }
     if(offscreenSamplerCreated)
@@ -158,10 +156,13 @@ bool swapchainRecreationRequired(VkResult result) {
 	  glfwGetFramebufferSize(manager->window, &winWidth, &winHeight);
 	  glfwWaitEvents();
       }
+      bool useFinalRenderpass = renderConf.useFinalBuffer;
       VkExtent2D offscreenBufferExtent = {(uint32_t)winWidth, (uint32_t)winHeight};
-      if (renderConf.target_resolution[0] != 0.0 && renderConf.target_resolution[1] != 0.0)
+      if (renderConf.target_resolution[0] != 0.0 && renderConf.target_resolution[1] != 0.0) {
+	  useFinalRenderpass = true;
 	  offscreenBufferExtent = {(uint32_t)renderConf.target_resolution[0],
 				   (uint32_t)renderConf.target_resolution[1]};
+      }
       VkExtent2D swapchainExtent = {(uint32_t)winWidth, (uint32_t)winHeight};
       
       if(swapchain == nullptr)
@@ -180,43 +181,49 @@ bool swapchainRecreationRequired(VkResult result) {
 	      manager->deviceState.physicalDevice);
       if(!renderConf.multisampling)
 	  sampleCount = VK_SAMPLE_COUNT_1_BIT;
-
+      
       if(swapchainFormat != prevSwapchainFormat || sampleCount != prevSampleCount) {
 	  if(offscreenRenderPass != nullptr) {
-	      LOG("not nullptr");
 	      delete offscreenRenderPass;
-	      //delete finalRenderPass;
+	      if(usingFinalRenderPass) {
+		  usingFinalRenderPass = false;
+		  delete finalRenderPass;
+	      }
 	  }
+	  auto offscreenFinalAttachUse = useFinalRenderpass ?
+	      AttachmentUse::ShaderRead : AttachmentUse::PresentSrc;
 	  std::vector<AttachmentDesc> offscreenAttachments;
 	  if(renderConf.multisampling) {
 	      offscreenAttachments.push_back(
-		      AttachmentDesc(0, AttachmentType::Colour,
+		      AttachmentDesc(2, AttachmentType::Colour,
 				     AttachmentUse::TransientAttachment,
 				     sampleCount, swapchainFormat));
 	      offscreenAttachments.push_back(
-		      AttachmentDesc(2, AttachmentType::Resolve,
-				     AttachmentUse::PresentSrc,
+		      AttachmentDesc(0, AttachmentType::Resolve,
+				     offscreenFinalAttachUse,
 				     VK_SAMPLE_COUNT_1_BIT, swapchainFormat));
 	  }
 	  else
 	      offscreenAttachments.push_back(
 		      AttachmentDesc(0, AttachmentType::Colour,
-				     AttachmentUse::PresentSrc,
+				     offscreenFinalAttachUse,
 				     VK_SAMPLE_COUNT_1_BIT, swapchainFormat));
 	  offscreenAttachments.push_back(
 		  AttachmentDesc(1, AttachmentType::Depth,
 				 AttachmentUse::Attachment,
 				 sampleCount, offscreenDepthFormat));
 	  
-	  LOG("making new renderpasses");
 	  offscreenRenderPass = new RenderPass(manager->deviceState.device, offscreenAttachments,
 					       renderConf.clear_colour);
-	  /*finalRenderPass =
-	      new RenderPass(manager->deviceState.device,
-			     { AttachmentDesc(0, AttachmentType::Colour,
-					      AttachmentUse::PresentSrc,
-					      VK_SAMPLE_COUNT_1_BIT, swapchainFormat)},
-					      renderConf.scaled_border_colour);*/
+	  if(useFinalRenderpass) {
+	      usingFinalRenderPass = true;
+	      finalRenderPass =
+		  new RenderPass(manager->deviceState.device,
+				 { AttachmentDesc(0, AttachmentType::Colour,
+						  AttachmentUse::PresentSrc,
+						  VK_SAMPLE_COUNT_1_BIT, swapchainFormat)},
+				 renderConf.scaled_border_colour);
+	  }
       }
       
       prevSwapchainFormat = swapchainFormat;
@@ -234,9 +241,10 @@ bool swapchainRecreationRequired(VkResult result) {
 	      swapchainImages, offscreenBufferExtent,
 	      &attachmentMemorySize, &attachmentMemoryFlags);
 
-      /*finalRenderPass->createFramebufferImages(
-	      swapchainImages, swapchainExtent,
-	      &attachmentMemorySize, &attachmentMemoryFlags);*/
+      if(useFinalRenderpass)
+	  finalRenderPass->createFramebufferImages(
+		  swapchainImages, swapchainExtent,
+		  &attachmentMemorySize, &attachmentMemoryFlags);
       if(attachmentMemorySize > 0) {
 	  vkFreeMemory(manager->deviceState.device, framebufferMemory, VK_NULL_HANDLE);
 	  checkResultAndThrow(
@@ -251,7 +259,8 @@ bool swapchainRecreationRequired(VkResult result) {
       }
       
       offscreenRenderPass->createFramebuffers(framebufferMemory);
-      //  finalRenderPass->createFramebuffers(framebufferMemory);
+      if(useFinalRenderpass)
+	  finalRenderPass->createFramebuffers(framebufferMemory);
 
       LOG("Swapchain Image Count: " << swapchainImages->size());
             
@@ -303,11 +312,13 @@ bool swapchainRecreationRequired(VkResult result) {
 	      sizeof(glm::mat4), Resource::MAX_2D_BATCH);
       perFrame2DVert = new DescSet(vert2D_Set, swapchainFrameCount, manager->deviceState.device);
 
-      descriptor::Set offscreenView_Set("Offscreen Transform", descriptor::ShaderStage::Vertex);
-      offscreenView_Set.AddDescriptor("data", descriptor::Type::UniformBuffer,
-				      sizeof(glm::mat4), 1);
-      offscreenTransform = new DescSet(
-	      offscreenView_Set, swapchainFrameCount, manager->deviceState.device);
+      if(useFinalRenderpass) {
+	  descriptor::Set offscreenView_Set("Offscreen Transform", descriptor::ShaderStage::Vertex);
+	  offscreenView_Set.AddDescriptor("data", descriptor::Type::UniformBuffer,
+					  sizeof(glm::mat4), 1);
+	  offscreenTransform = new DescSet(
+		  offscreenView_Set, swapchainFrameCount, manager->deviceState.device);
+      }
 
       // fragment descriptor sets
 
@@ -368,30 +379,36 @@ bool swapchainRecreationRequired(VkResult result) {
       emptyDS = new DescSet(
 	      descriptor::Set("Empty", descriptor::ShaderStage::Vertex),
 	      swapchainFrameCount, manager->deviceState.device);
-      
-      if(!offscreenSamplerCreated) {	  
-	  _offscreenTextureSampler = vkhelper::createTextureSampler(
-		  manager->deviceState.device,
-		  manager->deviceState.physicalDevice, 1.0f,
-		  false,
-		  true,
-		  VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
-	  offscreenSamplerCreated = true;
+
+      std::vector<VkImageView> offscreenViews;
+      if(useFinalRenderpass) {
+	  if(!offscreenSamplerCreated) {
+	      _offscreenTextureSampler = vkhelper::createTextureSampler(
+		      manager->deviceState.device,
+		      manager->deviceState.physicalDevice, 1.0f,
+		      false,
+		      true,
+		      VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
+	      offscreenSamplerCreated = true;
+	  }
+	  offscreenViews = offscreenRenderPass->getAttachmentViews(0);
+	  descriptor::Set offscreen_Set("offscreen texture", descriptor::ShaderStage::Fragment);
+	  offscreen_Set.AddSamplerDescriptor("sampler", 1, &_offscreenTextureSampler);
+	  offscreen_Set.AddImageViewDescriptor("frame", descriptor::Type::SampledImagePerSet,
+					       1, offscreenViews.data());
+	  offscreenTex = new DescSet(offscreen_Set, swapchainFrameCount,
+				     manager->deviceState.device);
       }
-      /*std::vector<VkImageView> offscreenViews = offscreenRenderPass->getAttachmentViews(
-	      renderConf.multisampling ? 2 : 0);
-      descriptor::Set offscreen_Set("offscreen texture", descriptor::ShaderStage::Fragment);
-      offscreen_Set.AddSamplerDescriptor("sampler", 1, &_offscreenTextureSampler);
-      offscreen_Set.AddImageViewDescriptor("frame", descriptor::Type::SampledImagePerSet,
-      1, offscreenViews.data());
-      offscreenTex = new DescSet(offscreen_Set, swapchainFrameCount,
-      manager->deviceState.device); */
 
       descriptorSets = {
 	  VP3D, VP2D, perFrame3D, bones, emptyDS, perFrame2DVert,
-	  perFrame2DFrag, offscreenTransform, lighting,
-	  textures, //offscreenTex
+	  perFrame2DFrag, lighting, textures,
       };
+      
+      if(useFinalRenderpass) {
+	  descriptorSets.push_back(offscreenTransform);
+	  descriptorSets.push_back(offscreenTex);
+      }
       
       LOG("Creating Descriptor pool and memory for set bindings");
       
@@ -415,12 +432,14 @@ bool swapchainRecreationRequired(VkResult result) {
 
       LOG("Creating Graphics Pipelines");
 
-
       // create pipeline for each shader set -> 3D, animated 3D, 2D, and final
       part::create::PipelineConfig pipelineConf;
       pipelineConf.useMultisampling = renderConf.multisampling;
       pipelineConf.msaaSamples = sampleCount;
       pipelineConf.useSampleShading = manager->deviceState.features.sampleRateShading;
+      //pipelineConf.useDepthTest = renderConf.useDepthTest;
+
+      VkExtent2D renderExtent = useFinalRenderpass ? offscreenBufferExtent : swapchainExtent;
       
       part::create::GraphicsPipeline(
 	      manager->deviceState.device, &_pipeline3D,
@@ -428,7 +447,7 @@ bool swapchainRecreationRequired(VkResult result) {
 	      {&VP3D->set, &perFrame3D->set, &emptyDS->set, &textures->set, &lighting->set},
 	      {{VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(fragPushConstants)}},
 	      "shaders/vulkan/3D-lighting.vert.spv", "shaders/vulkan/blinnphong.frag.spv",
-	      swapchainExtent,//offscreenBufferExtent,
+	      renderExtent,
 	      pipeline_inputs::V3D::attributeDescriptions(),
 	      pipeline_inputs::V3D::bindingDescriptions(),
 	      pipelineConf);
@@ -439,7 +458,7 @@ bool swapchainRecreationRequired(VkResult result) {
 	      {&VP3D->set, &perFrame3D->set, &bones->set, &textures->set, &lighting->set},
 	      {{VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(fragPushConstants)}},
 	      "shaders/vulkan/3D-lighting-anim.vert.spv", "shaders/vulkan/blinnphong.frag.spv",
-	      swapchainExtent,//offscreenBufferExtent,
+	      renderExtent,
 	      pipeline_inputs::VAnim3D::attributeDescriptions(),
 	      pipeline_inputs::VAnim3D::bindingDescriptions(),
 	      pipelineConf);
@@ -449,26 +468,31 @@ bool swapchainRecreationRequired(VkResult result) {
 	      offscreenRenderPass->getRenderPass(),
 	      {&VP2D->set, &perFrame2DVert->set, &textures->set, &perFrame2DFrag->set}, {},
 	      "shaders/vulkan/flat.vert.spv", "shaders/vulkan/flat.frag.spv",
-	      swapchainExtent,//offscreenBufferExtent,
+	      renderExtent,
 	      pipeline_inputs::V2D::attributeDescriptions(),
 	      pipeline_inputs::V2D::bindingDescriptions(),
 	      pipelineConf);
 
-      /*pipelineConf.useMultisampling = false;
-      pipelineConf.useDepthTest = false;
-      pipelineConf.blendEnabled = false;
-      pipelineConf.cullMode = VK_CULL_MODE_NONE;
-      part::create::GraphicsPipeline(
-	      manager->deviceState.device, &_pipelineFinal,
-	      finalRenderPass->getRenderPass(),
-	      {&offscreenTransform->set, &offscreenTex->set}, {},
-	      "shaders/vulkan/final.vert.spv", "shaders/vulkan/final.frag.spv",
-	      swapchainExtent, {}, {},
-	      pipelineConf);*/
-      /* offscreenTransformData = glmhelper::calcFinalOffset(
-	      glm::vec2(offscreenBufferExtent.width, offscreenBufferExtent.height),
-	      glm::vec2((float)swapchainExtent.width,
-	      (float)swapchainExtent.height));*/
+      if(useFinalRenderpass) {
+	  pipelineConf.useMultisampling = false;
+	  pipelineConf.useDepthTest = false;
+	  pipelineConf.blendEnabled = false;
+	  pipelineConf.cullMode = VK_CULL_MODE_NONE;
+
+	  part::create::GraphicsPipeline(
+		  manager->deviceState.device, &_pipelineFinal,
+		  finalRenderPass->getRenderPass(),
+		  {&offscreenTransform->set, &offscreenTex->set}, {},
+		  "shaders/vulkan/final.vert.spv", "shaders/vulkan/final.frag.spv",
+		  swapchainExtent, {}, {},
+		  pipelineConf);
+	  
+	  offscreenTransformData = glmhelper::calcFinalOffset(
+		  glm::vec2(offscreenBufferExtent.width, offscreenBufferExtent.height),
+		  glm::vec2((float)swapchainExtent.width,
+			    (float)swapchainExtent.height));
+      }
+      
       LOG("Finished Creating Frame Resources");
       timeData.time = 0;
       prevRenderConf = renderConf;
@@ -491,7 +515,9 @@ bool swapchainRecreationRequired(VkResult result) {
       _pipeline3D.destroy(manager->deviceState.device);
       _pipelineAnim3D.destroy(manager->deviceState.device);
       _pipeline2D.destroy(manager->deviceState.device);
-      //      _pipelineFinal.destroy(manager->deviceState.device);
+      if(usingFinalRenderPass) {
+	  _pipelineFinal.destroy(manager->deviceState.device);
+      }
       LOG("    closing pools");
       for(int i = 0; i < pools->PoolCount(); i++)
 	  if(pools->get(i) != nullptr)
@@ -866,14 +892,16 @@ void RenderVk::EndDraw(std::atomic<bool> &submit) {
 
   // DO FINAL RENDER PASS
 
-  /*  finalRenderPass->beginRenderPass(currentCommandBuffer, swapchainFrameIndex);
+  if(usingFinalRenderPass) {
+      finalRenderPass->beginRenderPass(currentCommandBuffer, swapchainFrameIndex);
   
-  offscreenTransform->bindings[0].storeSetData(
-	  swapchainFrameIndex, &offscreenTransformData, 0, 0, 0);
-  _pipelineFinal.begin(currentCommandBuffer, swapchainFrameIndex);
-  vkCmdDraw(currentCommandBuffer, 3, 1, 0, 0);
-
-  vkCmdEndRenderPass(currentCommandBuffer);*/
+      offscreenTransform->bindings[0].storeSetData(
+	      swapchainFrameIndex, &offscreenTransformData, 0, 0, 0);
+      _pipelineFinal.begin(currentCommandBuffer, swapchainFrameIndex);
+      vkCmdDraw(currentCommandBuffer, 3, 1, 0, 0);
+      
+      vkCmdEndRenderPass(currentCommandBuffer);
+  }
   
   VkResult result = vkEndCommandBuffer(currentCommandBuffer);
   if(result == VK_SUCCESS) {
@@ -900,9 +928,7 @@ void RenderVk::EndDraw(std::atomic<bool> &submit) {
       _resize();
   } else if (result != VK_SUCCESS)
       checkResultAndThrow(result, "failed to present swapchain image to queue");
-
-  //  vkQueueWaitIdle(manager->deviceState.queue.graphicsPresentQueue);
-
+  
   submit = true;
 }
 

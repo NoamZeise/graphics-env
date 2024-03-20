@@ -96,7 +96,8 @@ public:
 			     VkDeviceMemory attachmentMemory);
     VkImageView getView();
     bool isUsingExternalImage();
-
+    bool hasImageForEachFrame();
+    
 private:
     enum class state {
 	unmade,
@@ -107,6 +108,7 @@ private:
     state state = state::unmade;
 
     bool usingExternalImage = false;
+    bool imageForEachFrame = false;
     VkImage image;
     VkImageView view;
     size_t memoryOffset;
@@ -119,8 +121,12 @@ private:
 
 AttachmentImage::AttachmentImage(AttachmentDesc &attachmentDesc) {
     attachmentDesc.getImageProps(&imageFormat, &imageUsage, &imageAspect, &sampleCount);
-    if(attachmentDesc.getUse() == AttachmentUse::PresentSrc)
+    switch(attachmentDesc.getUse()) {
+    case AttachmentUse::PresentSrc:
 	usingExternalImage = true;
+	imageForEachFrame = true;
+	break;
+    }
 }
 
 void AttachmentImage::Destroy(VkDevice device)
@@ -194,6 +200,7 @@ VkResult AttachmentImage::CreateImageView(VkDevice device,
 VkImageView AttachmentImage::getView() { return this->view; }
 
 bool AttachmentImage::isUsingExternalImage() { return this->usingExternalImage; }
+bool AttachmentImage::hasImageForEachFrame() { return this->imageForEachFrame; }
 
 Framebuffer::~Framebuffer() {
     if(framebufferCreated)
@@ -203,13 +210,13 @@ Framebuffer::~Framebuffer() {
 }
 
 
-enum class SubpassDependancyType {
+enum class SubpassDependancy {
   PreviousImageOps,
   FutureShaderRead,
 };
 
 VkSubpassDependency genSubpassDependancy(bool colour, bool depth,
-                                         SubpassDependancyType depType);
+                                         SubpassDependancy depType);
 
 RenderPass::RenderPass(VkDevice device, std::vector<AttachmentDesc> attachments,
 	       float clearColour[3]) {
@@ -222,25 +229,26 @@ RenderPass::RenderPass(VkDevice device, std::vector<AttachmentDesc> attachments,
     VkAttachmentReference depthRef;
     VkAttachmentReference resolveRef;
     std::vector<VkAttachmentReference> colourRefs;
+    attachmentClears.resize(attachments.size());
     for(int i = 0; i < attachments.size(); i++) {
-	VkClearValue clear;
-	if(attachments[i].getIndex() > attachments.size())
+	int attachIndex = attachments[i].getIndex();
+	if(attachIndex > attachments.size())
 	    throw std::runtime_error("Render Pass Creation Error: Attachment Index "
 				     "was greater than the number of supplied attachments");
-	if(attachmentDescription[attachments[i].getIndex()].wasCreated())
+	if(attachmentDescription[attachIndex].wasCreated())
 	    throw std::runtime_error("Render Pass Creation Error: tried to have two attachments "
 				     "with the same index!");
-	attachmentDescription[attachments[i].getIndex()] = attachments[i];    
-	attachDescVK[attachments[i].getIndex()] = attachments[i].getAttachmentDescription();
+	attachmentDescription[attachIndex] = attachments[i];    
+	attachDescVK[attachIndex] = attachments[i].getAttachmentDescription();
 
 	VkAttachmentReference attachRef = attachments[i].getAttachmentReference();
+	VkClearValue clear;
 	if(attachments[i].getUse() == AttachmentUse::ShaderRead)
 	    hasShaderReadAttachment = true;
 	switch(attachments[i].getType()) {
 	case AttachmentType::Colour:
 	    colourRefs.push_back(attachRef);
 	    clear.color = {{clearColour[0], clearColour[1], clearColour[2], 1.0f}};
-	    attachmentClears.push_back(clear);
 	    break;
 	case AttachmentType::Depth:
 	    if(hasDepth)
@@ -248,7 +256,6 @@ RenderPass::RenderPass(VkDevice device, std::vector<AttachmentDesc> attachments,
 	    hasDepth = true;
 	    depthRef = attachRef;
 	    clear.depthStencil = {1.0f, 0};
-	    attachmentClears.push_back(clear);
 	    break;
 	case AttachmentType::Resolve:
 	    if(hasResolve)
@@ -256,6 +263,7 @@ RenderPass::RenderPass(VkDevice device, std::vector<AttachmentDesc> attachments,
 	    hasResolve = true;
 	    resolveRef = attachRef;
 	}
+	attachmentClears[attachIndex] = clear;
     }
 
     VkSubpassDescription subpass{};
@@ -270,11 +278,11 @@ RenderPass::RenderPass(VkDevice device, std::vector<AttachmentDesc> attachments,
     std::vector<VkSubpassDependency> subpassDependancies;
     subpassDependancies.push_back(
 	    genSubpassDependancy(colourRefs.size() > 0, hasDepth,
-				 SubpassDependancyType::PreviousImageOps));
+				 SubpassDependancy::PreviousImageOps));
     if(hasShaderReadAttachment)
 	subpassDependancies.push_back(
 		genSubpassDependancy(colourRefs.size() > 0, hasDepth,
-				     SubpassDependancyType::FutureShaderRead));
+				     SubpassDependancy::FutureShaderRead));
 
     VkRenderPassCreateInfo createInfo{VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO};
     createInfo.attachmentCount = (uint32_t)attachDescVK.size();
@@ -293,9 +301,9 @@ RenderPass::~RenderPass() {
 }
 
 VkResult RenderPass::createFramebufferImages(std::vector<VkImage> *swapchainImages,
-					 VkExtent2D extent,
-					 VkDeviceSize *pMemSize,
-					 uint32_t *pMemFlags) {
+					     VkExtent2D extent,
+					     VkDeviceSize *pMemSize,
+					     uint32_t *pMemFlags) {
     VkResult result = VK_SUCCESS;
     std::vector<AttachmentImage> attachImages;
     for(int i = 0; i < attachmentDescription.size(); i++)
@@ -304,29 +312,18 @@ VkResult RenderPass::createFramebufferImages(std::vector<VkImage> *swapchainImag
     framebuffers.resize((swapchainImages->size()));
     framebufferExtent = extent;
 
-    VkDeviceSize imageMemReqs;
     for(int i = 0; i < framebuffers.size(); i++) {
-	if(i == 0) {
-	    framebuffers[i].attachments = attachImages;
-	    framebuffers[i].device = this->device;
-	    for(AttachmentImage &im: framebuffers[i].attachments) {
-		if(im.isUsingExternalImage())
-		    im.AddImage(swapchainImages->at(i));
-		else {
-		    msgAndReturnOnErr(
-			    im.CreateImage(device, extent, pMemSize, pMemFlags),
-			    "RenderPass Error: Failed to create framebuffer attachment image");
-		}
-	    }
-	} else {
-	    framebuffers[i].attachments = attachImages;
-	    framebuffers[i].device = this->device;
-	    for(int j = 0; j < attachImages.size(); j++) {
-		if(framebuffers[i].attachments[j].isUsingExternalImage())
-		    framebuffers[i].attachments[j]
-			.AddImage(swapchainImages->at(i));
-
-	    }
+	framebuffers[i].attachments = attachImages;
+	framebuffers[i].device = this->device;
+	for(int j = 0; j < attachImages.size(); j++) {
+	    if(framebuffers[i].attachments[j].isUsingExternalImage())
+		framebuffers[i].attachments[j]
+		    .AddImage(swapchainImages->at(i));
+	    else if(i == 0 || framebuffers[i].attachments[j].hasImageForEachFrame())
+		msgAndReturnOnErr(
+			framebuffers[i].attachments[j]
+			.CreateImage(device, extent, pMemSize, pMemFlags),
+			"RenderPass Error: Failed to create framebuffer attachment image");
 	}
     }
     return result;
@@ -342,22 +339,21 @@ VkResult RenderPass::createFramebuffers(VkDeviceMemory framebufferImageMemory) {
     fbCreateInfo.height = framebufferExtent.height;
     fbCreateInfo.layers = 1;
     for(int fi = 0; fi < framebuffers.size(); fi++) {
-	Framebuffer* fb = &framebuffers[fi];
-	std::vector<VkImageView> attachViews(fb->attachments.size());
+	std::vector<VkImageView> attachViews(framebuffers[fi].attachments.size());
 	for(int i = 0; i < attachViews.size(); i++) {
-	    if(fb->attachments[i].isUsingExternalImage() || fi == 0) {
-		msgAndReturnOnErr(fb->attachments[i].CreateImageView(device, framebufferImageMemory),
+	    if(fi == 0 || framebuffers[fi].attachments[i].hasImageForEachFrame()) {
+		msgAndReturnOnErr(framebuffers[fi].attachments[i].CreateImageView
+				  (device, framebufferImageMemory),
 				  "RenderPass Error: Failed to create image view for framebuffer");
-		attachViews[i] = fb->attachments[i].getView();
-	    } else {
+		attachViews[i] = framebuffers[fi].attachments[i].getView();
+	    } else
 		attachViews[i] = framebuffers[0].attachments[i].getView();
-	    }
 	}
 	fbCreateInfo.pAttachments = attachViews.data();
 	msgAndReturnOnErr(vkCreateFramebuffer(device, &fbCreateInfo,
-					      VK_NULL_HANDLE, &fb->framebuffer),
+					      VK_NULL_HANDLE, &framebuffers[fi].framebuffer),
 			  "RenderPass Error: Failed to create Framebuffer");
-	fb->framebufferCreated = true;
+	framebuffers[fi].framebufferCreated = true;
     }
 
     return result;
@@ -398,8 +394,12 @@ std::vector<VkImageView> RenderPass::getAttachmentViews(uint32_t attachmentIndex
 				 " attachment is not for reading from a shader");
 
     std::vector<VkImageView> views(framebuffers.size());
-    for(int i = 0; i < framebuffers.size(); i++)
-	views[i] = framebuffers[i].attachments[attachmentIndex].getView();
+    for(int i = 0; i < framebuffers.size(); i++) {
+	if(framebuffers[0].attachments[attachmentIndex].hasImageForEachFrame())
+	    views[i] = framebuffers[i].attachments[attachmentIndex].getView();
+	else
+	    views[i] = framebuffers[0].attachments[attachmentIndex].getView();
+    }
     return views;
 }
 
@@ -445,27 +445,32 @@ void setAccessMask(VkAccessFlags *pAccessMask, bool colour, bool depth) {
 	    VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
 }
 
-VkSubpassDependency genSubpassDependancy(bool colour, bool depth, SubpassDependancyType depType) {
+VkSubpassDependency genSubpassDependancy(bool colour, bool depth, SubpassDependancy depType) {
     VkSubpassDependency dep;
     dep.srcStageMask = 0;
     dep.srcAccessMask = 0;
     dep.dstStageMask = 0;
     dep.dstAccessMask = 0;
     dep.dependencyFlags = 0;
-    //dep.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;// ??? TODO: check if needed
     switch(depType) {
-    case SubpassDependancyType::PreviousImageOps:
+    case SubpassDependancy::PreviousImageOps:
 	dep.srcSubpass = VK_SUBPASS_EXTERNAL;
 	dep.dstSubpass = 0;
-	//	setStageMask(&dep.srcStageMask, colour, depth);
+
 	dep.srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT |
 	    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	setStageMask(&dep.dstStageMask, colour, depth);
 	dep.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT |
 	    VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	setAccessMask(&dep.dstAccessMask, colour, depth);
+	
+	setStageMask(&dep.dstStageMask, colour, depth);
+	dep.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
+	    VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+	dep.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
+	    VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
+	    VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
+	    VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 	break;
-    case SubpassDependancyType::FutureShaderRead:
+    case SubpassDependancy::FutureShaderRead:
 	dep.srcSubpass = 0;
 	dep.dstSubpass = VK_SUBPASS_EXTERNAL;
 	setStageMask(&dep.srcStageMask, colour, depth);

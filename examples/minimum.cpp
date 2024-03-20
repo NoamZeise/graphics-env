@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
     ManagerState state;
     state.windowTitle = "minimum example";
     state.defaultRenderer = parseArgs(argc, argv, &state.windowTitle);
-
+    
     Manager manager(state);
     
     ResourcePool* pool = manager.render->pool();

@@ -117,6 +117,7 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
       VkDeviceMemory framebufferMemory = VK_NULL_HANDLE;
       RenderPass* offscreenRenderPass = nullptr;
       RenderPass* finalRenderPass = nullptr;
+      bool usingFinalRenderPass = false;
 
       Pipeline _pipeline3D;
       Pipeline _pipelineAnim3D;

@@ -11,6 +11,10 @@ struct RenderConfig {
     float clear_colour[3] = { 0.39f, 0.58f, 0.93f };
     float scaled_border_colour[3] = { 0.0f, 0.0f, 0.0f };
 
+    // Use seperate final buffer
+    // (used automatically if target_res != {0, 0})
+    bool useFinalBuffer = false;
+
     //Texture Loading Settings
     bool srgb = false;
     bool mip_mapping = false;
