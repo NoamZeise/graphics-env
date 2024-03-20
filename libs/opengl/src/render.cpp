@@ -49,7 +49,7 @@ namespace glenv {
       flatShader = new GLShader("shaders/opengl/flat.vert", "shaders/opengl/flat.frag");
       flatShader->Use();
       glUniform1i(flatShader->Location("image"), 0);
-
+      
       finalShader = new GLShader("shaders/opengl/final.vert", "shaders/opengl/final.frag");
       finalShader->Use();
       glUniformMatrix4fv(finalShader->Location("screenTransform"),
@@ -191,7 +191,8 @@ namespace glenv {
       glm::vec2 targetResolution = getTargetRes(renderConf, windowResolution);
       if(useOffscreenFramebuffer) {
 	  glBindFramebuffer(GL_FRAMEBUFFER, offscreenFramebuffer->id());
-	  glEnable(GL_DEPTH_TEST);
+	  if(renderConf.useDepthTest)
+	      glEnable(GL_DEPTH_TEST);
 	  glViewport(0, 0, (GLsizei)targetResolution.x, (GLsizei)targetResolution.y);
       }
       glClearColor(renderConf.clear_colour[0],
@@ -393,6 +394,11 @@ namespace glenv {
       glViewport(0, 0, width, height);
       LOG("resizing framebuffer, window width: " << width << "  height:" << height);
       glm::vec2 targetResolution = getTargetRes(renderConf, windowResolution);
+
+      /*this->useOffscreenFramebuffer = renderConf.useFinalBuffer;
+      if(!this->useOffscreenFramebuffer &&
+	 (renderConf.target_resolution[0] != 0.0f || renderConf.target_resolution[1] != 0.0f))
+	 this->useOffscreenFramebuffer = true;*/
 
       if(renderConf.multisampling) 
 	  glEnable(GL_MULTISAMPLE);
