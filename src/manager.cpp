@@ -68,12 +68,12 @@ Manager::Manager(ManagerState state) {
     switch(framework) {
     case RenderFramework::Vulkan:
 #ifndef NO_VULKAN
-	render = static_cast<Render*>(new vkenv::RenderVk(window, state.conf));
+	render = static_cast<Render*>(new vkenv::RenderVk(window, state.render));
 	break;
 #endif
     case RenderFramework::OpenGL:
 #ifndef NO_OPENGL
-	render = static_cast<Render*>(new glenv::RenderGl(window, state.conf));
+	render = static_cast<Render*>(new glenv::RenderGl(window, state.render));
 	break;
 #endif
     default:

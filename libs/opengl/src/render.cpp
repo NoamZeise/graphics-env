@@ -73,7 +73,7 @@ namespace glenv {
   }
 
   RenderGl::~RenderGl() {
-      if(useOffscreenFramebuffer) {
+      if(useFinalFramebuffer) {
 	  delete offscreenFramebuffer;
 	  if(offscreenBlitFramebuffer != nullptr)
 	      delete offscreenBlitFramebuffer;
@@ -188,16 +188,20 @@ namespace glenv {
   }
 
   void RenderGl::EndDraw(std::atomic<bool>& submit) {
-      glm::vec2 targetResolution = getTargetRes(renderConf, windowResolution);
-      if(useOffscreenFramebuffer) {
-	  glBindFramebuffer(GL_FRAMEBUFFER, offscreenFramebuffer->id());
-	  if(renderConf.useDepthTest)
-	      glEnable(GL_DEPTH_TEST);
-	  glViewport(0, 0, (GLsizei)targetResolution.x, (GLsizei)targetResolution.y);
-      }
+      glm::vec2 mainResolution = getTargetRes(renderConf, windowResolution);
+      
+      glBindFramebuffer(GL_FRAMEBUFFER, useFinalFramebuffer ?
+			offscreenFramebuffer->id() : 0);
+
+      if(renderConf.useDepthTest)
+	  glEnable(GL_DEPTH_TEST);
+      
+      glViewport(0, 0, (GLsizei)mainResolution.x, (GLsizei)mainResolution.y);
+      
       glClearColor(renderConf.clear_colour[0],
 		   renderConf.clear_colour[1],
 		   renderConf.clear_colour[2], 1.0f);
+      
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       
       if(currentDraw == 0) {
@@ -255,19 +259,23 @@ namespace glenv {
       
       DRAW_BATCH();
 
-      if(useOffscreenFramebuffer) {
-	  if(renderConf.multisampling) {
-	      glBindFramebuffer(GL_DRAW_FRAMEBUFFER, offscreenBlitFramebuffer->id());
-	      glBindFramebuffer(GL_READ_FRAMEBUFFER, offscreenFramebuffer->id());
-	      glDrawBuffer(GL_BACK);
-	      glBlitFramebuffer(0, 0,
-				(GLsizei)targetResolution.x,
-				(GLsizei)targetResolution.y,
-				0, 0,
-				(GLsizei)targetResolution.x,
-				(GLsizei)targetResolution.y,
-				GL_COLOR_BUFFER_BIT, GL_LINEAR);
-	  }
+      if(renderConf.multisampling) {
+	  glBindFramebuffer(GL_DRAW_FRAMEBUFFER,
+			    useFinalFramebuffer ?
+			    offscreenBlitFramebuffer->id()
+			    : 0);
+	  glBindFramebuffer(GL_READ_FRAMEBUFFER, offscreenFramebuffer->id());
+	  glDrawBuffer(GL_BACK);
+	  glBlitFramebuffer(0, 0,
+			    (GLsizei)mainResolution.x,
+			    (GLsizei)mainResolution.y,
+			    0, 0,
+			    (GLsizei)mainResolution.x,
+			    (GLsizei)mainResolution.y,
+			    GL_COLOR_BUFFER_BIT, GL_LINEAR);
+      }
+      
+      if(useFinalFramebuffer) {
 	  glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	  glClearColor(renderConf.scaled_border_colour[0],
 		       renderConf.scaled_border_colour[1],
@@ -395,49 +403,61 @@ namespace glenv {
       LOG("resizing framebuffer, window width: " << width << "  height:" << height);
       glm::vec2 targetResolution = getTargetRes(renderConf, windowResolution);
 
-      /*this->useOffscreenFramebuffer = renderConf.useFinalBuffer;
-      if(!this->useOffscreenFramebuffer &&
-	 (renderConf.target_resolution[0] != 0.0f || renderConf.target_resolution[1] != 0.0f))
-	 this->useOffscreenFramebuffer = true;*/
+      useFinalFramebuffer = renderConf.forceFinalBuffer ||
+	  targetResolution != windowResolution;
 
       if(renderConf.multisampling) 
 	  glEnable(GL_MULTISAMPLE);
       else
 	  glDisable(GL_MULTISAMPLE);
 
-      if(useOffscreenFramebuffer) {
-	  if(renderConf.multisampling)
-	      glGetIntegerv(GL_MAX_SAMPLES, &msaaSamples);
-	  else
-	      msaaSamples = 1;
-	  if(offscreenFramebuffer != nullptr)
-	      delete offscreenFramebuffer;
+      msaaSamples = 1;
+      auto offscreenType = GlFramebuffer::AttachmentType::texture2D;
+      if(renderConf.multisampling) {
+	  offscreenType = GlFramebuffer::AttachmentType::renderbuffer;
+	  glGetIntegerv(GL_MAX_SAMPLES, &msaaSamples);
+      }
+      
+      if(offscreenFramebuffer != nullptr)
+	  delete offscreenFramebuffer;
+
+      std::vector<GlFramebuffer::Attachment> attachments;
+      if(useFinalFramebuffer || renderConf.multisampling) {
+	  attachments.push_back(
+		  GlFramebuffer::Attachment(
+			  GlFramebuffer::Attachment::Position::color0,
+			  offscreenType,
+			  GL_RGB));
+      }
+
+      if(renderConf.useDepthTest)
+	  attachments.push_back(
+		  GlFramebuffer::Attachment(
+			  GlFramebuffer::Attachment::Position::depthStencil,
+			  GlFramebuffer::AttachmentType::renderbuffer,
+			  GL_DEPTH24_STENCIL8));
+
+      if(renderConf.multisampling || useFinalFramebuffer)
 	  offscreenFramebuffer = new GlFramebuffer(
-		  (GLsizei)targetResolution.x, (GLsizei)targetResolution.y, msaaSamples, {
+		  (GLsizei)targetResolution.x, (GLsizei)targetResolution.y,
+		  msaaSamples, attachments);
+      
+      if(useFinalFramebuffer && renderConf.multisampling) {
+	  offscreenBlitFramebuffer = new GlFramebuffer(
+		  (GLsizei)targetResolution.x, (GLsizei)targetResolution.y, 1, {
 		      GlFramebuffer::Attachment(
 			      GlFramebuffer::Attachment::Position::color0,
-			      renderConf.multisampling ?
-			      GlFramebuffer::AttachmentType::renderbuffer :
 			      GlFramebuffer::AttachmentType::texture2D,
-			      GL_RGB),
-		       GlFramebuffer::Attachment(
-		            GlFramebuffer::Attachment::Position::depthStencil,
-		            GlFramebuffer::AttachmentType::renderbuffer,
-		            GL_DEPTH24_STENCIL8),
-		  });
-	  if(renderConf.multisampling) {
-	      offscreenBlitFramebuffer = new GlFramebuffer(
-		      (GLsizei)targetResolution.x, (GLsizei)targetResolution.y, 1, {
-			  GlFramebuffer::Attachment(
-				  GlFramebuffer::Attachment::Position::color0,
-				  GlFramebuffer::AttachmentType::texture2D,
-				  GL_RGB)});
-	  }
+			      GL_RGB)});
+      }
+
+      if(useFinalFramebuffer) {
 	  finalShader->Use();
 	  finalTransform = glmhelper::calcFinalOffset(targetResolution, windowResolution);
 	  glUniformMatrix4fv(finalShader->Location("screenTransform"),
 			     1, GL_FALSE, &finalTransform[0][0]);
       }
+      
       prevRenderConf = renderConf;
   }
 

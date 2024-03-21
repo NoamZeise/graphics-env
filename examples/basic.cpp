@@ -20,10 +20,7 @@
 int main(int argc, char** argv) {
     ManagerState state;
     state.cursor = cursorState::disabled;
-    state.windowTitle = "basic example";
-    state.conf.multisampling = true;
-    state.conf.sample_shading = true;
-    state.conf.useDepthTest = false;
+    state.windowTitle = "basic example";    
     state.defaultRenderer = parseArgs(argc, argv, &state.windowTitle);
     Manager manager(state);
     ResourcePool* pool = manager.render->pool();

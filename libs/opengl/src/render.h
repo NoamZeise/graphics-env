@@ -91,7 +91,7 @@ namespace glenv {
       GLShader *flatShader;
       GLShader *finalShader;
 
-      bool useOffscreenFramebuffer = true;
+      bool useFinalFramebuffer = true;
       GlFramebuffer* offscreenFramebuffer = nullptr;
       GlFramebuffer* offscreenBlitFramebuffer = nullptr;
       int msaaSamples = 1;

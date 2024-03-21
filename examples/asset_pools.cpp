@@ -28,8 +28,8 @@ int main(int argc, char** argv) {
     ManagerState state;
     state.cursor = cursorState::disabled;
     state.windowTitle = "Asset Pools Examples";
-    state.conf.multisampling = true;
-    state.conf.sample_shading = true;
+    state.render.multisampling = true;
+    state.render.sample_shading = true;
     state.defaultRenderer = parseArgs(argc, argv, &state.windowTitle);
     Manager manager(state);
     //get default pool

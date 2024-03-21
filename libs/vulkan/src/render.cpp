@@ -156,7 +156,7 @@ bool swapchainRecreationRequired(VkResult result) {
 	  glfwGetFramebufferSize(manager->window, &winWidth, &winHeight);
 	  glfwWaitEvents();
       }
-      bool useFinalRenderpass = renderConf.useFinalBuffer;
+      bool useFinalRenderpass = renderConf.forceFinalBuffer;
       VkExtent2D offscreenBufferExtent = {(uint32_t)winWidth, (uint32_t)winHeight};
       if (renderConf.target_resolution[0] != 0.0 && renderConf.target_resolution[1] != 0.0) {
 	  useFinalRenderpass = true;
@@ -202,8 +202,7 @@ bool swapchainRecreationRequired(VkResult result) {
 		      AttachmentDesc(0, AttachmentType::Resolve,
 				     offscreenFinalAttachUse,
 				     VK_SAMPLE_COUNT_1_BIT, swapchainFormat));
-	  }
-	  else
+	  } else
 	      offscreenAttachments.push_back(
 		      AttachmentDesc(0, AttachmentType::Colour,
 				     offscreenFinalAttachUse,

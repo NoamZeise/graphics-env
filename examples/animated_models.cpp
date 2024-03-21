@@ -43,9 +43,9 @@ struct AnimatedModel {
 int main(int argc, char** argv) {
     ManagerState state;
     state.cursor = cursorState::disabled;
-    state.conf.multisampling = true;
-    state.conf.sample_shading = true;
-    state.conf.mip_mapping = false;
+    state.render.multisampling = true;
+    state.render.sample_shading = true;
+    state.render.mip_mapping = false;
     state.windowTitle = "Animated Models";
     state.defaultRenderer = parseArgs(argc, argv, &state.windowTitle);
     Manager manager(state);

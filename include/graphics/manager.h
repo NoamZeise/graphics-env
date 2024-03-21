@@ -33,7 +33,7 @@ struct ManagerState {
     bool hideWindowOnCreate = false;
     cursorState cursor = cursorState::normal;
     RenderFramework defaultRenderer = RenderFramework::Vulkan;
-    RenderConfig conf;
+    RenderConfig render;
 };
 
 struct Manager {
