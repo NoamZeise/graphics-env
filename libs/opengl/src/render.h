@@ -64,10 +64,6 @@ namespace glenv {
       glm::vec2 offscreenSize() override;
 
   private:
-      Resource::Model loadModel(Resource::ModelType type, ModelInfo::Model model,
-				std::vector<Resource::ModelAnimation> *pGetAnimations);
-      Resource::Model loadModel(Resource::ModelType type, std::string filepath,
-				std::vector<Resource::ModelAnimation> *pGetAnimations);
       void draw2DBatch(int drawCount, Resource::Texture texture,
 		       glm::vec4 currentColour);
       void draw3DBatch(int drawCount, Resource::Model model);

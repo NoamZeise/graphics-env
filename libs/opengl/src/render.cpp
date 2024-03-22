@@ -8,9 +8,8 @@
 #include <glm/gtc/matrix_inverse.hpp>
 #include <graphics/logger.h>
 #include <graphics/glm_helper.h>
+#include <resource_loader/helpers.h>
 #include <stdexcept>
-
-glm::vec2 getTargetRes(RenderConfig renderConf, glm::vec2 winRes);
 
 namespace glenv {
 
@@ -32,7 +31,6 @@ namespace glenv {
 	  throw std::runtime_error("failed to load glad");
       LOG("glad loaded");
 
-      glEnable(GL_DEPTH_TEST);
       glEnable(GL_BLEND);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
       glEnable(GL_CULL_FACE);
@@ -83,6 +81,77 @@ namespace glenv {
       delete flatShader;
       delete finalShader;
       delete pools;
+  }
+
+  void RenderGl::FramebufferResize() {
+      glfwSwapInterval(renderConf.vsync ? 1 : 0);
+      int width, height;
+      glfwGetFramebufferSize(window, &width, &height);
+      while(width == 0 || height == 0) {
+	  glfwGetFramebufferSize(window, &width, &height);
+	  glfwWaitEvents();
+      }
+      windowResolution = glm::vec2((float)width, (float)height);
+      glViewport(0, 0, width, height);
+      LOG("resizing framebuffer, window width: " << width << "  height:" << height);
+      glm::vec2 targetResolution = getTargetRes(renderConf, width, height);
+
+      useFinalFramebuffer = renderConf.forceFinalBuffer ||
+	  targetResolution != windowResolution;
+
+      if(renderConf.multisampling) 
+	  glEnable(GL_MULTISAMPLE);
+      else
+	  glDisable(GL_MULTISAMPLE);
+
+      msaaSamples = 1;
+      auto offscreenType = GlFramebuffer::AttachmentType::texture2D;
+      if(renderConf.multisampling) {
+	  offscreenType = GlFramebuffer::AttachmentType::renderbuffer;
+	  glGetIntegerv(GL_MAX_SAMPLES, &msaaSamples);
+      }
+      
+      if(offscreenFramebuffer != nullptr)
+	  delete offscreenFramebuffer;
+
+      std::vector<GlFramebuffer::Attachment> attachments;
+      if(useFinalFramebuffer || renderConf.multisampling) {
+	  attachments.push_back(
+		  GlFramebuffer::Attachment(
+			  GlFramebuffer::Attachment::Position::color0,
+			  offscreenType,
+			  GL_RGB));
+      }
+
+      if(renderConf.useDepthTest)
+	  attachments.push_back(
+		  GlFramebuffer::Attachment(
+			  GlFramebuffer::Attachment::Position::depthStencil,
+			  GlFramebuffer::AttachmentType::renderbuffer,
+			  GL_DEPTH24_STENCIL8));
+
+      if(renderConf.multisampling || useFinalFramebuffer)
+	  offscreenFramebuffer = new GlFramebuffer(
+		  (GLsizei)targetResolution.x, (GLsizei)targetResolution.y,
+		  msaaSamples, attachments);
+      
+      if(useFinalFramebuffer && renderConf.multisampling) {
+	  offscreenBlitFramebuffer = new GlFramebuffer(
+		  (GLsizei)targetResolution.x, (GLsizei)targetResolution.y, 1, {
+		      GlFramebuffer::Attachment(
+			      GlFramebuffer::Attachment::Position::color0,
+			      GlFramebuffer::AttachmentType::texture2D,
+			      GL_RGB)});
+      }
+
+      if(useFinalFramebuffer) {
+	  finalShader->Use();
+	  finalTransform = glmhelper::calcFinalOffset(targetResolution, windowResolution);
+	  glUniformMatrix4fv(finalShader->Location("screenTransform"),
+			     1, GL_FALSE, &finalTransform[0][0]);
+      }
+      
+      prevRenderConf = renderConf;
   }
 
   ResourcePool* RenderGl::CreateResourcePool() {
@@ -188,7 +257,7 @@ namespace glenv {
   }
 
   void RenderGl::EndDraw(std::atomic<bool>& submit) {
-      glm::vec2 mainResolution = getTargetRes(renderConf, windowResolution);
+      glm::vec2 mainResolution = getTargetRes(renderConf, windowResolution.x, windowResolution.y);
       
       glBindFramebuffer(GL_FRAMEBUFFER, useFinalFramebuffer ?
 			offscreenFramebuffer->id() : 0);
@@ -394,73 +463,6 @@ namespace glenv {
 	  DrawQuad(draw.tex, draw.model, draw.colour, draw.texOffset);
   }
 
-  void RenderGl::FramebufferResize() {
-      glfwSwapInterval(renderConf.vsync ? 1 : 0);
-      int width, height;
-      glfwGetFramebufferSize(window, &width, &height);
-      windowResolution = glm::vec2((float)width, (float)height);
-      glViewport(0, 0, width, height);
-      LOG("resizing framebuffer, window width: " << width << "  height:" << height);
-      glm::vec2 targetResolution = getTargetRes(renderConf, windowResolution);
-
-      useFinalFramebuffer = renderConf.forceFinalBuffer ||
-	  targetResolution != windowResolution;
-
-      if(renderConf.multisampling) 
-	  glEnable(GL_MULTISAMPLE);
-      else
-	  glDisable(GL_MULTISAMPLE);
-
-      msaaSamples = 1;
-      auto offscreenType = GlFramebuffer::AttachmentType::texture2D;
-      if(renderConf.multisampling) {
-	  offscreenType = GlFramebuffer::AttachmentType::renderbuffer;
-	  glGetIntegerv(GL_MAX_SAMPLES, &msaaSamples);
-      }
-      
-      if(offscreenFramebuffer != nullptr)
-	  delete offscreenFramebuffer;
-
-      std::vector<GlFramebuffer::Attachment> attachments;
-      if(useFinalFramebuffer || renderConf.multisampling) {
-	  attachments.push_back(
-		  GlFramebuffer::Attachment(
-			  GlFramebuffer::Attachment::Position::color0,
-			  offscreenType,
-			  GL_RGB));
-      }
-
-      if(renderConf.useDepthTest)
-	  attachments.push_back(
-		  GlFramebuffer::Attachment(
-			  GlFramebuffer::Attachment::Position::depthStencil,
-			  GlFramebuffer::AttachmentType::renderbuffer,
-			  GL_DEPTH24_STENCIL8));
-
-      if(renderConf.multisampling || useFinalFramebuffer)
-	  offscreenFramebuffer = new GlFramebuffer(
-		  (GLsizei)targetResolution.x, (GLsizei)targetResolution.y,
-		  msaaSamples, attachments);
-      
-      if(useFinalFramebuffer && renderConf.multisampling) {
-	  offscreenBlitFramebuffer = new GlFramebuffer(
-		  (GLsizei)targetResolution.x, (GLsizei)targetResolution.y, 1, {
-		      GlFramebuffer::Attachment(
-			      GlFramebuffer::Attachment::Position::color0,
-			      GlFramebuffer::AttachmentType::texture2D,
-			      GL_RGB)});
-      }
-
-      if(useFinalFramebuffer) {
-	  finalShader->Use();
-	  finalTransform = glmhelper::calcFinalOffset(targetResolution, windowResolution);
-	  glUniformMatrix4fv(finalShader->Location("screenTransform"),
-			     1, GL_FALSE, &finalTransform[0][0]);
-      }
-      
-      prevRenderConf = renderConf;
-  }
-
   void RenderGl::set3DViewMat(glm::mat4 view, glm::vec4 camPos) {
       view3D = view;
       lighting.camPos = camPos;
@@ -502,11 +504,3 @@ namespace glenv {
   }
   
 }//namespace
-
-glm::vec2 getTargetRes(RenderConfig renderConf, glm::vec2 winRes) {
-    glm::vec2 targetResolution(renderConf.target_resolution[0],
-			       renderConf.target_resolution[1]);
-    if(targetResolution.x == 0.0 || targetResolution.y == 0.0)
-	targetResolution = winRes;
-    return targetResolution;
-}
