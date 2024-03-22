@@ -9,6 +9,7 @@
 #include "logger.h"
 
 #include <resource_loader/pool_manager.h>
+#include <resource_loader/helpers.h>
 #include <graphics/glm_helper.h>
 
 #include <GLFW/glfw3.h>
@@ -150,19 +151,17 @@ bool swapchainRecreationRequired(VkResult result) {
 	  _destroyFrameResources();
 	    
       int winWidth, winHeight;
-      winWidth = winHeight = 0;
       glfwGetFramebufferSize(manager->window, &winWidth, &winHeight);
       while(winWidth == 0 || winHeight == 0) {
 	  glfwGetFramebufferSize(manager->window, &winWidth, &winHeight);
 	  glfwWaitEvents();
       }
-      bool useFinalRenderpass = renderConf.forceFinalBuffer;
-      VkExtent2D offscreenBufferExtent = {(uint32_t)winWidth, (uint32_t)winHeight};
-      if (renderConf.target_resolution[0] != 0.0 && renderConf.target_resolution[1] != 0.0) {
-	  useFinalRenderpass = true;
-	  offscreenBufferExtent = {(uint32_t)renderConf.target_resolution[0],
-				   (uint32_t)renderConf.target_resolution[1]};
-      }
+      glm::vec2 target = getTargetRes(renderConf, winWidth, winHeight);
+            
+      bool useFinalRenderpass = renderConf.forceFinalBuffer ||
+	  target != glm::vec2(winWidth, winHeight);
+      
+      VkExtent2D offscreenBufferExtent = {(uint32_t)target.x, (uint32_t)target.y};
       VkExtent2D swapchainExtent = {(uint32_t)winWidth, (uint32_t)winHeight};
       
       if(swapchain == nullptr)
@@ -282,12 +281,12 @@ bool swapchainRecreationRequired(VkResult result) {
       descriptor::Set VP3D_Set("VP3D", descriptor::ShaderStage::Vertex);
       VP3D_Set.AddDescriptor(viewProjectionBinding);
       VP3D_Set.AddDescriptor(timeBinding);
-      VP3D = new DescSet(VP3D_Set, swapchainFrameCount, manager->deviceState.device);
+      VP3D = new DescSet(VP3D_Set, frameCount, manager->deviceState.device);
       descriptorSets.push_back(VP3D);
       
       descriptor::Set VP2D_Set("VP2D", descriptor::ShaderStage::Vertex);
       VP2D_Set.AddDescriptor(viewProjectionBinding);
-      VP2D = new DescSet(VP2D_Set, swapchainFrameCount, manager->deviceState.device);
+      VP2D = new DescSet(VP2D_Set, frameCount, manager->deviceState.device);
       descriptorSets.push_back(VP2D);
 
       descriptor::Set PerFrame3D_Set("Per Frame 3D", descriptor::ShaderStage::Vertex);
@@ -296,20 +295,20 @@ bool swapchainRecreationRequired(VkResult result) {
 	      descriptor::Type::StorageBuffer,
 	      sizeof(shaderStructs::PerFrame3D),
 	      Resource::MAX_3D_BATCH);
-      perFrame3D = new DescSet(PerFrame3D_Set, swapchainFrameCount, manager->deviceState.device);
+      perFrame3D = new DescSet(PerFrame3D_Set, frameCount, manager->deviceState.device);
       descriptorSets.push_back(perFrame3D);
 
       descriptor::Set bones_Set("Bones Animation", descriptor::ShaderStage::Vertex);
       bones_Set.AddDescriptor("bones", descriptor::Type::UniformBufferDynamic,
 			      sizeof(shaderStructs::Bones), MAX_ANIMATIONS_PER_FRAME);
-      bones = new DescSet(bones_Set, swapchainFrameCount, manager->deviceState.device);
+      bones = new DescSet(bones_Set, frameCount, manager->deviceState.device);
       descriptorSets.push_back(bones);
 
       descriptor::Set vert2D_Set("Per Frame 2D Vert", descriptor::ShaderStage::Vertex);
       vert2D_Set.AddSingleArrayStructDescriptor(
 	      "vert struct", descriptor::Type::StorageBuffer,
 	      sizeof(glm::mat4), Resource::MAX_2D_BATCH);
-      perFrame2DVert = new DescSet(vert2D_Set, swapchainFrameCount, manager->deviceState.device);
+      perFrame2DVert = new DescSet(vert2D_Set, frameCount, manager->deviceState.device);
       descriptorSets.push_back(perFrame2DVert);
       
       if(useFinalRenderpass) {
@@ -317,7 +316,7 @@ bool swapchainRecreationRequired(VkResult result) {
 	  offscreenView_Set.AddDescriptor("data", descriptor::Type::UniformBuffer,
 					  sizeof(glm::mat4), 1);
 	  offscreenTransform = new DescSet(
-		  offscreenView_Set, swapchainFrameCount, manager->deviceState.device);
+		  offscreenView_Set, frameCount, manager->deviceState.device);
 	  descriptorSets.push_back(offscreenTransform);
       }
 
@@ -326,7 +325,7 @@ bool swapchainRecreationRequired(VkResult result) {
       descriptor::Set lighting_Set("3D Lighting", descriptor::ShaderStage::Fragment);
       lighting_Set.AddDescriptor("Lighting properties", descriptor::Type::UniformBuffer,
 				 sizeof(lightingData), 1);
-      lighting = new DescSet(lighting_Set, swapchainFrameCount, manager->deviceState.device);
+      lighting = new DescSet(lighting_Set, frameCount, manager->deviceState.device);
       descriptorSets.push_back(lighting);
 
       float minMipmapLevel = 100000.0f;
@@ -369,7 +368,7 @@ bool swapchainRecreationRequired(VkResult result) {
       texture_Set.AddImageViewDescriptor("views", descriptor::Type::SampledImage,
 					 Resource::MAX_TEXTURES_SUPPORTED,
 					 textureViews);
-      textures = new DescSet(texture_Set, swapchainFrameCount, manager->deviceState.device);
+      textures = new DescSet(texture_Set, frameCount, manager->deviceState.device);
       descriptorSets.push_back(textures);
       
       descriptor::Set frag2D_Set("Per Frame 2D frag", descriptor::ShaderStage::Fragment);
@@ -377,12 +376,12 @@ bool swapchainRecreationRequired(VkResult result) {
 	      "Per frag struct",
 	      descriptor::Type::StorageBuffer,
 	      sizeof(shaderStructs::Frag2DData), Resource::MAX_2D_BATCH);
-      perFrame2DFrag = new DescSet(frag2D_Set, swapchainFrameCount, manager->deviceState.device);
+      perFrame2DFrag = new DescSet(frag2D_Set, frameCount, manager->deviceState.device);
       descriptorSets.push_back(perFrame2DFrag);
       
       emptyDS = new DescSet(
 	      descriptor::Set("Empty", descriptor::ShaderStage::Vertex),
-	      swapchainFrameCount, manager->deviceState.device);
+	      frameCount, manager->deviceState.device);
       descriptorSets.push_back(emptyDS);
 
       std::vector<VkImageView> offscreenViews;
@@ -401,7 +400,7 @@ bool swapchainRecreationRequired(VkResult result) {
 	  offscreen_Set.AddSamplerDescriptor("sampler", 1, &_offscreenTextureSampler);
 	  offscreen_Set.AddImageViewDescriptor("frame", descriptor::Type::SampledImagePerSet,
 					       1, offscreenViews.data());
-	  offscreenTex = new DescSet(offscreen_Set, swapchainFrameCount,
+	  offscreenTex = new DescSet(offscreen_Set, frameCount,
 				     manager->deviceState.device);
 	  descriptorSets.push_back(offscreenTex);
       }
@@ -419,7 +418,7 @@ bool swapchainRecreationRequired(VkResult result) {
       }
       
       part::create::DescriptorPoolAndSet(
-	      manager->deviceState.device, &_descPool, sets, swapchainFrameCount);
+	      manager->deviceState.device, &_descPool, sets, frameCount);
       
       // create memory mapped buffer for all descriptor set bindings
       part::create::PrepareShaderBufferSets(
@@ -434,8 +433,6 @@ bool swapchainRecreationRequired(VkResult result) {
       pipelineConf.msaaSamples = sampleCount;
       pipelineConf.useSampleShading = manager->deviceState.features.sampleRateShading;
       pipelineConf.useDepthTest = renderConf.useDepthTest;
-
-      VkExtent2D renderExtent = useFinalRenderpass ? offscreenBufferExtent : swapchainExtent;
       
       part::create::GraphicsPipeline(
 	      manager->deviceState.device, &_pipeline3D,
@@ -443,7 +440,7 @@ bool swapchainRecreationRequired(VkResult result) {
 	      {&VP3D->set, &perFrame3D->set, &emptyDS->set, &textures->set, &lighting->set},
 	      {{VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(fragPushConstants)}},
 	      "shaders/vulkan/3D-lighting.vert.spv", "shaders/vulkan/blinnphong.frag.spv",
-	      renderExtent,
+	      offscreenBufferExtent,
 	      pipeline_inputs::V3D::attributeDescriptions(),
 	      pipeline_inputs::V3D::bindingDescriptions(),
 	      pipelineConf);
@@ -454,7 +451,7 @@ bool swapchainRecreationRequired(VkResult result) {
 	      {&VP3D->set, &perFrame3D->set, &bones->set, &textures->set, &lighting->set},
 	      {{VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(fragPushConstants)}},
 	      "shaders/vulkan/3D-lighting-anim.vert.spv", "shaders/vulkan/blinnphong.frag.spv",
-	      renderExtent,
+	      offscreenBufferExtent,
 	      pipeline_inputs::VAnim3D::attributeDescriptions(),
 	      pipeline_inputs::VAnim3D::bindingDescriptions(),
 	      pipelineConf);
@@ -464,7 +461,7 @@ bool swapchainRecreationRequired(VkResult result) {
 	      offscreenRenderPass->getRenderPass(),
 	      {&VP2D->set, &perFrame2DVert->set, &textures->set, &perFrame2DFrag->set}, {},
 	      "shaders/vulkan/flat.vert.spv", "shaders/vulkan/flat.frag.spv",
-	      renderExtent,
+	      offscreenBufferExtent,
 	      pipeline_inputs::V2D::attributeDescriptions(),
 	      pipeline_inputs::V2D::bindingDescriptions(),
 	      pipelineConf);
@@ -630,28 +627,28 @@ void RenderVk::_startDraw() {
     frameIndex = (frameIndex + 1) % frameCount;
     checkResultAndThrow(frames[frameIndex]->waitForPreviousFrame(),
 			"Render Error: failed to wait for previous frame fence");
-    VkResult result = swapchain->acquireNextImage(frames[frameIndex]->swapchainImageReady,
-						 &swapchainFrameIndex);
+    VkResult result = swapchain->acquireNextImage(
+	    frames[frameIndex]->swapchainImageReady, &swapchainFrameIndex);
     if(result != VK_SUCCESS && !swapchainRecreationRequired(result))
 	    checkResultAndThrow(result, "Render Error: failed to begin offscreen render pass!");
     checkResultAndThrow(frames[frameIndex]->startFrame(&currentCommandBuffer),
 			"Render Error: Failed to start command buffer.");
   
-    offscreenRenderPass->beginRenderPass(currentCommandBuffer, swapchainFrameIndex);
+    offscreenRenderPass->beginRenderPass(currentCommandBuffer, frameIndex);
     
     currentBonesDynamicOffset = 0;
     currentModelPool = Resource::Pool();
     _begunDraw = true;
-}
+}	
 
 void RenderVk::_store3DsetData() {
-    VP3D->bindings[0].storeSetData(swapchainFrameIndex, &VP3DData);
-    VP3D->bindings[1].storeSetData(swapchainFrameIndex, &timeData);
-    lighting->bindings[0].storeSetData(swapchainFrameIndex, &lightingData);
+    VP3D->bindings[0].storeSetData(frameIndex, &VP3DData);
+    VP3D->bindings[1].storeSetData(frameIndex, &timeData);
+    lighting->bindings[0].storeSetData(frameIndex, &lightingData);
 }
 
 void RenderVk::_store2DsetData() {
-    VP2D->bindings[0].storeSetData(swapchainFrameIndex, &VP2DData);
+    VP2D->bindings[0].storeSetData(frameIndex, &VP2DData);
 }
 
 void RenderVk::_begin(RenderState state) {
@@ -665,21 +662,21 @@ void RenderVk::_begin(RenderState state) {
 	_store3DsetData();
     if(_current2DInstanceIndex == 0 && state == RenderState::Draw2D)
 	_store2DsetData();
-    Pipeline* p = nullptr;
+    Pipeline* pipeline = nullptr;
     switch(state) {
     case RenderState::Draw2D:
-	p = &_pipeline2D;
+	pipeline = &_pipeline2D;
 	break;
     case RenderState::Draw3D:
-	p = &_pipeline3D;
+	pipeline = &_pipeline3D;
 	break;
     case RenderState::DrawAnim3D:
-	p = &_pipelineAnim3D;
+	pipeline = &_pipelineAnim3D;
 	break;
     default:
 	throw std::runtime_error("begin draw not implemented for this render state");
     }
-    p->begin(currentCommandBuffer, swapchainFrameIndex);
+    pipeline->begin(currentCommandBuffer, frameIndex);
 }
   
 
@@ -737,12 +734,12 @@ void RenderVk::DrawAnimModel(Resource::Model model, glm::mat4 modelMatrix,
 	LOG("warning, too many animation calls!\n");
 	return;
     }
-    bones->bindings[0].storeSetData(swapchainFrameIndex,
+    bones->bindings[0].storeSetData(frameIndex,
 				    &bonesData, 0, 0, currentBonesDynamicOffset);
     uint32_t offset = static_cast<uint32_t>((currentBonesDynamicOffset) *
 					    bones->bindings[0].bufferSize *
 					    bones->bindings[0].setCount);
-    _pipelineAnim3D.bindDynamicDS(currentCommandBuffer, &bones->set, swapchainFrameIndex,  offset);
+    _pipelineAnim3D.bindDynamicDS(currentCommandBuffer, &bones->set, frameIndex,  offset);
     _drawBatch();
     currentBonesDynamicOffset++;
 }
@@ -871,15 +868,15 @@ void RenderVk::EndDraw(std::atomic<bool> &submit) {
 
   for (size_t i = 0; i < _current3DInstanceIndex; i++)
       perFrame3D->bindings[0].storeSetData(
-	      swapchainFrameIndex, &perFrame3DData[i], 0, i, 0);
+	      frameIndex, &perFrame3DData[i], 0, i, 0);
   
   _current3DInstanceIndex = 0;
 
   for (size_t i = 0; i < _current2DInstanceIndex; i++) {
       perFrame2DVert->bindings[0].storeSetData(
-	      swapchainFrameIndex, &perFrame2DVertData[i], 0, i, 0);
+	      frameIndex, &perFrame2DVertData[i], 0, i, 0);
       perFrame2DFrag->bindings[0].storeSetData(
-	      swapchainFrameIndex, &perFrame2DFragData[i], 0, i, 0);	  
+	      frameIndex, &perFrame2DFragData[i], 0, i, 0);	  
   }
   
   _current2DInstanceIndex = 0;
@@ -889,11 +886,11 @@ void RenderVk::EndDraw(std::atomic<bool> &submit) {
   // DO FINAL RENDER PASS
 
   if(usingFinalRenderPass) {
-      finalRenderPass->beginRenderPass(currentCommandBuffer, swapchainFrameIndex);
+      finalRenderPass->beginRenderPass(currentCommandBuffer, frameIndex);
   
       offscreenTransform->bindings[0].storeSetData(
-	      swapchainFrameIndex, &offscreenTransformData, 0, 0, 0);
-      _pipelineFinal.begin(currentCommandBuffer, swapchainFrameIndex);
+	      frameIndex, &offscreenTransformData, 0, 0, 0);
+      _pipelineFinal.begin(currentCommandBuffer, frameIndex);
       vkCmdDraw(currentCommandBuffer, 3, 1, 0, 0);
       
       vkCmdEndRenderPass(currentCommandBuffer);
