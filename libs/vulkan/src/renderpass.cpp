@@ -309,16 +309,23 @@ VkResult RenderPass::createFramebufferImages(std::vector<VkImage> *swapchainImag
     for(int i = 0; i < attachmentDescription.size(); i++)
 	attachImages.push_back(AttachmentImage(attachmentDescription[i]));
     framebuffers.clear();
-    framebuffers.resize((swapchainImages->size()));
+    if(swapchainImages != nullptr)
+	framebuffers.resize((swapchainImages->size()));
+    else
+	framebuffers.resize(1);
     framebufferExtent = extent;
-
     for(int i = 0; i < framebuffers.size(); i++) {
 	framebuffers[i].attachments = attachImages;
 	framebuffers[i].device = this->device;
 	for(int j = 0; j < attachImages.size(); j++) {
-	    if(framebuffers[i].attachments[j].isUsingExternalImage())
+	    if(framebuffers[i].attachments[j].isUsingExternalImage()) {
+		if(swapchainImages == nullptr)
+		    throw std::runtime_error(
+			    "create fb images: swapchain images null, "
+			    " but attachment is using external image!");			    
 		framebuffers[i].attachments[j]
 		    .AddImage(swapchainImages->at(i));
+	    }
 	    else if(i == 0 || framebuffers[i].attachments[j].hasImageForEachFrame())
 		msgAndReturnOnErr(
 			framebuffers[i].attachments[j]
@@ -364,11 +371,11 @@ VkRect2D fbScissor(VkExtent2D extent);
 
 void RenderPass::beginRenderPass(VkCommandBuffer cmdBuff, uint32_t frameIndex) {
     VkRenderPassBeginInfo beginInfo{VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
-    if(frameIndex > framebuffers.size())
-	throw std::runtime_error("RenderPass Error: Tried to start render pass, "
+    if(frameIndex >= framebuffers.size())
+	throw std::runtime_error("RenderPass::beginRenderPass - Tried to begin pass, "
 				 "but the frame index was out of range. "
-				 "Ensure that thr renderpass framebuffers "
-				 "and attachments have been created.");
+				 "Ensure that the renderpass framebuffers "
+				 "have been created and the index is correct.");
     beginInfo.renderPass = renderpass;
     beginInfo.framebuffer = framebuffers[frameIndex].framebuffer;
     beginInfo.renderArea.offset = offset;
@@ -462,7 +469,6 @@ VkSubpassDependency genSubpassDependancy(bool colour, bool depth, SubpassDependa
 	dep.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT |
 	    VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 	
-	setStageMask(&dep.dstStageMask, colour, depth);
 	dep.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
 	    VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 	dep.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |

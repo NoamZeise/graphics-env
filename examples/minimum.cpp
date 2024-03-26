@@ -15,6 +15,8 @@ int main(int argc, char** argv) {
     ManagerState state;
     state.windowTitle = "minimum example";
     state.defaultRenderer = parseArgs(argc, argv, &state.windowTitle);
+
+    state.render.forceFinalBuffer = true;
     
     Manager manager(state);
     
