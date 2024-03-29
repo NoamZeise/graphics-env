@@ -11,6 +11,7 @@ if((NOT NO_ASSIMP) AND (NOT NO_FREETYPE))
   endif()
   add_example(asset_pools asset_pools.cpp)
   add_example(animated_models animated_models.cpp)
+  add_example(gooch_shading gooch_shading.cpp)
 endif()
 
 # only need to copy files for one example
