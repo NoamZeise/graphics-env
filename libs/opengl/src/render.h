@@ -59,9 +59,6 @@ namespace glenv {
       void set3DProjMat(glm::mat4 proj) override;
       void set2DProjMat(glm::mat4 proj) override;
       void setLightingProps(BPLighting lighting) override;
-      void setRenderConf(RenderConfig renderConf) override;
-      RenderConfig getRenderConf() override;
-      glm::vec2 offscreenSize() override;
 
   private:
       void draw2DBatch(int drawCount, Resource::Texture texture,
@@ -76,11 +73,8 @@ namespace glenv {
       bool _poolInUse(Resource::Pool pool);
 
       BPLighting lighting;
-      RenderConfig renderConf;
-      RenderConfig prevRenderConf;
 
       GLFWwindow *window;
-      glm::vec2 windowResolution;
 
       GLShader *shader3D;
       GLShader *shader3DAnim;

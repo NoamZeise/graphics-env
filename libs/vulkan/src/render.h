@@ -65,9 +65,6 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
       void set3DProjMat(glm::mat4 proj) override;
       void set2DProjMat(glm::mat4 proj) override;
       void setLightingProps(BPLighting lighting) override;
-      void setRenderConf(RenderConfig renderConf) override;
-      RenderConfig getRenderConf() override;
-      glm::vec2 offscreenSize() override;
 
       void setTime(float time) {
 	  timeData.time = time;
@@ -96,10 +93,7 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
       
       
       bool _framebufferResized = false;
-      bool _frameResourcesCreated = false;
-
-      RenderConfig renderConf;
-      RenderConfig prevRenderConf;
+      bool _frameResourcesCreated = false;     
   
       VulkanManager* manager = nullptr;
       uint32_t frameIndex = 0;

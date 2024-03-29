@@ -8,7 +8,6 @@
 #include <glm/gtc/matrix_inverse.hpp>
 #include <graphics/logger.h>
 #include <graphics/glm_helper.h>
-#include <resource_loader/helpers.h>
 #include <stdexcept>
 
 namespace glenv {
@@ -94,7 +93,7 @@ namespace glenv {
       windowResolution = glm::vec2((float)width, (float)height);
       glViewport(0, 0, width, height);
       LOG("resizing framebuffer, window width: " << width << "  height:" << height);
-      glm::vec2 targetResolution = getTargetRes(renderConf, width, height);
+      glm::vec2 targetResolution = offscreenSize();
 
       useFinalFramebuffer = renderConf.forceFinalBuffer ||
 	  targetResolution != windowResolution;
@@ -257,7 +256,7 @@ namespace glenv {
   }
 
   void RenderGl::EndDraw(std::atomic<bool>& submit) {
-      glm::vec2 mainResolution = getTargetRes(renderConf, windowResolution.x, windowResolution.y);
+      glm::vec2 mainResolution = offscreenSize();
       
       glBindFramebuffer(GL_FRAMEBUFFER, useFinalFramebuffer ?
 			offscreenFramebuffer->id() : 0);
@@ -480,27 +479,10 @@ namespace glenv {
       proj2D = proj;
   }
 
-  void RenderGl::setRenderConf(RenderConfig renderConf) {
-      this->renderConf = renderConf;
-      FramebufferResize();
-  }
-  
-  RenderConfig RenderGl::getRenderConf() {
-      return renderConf;
-  }
-
   void RenderGl::setLightingProps(BPLighting lighting) {
       this->lighting = lighting;
       setLightingShader(shader3D);
       setLightingShader(shader3DAnim);
-  }
-  
-  glm::vec2 RenderGl::offscreenSize() {
-      return
-	  renderConf.target_resolution[0] == 0.0 ||
-	  renderConf.target_resolution[1] == 0.0 ?
-	  glm::vec2(windowResolution.x, windowResolution.y) :
-	  glm::vec2(renderConf.target_resolution[0], renderConf.target_resolution[1]);
   }
   
 }//namespace

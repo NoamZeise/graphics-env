@@ -9,7 +9,6 @@
 #include "logger.h"
 
 #include <resource_loader/pool_manager.h>
-#include <resource_loader/helpers.h>
 #include <graphics/glm_helper.h>
 
 #include <GLFW/glfw3.h>
@@ -156,7 +155,8 @@ bool swapchainRecreationRequired(VkResult result) {
 	  glfwGetFramebufferSize(manager->window, &winWidth, &winHeight);
 	  glfwWaitEvents();
       }
-      glm::vec2 target = getTargetRes(renderConf, winWidth, winHeight);
+      windowResolution = glm::vec2((float)winWidth, (float)winHeight);
+      glm::vec2 target = offscreenSize();
             
       bool useFinalRenderpass = renderConf.forceFinalBuffer ||
 	  target != glm::vec2(winWidth, winHeight);
@@ -181,7 +181,8 @@ bool swapchainRecreationRequired(VkResult result) {
       if(!renderConf.multisampling)
 	  sampleCount = VK_SAMPLE_COUNT_1_BIT;
       
-      if(swapchainFormat != prevSwapchainFormat || sampleCount != prevSampleCount) {
+      if(swapchainFormat != prevSwapchainFormat || sampleCount != prevSampleCount ||
+	 useFinalRenderpass != usingFinalRenderPass) {
 	  if(offscreenRenderPass != nullptr) {
 	      delete offscreenRenderPass;
 	      if(usingFinalRenderPass) {
@@ -970,22 +971,6 @@ void RenderVk::set2DProjMat(glm::mat4 proj) {
 
 void RenderVk::setLightingProps(BPLighting lighting) {
     lightingData = lighting;
-}
-
-void RenderVk::setRenderConf(RenderConfig renderConf) {
-    this->renderConf = renderConf;
-    FramebufferResize();
-}
-
-RenderConfig RenderVk::getRenderConf() {
-    return renderConf;
-}
-
-glm::vec2 RenderVk::offscreenSize() {
-    if(offscreenRenderPass == nullptr)
-	return glm::vec2();
-    return glm::vec2((float)offscreenRenderPass->getExtent().width,
-		     (float)offscreenRenderPass->getExtent().height);
 }
 
 }//namespace

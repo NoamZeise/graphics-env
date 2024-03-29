@@ -13,7 +13,6 @@ class Render {
     /// sets up graphics api, makes a default resource pool
     Render(GLFWwindow* window, RenderConfig conf) {}
     virtual ~Render() {};
-
     
     /// --- Resource Loading ---
 
@@ -108,9 +107,25 @@ class Render {
     virtual void set2DProjMat(glm::mat4 proj) = 0;
     virtual void setLightingProps(BPLighting lighting) = 0;
 
-    virtual void setRenderConf(RenderConfig renderConf) = 0;
-    virtual RenderConfig getRenderConf() = 0;
-    virtual glm::vec2 offscreenSize() = 0;
+    void setRenderConf(RenderConfig renderConf) {
+	this->renderConf = renderConf;
+	FramebufferResize();
+    }
+    RenderConfig getRenderConf() {
+	return renderConf;
+    }
+    glm::vec2 offscreenSize() {
+	glm::vec2 offscreen(renderConf.target_resolution[0],
+			    renderConf.target_resolution[1]);
+	if(offscreen.x == 0.0 || offscreen.y == 0.0)
+	    return windowResolution;
+	return offscreen;
+    }
+
+protected:
+    RenderConfig renderConf;
+    RenderConfig prevRenderConf;
+    glm::vec2 windowResolution;
 };
 
 #endif
