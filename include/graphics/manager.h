@@ -34,6 +34,7 @@ struct ManagerState {
     cursorState cursor = cursorState::normal;
     RenderFramework defaultRenderer = RenderFramework::Vulkan;
     RenderConfig render;
+    shader::PipelineSetup pipeline;
 };
 
 struct Manager {

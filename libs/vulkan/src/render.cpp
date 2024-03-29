@@ -50,10 +50,8 @@ VkFormat getDepthBufferFormat(VkPhysicalDevice physicalDevice) {
 	    VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 }
 
-RenderVk::RenderVk(GLFWwindow *window, RenderConfig renderConf) : Render(window, renderConf) {
+  RenderVk::RenderVk(GLFWwindow *window, RenderConfig renderConf, shader::PipelineSetup pipelineSetup) : Render(window, renderConf, pipelineSetup) {
     checkVolk();
-    this->renderConf = renderConf;
-    this->prevRenderConf = renderConf;
     EnabledFeatures features;
     features.sampleRateShading = renderConf.sample_shading;
     manager = new VulkanManager(window, features);
@@ -150,9 +148,9 @@ bool swapchainRecreationRequired(VkResult result) {
 	  _destroyFrameResources();
 	    
       int winWidth, winHeight;
-      glfwGetFramebufferSize(manager->window, &winWidth, &winHeight);
+      glfwGetFramebufferSize(window, &winWidth, &winHeight);
       while(winWidth == 0 || winHeight == 0) {
-	  glfwGetFramebufferSize(manager->window, &winWidth, &winHeight);
+	  glfwGetFramebufferSize(window, &winWidth, &winHeight);
 	  glfwWaitEvents();
       }
       windowResolution = glm::vec2((float)winWidth, (float)winHeight);

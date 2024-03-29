@@ -5,11 +5,8 @@
 #ifndef VULKAN_MANAGER_H
 #define VULKAN_MANAGER_H
 
-#include <stdint.h>
-
 #include <volk.h>
 #include <GLFW/glfw3.h>
-
 #include "device_state.h"
 
 struct VulkanManager {
@@ -19,7 +16,6 @@ struct VulkanManager {
     DeviceState deviceState;
     VkCommandPool generalCommandPool;
     VkCommandBuffer generalCommandBuffer;
-    GLFWwindow *window;
     VkInstance instance;
     VkSurfaceKHR windowSurface;
 #ifndef NDEBUG

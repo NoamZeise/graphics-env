@@ -11,7 +11,12 @@
 class Render {
  public:
     /// sets up graphics api, makes a default resource pool
-    Render(GLFWwindow* window, RenderConfig conf) {}
+    Render(GLFWwindow* window, RenderConfig conf, shader::PipelineSetup pipelineSetup) {
+	this->window = window;
+	this->renderConf = renderConf;
+	this->prevRenderConf = renderConf;
+	this->pipelineSetup = pipelineSetup;
+    }
     virtual ~Render() {};
     
     /// --- Resource Loading ---
@@ -123,8 +128,10 @@ class Render {
     }
 
 protected:
+    GLFWwindow *window;
     RenderConfig renderConf;
     RenderConfig prevRenderConf;
+    shader::PipelineSetup pipelineSetup;
     glm::vec2 windowResolution;
 };
 

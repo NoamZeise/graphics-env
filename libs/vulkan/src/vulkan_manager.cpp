@@ -1,8 +1,6 @@
 #include "vulkan_manager.h"
 #include "parts/core.h"
 #include "parts/command.h"
-
-#include <iostream>
 #include <stdexcept>
 
 std::mutex graphicsPresentMutex;
@@ -12,7 +10,6 @@ std::mutex graphicsPresentMutex;
     throw std::runtime_error(error_message);
 
 VulkanManager::VulkanManager(GLFWwindow *window, EnabledFeatures featuresToEnable) {
-    this->window = window;
     throwOnErr(part::create::Instance(&instance),
 	       "Failed to create Vulkan Instance");
 #ifndef NDEBUG

@@ -19,12 +19,8 @@ namespace glenv {
       return true;
   }
     
-  RenderGl::RenderGl(GLFWwindow *window, RenderConfig renderConf) : Render(window, renderConf) {
+  RenderGl::RenderGl(GLFWwindow *window, RenderConfig renderConf, shader::PipelineSetup pipelineSetup) : Render(window, renderConf, pipelineSetup) {
       glfwMakeContextCurrent(window);
-
-      this->window = window;
-      this->renderConf = renderConf;
-      this->prevRenderConf = renderConf;
       
       if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	  throw std::runtime_error("failed to load glad");

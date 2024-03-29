@@ -37,7 +37,7 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
       /// This will be called by Render automatically if not called before Render is created.
       static bool LoadVulkan();
 
-      RenderVk(GLFWwindow *window, RenderConfig renderConf);
+      RenderVk(GLFWwindow *window, RenderConfig renderConf, shader::PipelineSetup pipelineSetup);
       ~RenderVk();
 
       ResourcePool* CreateResourcePool() override;

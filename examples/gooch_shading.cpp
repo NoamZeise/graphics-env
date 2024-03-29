@@ -9,12 +9,16 @@ int main(int argc, char** argv) {
     ManagerState state;
     state.windowTitle = "Gooch Shading";
     state.defaultRenderer = parseArgs(argc, argv, &state.windowTitle);
-
-    // set frag shader
-    
-    // set vert shader
     
     Manager manager(state);
+
+    // set vert shader
+    std::string gooch_shader_path = "vk-shaders/gooch.frag.spv";
+    if(manager.backend() == RenderFramework::OpenGL)
+	gooch_shader_path = "ogl-shaders/gooch.frag";
+    // manager->render->setShaders(
+    //      Pipeline::3D, Stage::Fragment,
+    //      gooch_shader_path);
     
     ResourcePool* pool = manager.render->pool();
     Resource::Texture tex = pool->tex()->load("textures/tile.png");

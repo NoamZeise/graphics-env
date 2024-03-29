@@ -19,6 +19,9 @@ void mouseBtnCallback(GLFWwindow *window, int button, int action, int mods);
 void errorCallback(int error, const char *description);
 
 RenderFramework chooseRenderFramework(RenderFramework preferred);
+void setShaders(std::string* pshader_path,
+		std::string default_vertex,
+		std::string default_fragment);
 
 Manager::Manager(ManagerState state) {
     winWidth = state.windowWidth;
@@ -64,16 +67,40 @@ Manager::Manager(ManagerState state) {
     
     if(state.fixedWindowRatio)
 	glfwSetWindowAspectRatio(window, winWidth, winHeight);
-
+    
     switch(framework) {
     case RenderFramework::Vulkan:
 #ifndef NO_VULKAN
-	render = static_cast<Render*>(new vkenv::RenderVk(window, state.render));
+	setShaders(state.pipeline.shader_path[shader::pipeline::_3D],
+		  "shaders/vulkan/3D-lighting.vert.spv",
+		  "shaders/vulkan/blinnphong.frag.spv");
+	setShaders(state.pipeline.shader_path[shader::pipeline::anim3D],
+		  "shaders/vulkan/3D-lighting-anim.vert.spv",
+		  "shaders/vulkan/blinnphong.frag.spv");
+	setShaders(state.pipeline.shader_path[shader::pipeline::_2D],
+		  "shaders/vulkan/flat.vert.spv",
+		  "shaders/vulkan/flat.frag.spv");
+	setShaders(state.pipeline.shader_path[shader::pipeline::final],
+		  "shaders/vulkan/final.vert.spv",
+		  "shaders/vulkan/final.frag.spv");
+	render = static_cast<Render*>(new vkenv::RenderVk(window, state.render, state.pipeline));
 	break;
 #endif
     case RenderFramework::OpenGL:
 #ifndef NO_OPENGL
-	render = static_cast<Render*>(new glenv::RenderGl(window, state.render));
+	setShaders(state.pipeline.shader_path[shader::pipeline::_3D],
+		  "shaders/opengl/3D-lighting.vert",
+		  "shaders/opengl/blinnphong.frag");
+	setShaders(state.pipeline.shader_path[shader::pipeline::anim3D],
+		  "shaders/opengl/3D-lighting-anim.vert",
+		  "shaders/opengl/blinnphong.frag");
+	setShaders(state.pipeline.shader_path[shader::pipeline::_2D],
+		  "shaders/opengl/flat.vert",
+		  "shaders/opengl/flat.frag");
+	setShaders(state.pipeline.shader_path[shader::pipeline::final],
+		  "shaders/opengl/final.vert",
+		  "shaders/opengl/final.frag");
+	render = static_cast<Render*>(new glenv::RenderGl(window, state.render, state.pipeline));
 	break;
 #endif
     default:
@@ -183,7 +210,14 @@ RenderFramework chooseRenderFramework(RenderFramework preferred) {
     throw std::runtime_error("Failed to load any graphics apis!");
 }
 
-
+void setShaders(std::string* pshader_path,
+		std::string default_vertex,
+		std::string default_fragment) {
+    if(pshader_path[shader::stage::vert].size() == 0)
+	pshader_path[shader::stage::vert] = default_vertex;
+    if(pshader_path[shader::stage::frag].size() == 0)
+	pshader_path[shader::stage::frag] = default_fragment;
+}
 
 // ---- GLFW CALLBACKS ----
 

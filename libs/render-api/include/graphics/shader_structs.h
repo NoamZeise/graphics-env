@@ -2,6 +2,26 @@
 #define OUT_GRAPHICS_SHADER_STRUCTS
 
 #include <glm/glm.hpp>
+#include <string>
+
+namespace shader {
+    const int pipeline_count = 4;
+    enum pipeline {
+	_2D = 0,
+	_3D,
+	anim3D,
+	final,
+    };
+    const int shader_stage_count = 2;
+    enum stage {
+	vert = 0,
+	frag,
+    };
+
+    struct PipelineSetup {
+	std::string shader_path[pipeline_count][shader_stage_count];
+    };
+}
 
 struct BPLighting {
   BPLighting() {

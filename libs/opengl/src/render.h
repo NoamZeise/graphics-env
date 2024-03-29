@@ -29,7 +29,7 @@ namespace glenv {
   class RenderGl : public Render {
   public:
       static bool LoadOpenGL();
-      RenderGl(GLFWwindow* window, RenderConfig renderConf);
+      RenderGl(GLFWwindow* window, RenderConfig renderConf, shader::PipelineSetup pipelineSetup);
       ~RenderGl();
 
       ResourcePool* CreateResourcePool() override;
@@ -73,8 +73,6 @@ namespace glenv {
       bool _poolInUse(Resource::Pool pool);
 
       BPLighting lighting;
-
-      GLFWwindow *window;
 
       GLShader *shader3D;
       GLShader *shader3DAnim;

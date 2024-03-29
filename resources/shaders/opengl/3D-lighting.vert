@@ -1,11 +1,7 @@
 #version 430 core
-layout (location = 0) in vec3 inPos;
-layout (location = 1) in vec3 inNormal;
-layout (location = 2) in vec2 inTexCoord;
 
-layout (location = 0) out vec2 outTexCoord;
-layout (location = 1) out vec3 outFragPos;
-layout (location = 2) out vec3 outNormal;
+uniform mat4 view;
+uniform mat4 projection;
 
 const int MAX_3D_INSTANCE = 10000;
 
@@ -19,8 +15,13 @@ layout (std430, binding = 3) buffer perInstanceNormalData
   mat4 normalMat[MAX_3D_INSTANCE];
 };
 
-uniform mat4 projection;
-uniform mat4 view;
+layout (location = 0) in vec3 inPos;
+layout (location = 1) in vec3 inNormal;
+layout (location = 2) in vec2 inTexCoord;
+
+layout (location = 0) out vec2 outTexCoord;
+layout (location = 1) out vec3 outFragPos;
+layout (location = 2) out vec3 outNormal;
 
 void main()
 {
