@@ -32,9 +32,17 @@ MouseState::MouseState() {
 
 double Mouse::x() { return this->state.x; }
 
-double Mouse::dx() { return this->state.x - this->prevState.x; }
+double Mouse::dx() {
+    if(this->prevState.uninitialized)
+	return 0;
+    return this->state.x - this->prevState.x;
+}
 
-double Mouse::dy() { return this->state.y - this->prevState.y; }
+double Mouse::dy() {
+    if(this->prevState.uninitialized)
+	return 0;
+    return this->state.y - this->prevState.y;
+}
 
 double Mouse::y() { return this->state.y; }
 
@@ -53,6 +61,8 @@ bool Mouse::hold(MouseButton btn) {
 }
 
 bool Mouse::press(MouseButton btn) {
+    if(this->prevState.uninitialized)
+	return false;
     return this->hold(btn) && !this->prevState.btn[btn];
 }
 
@@ -70,5 +80,6 @@ void Mouse::mouseButtonCallback(MouseButton btn, int action, int mods) {
 
 void Mouse::update() {
     this->prevState = this->state;
+    this->state.uninitialized = false;
     this->state.scroll = 0.0;
 }

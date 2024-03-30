@@ -119,6 +119,9 @@ namespace camera {
   }
 
   void ThirdPerson::setForward(glm::vec3 forward) {
+      float updot = glm::dot(forward, worldUp);
+      if (updot > camlimit || -updot > camlimit)
+	  return;
       Base::setForward(forward);
       updateView();
   }

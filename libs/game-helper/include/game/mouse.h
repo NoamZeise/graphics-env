@@ -14,6 +14,7 @@ struct MouseState {
     double y = 0.0;
     double scroll = 0.0;
     bool btn[GLFW_MOUSE_BUTTON_LAST + 1];
+    bool uninitialized = true;
 };
 
 class Mouse {
