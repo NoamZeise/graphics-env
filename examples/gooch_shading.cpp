@@ -2,6 +2,7 @@
 #include <game/camera.h>
 #include <graphics/glm_helper.h>
 #include <glm/gtc/matrix_inverse.hpp>
+#include <graphics/logger.h>
 
 #include "helper.h"
 
@@ -9,16 +10,9 @@ int main(int argc, char** argv) {
     ManagerState state;
     state.windowTitle = "Gooch Shading";
     state.defaultRenderer = parseArgs(argc, argv, &state.windowTitle);
-    
+    state.setShader(shader::pipeline::_3D, shader::stage::frag,
+		    "vk-shaders/gooch.frag.spv", "ogl-shaders/gooch.frag");
     Manager manager(state);
-
-    // set vert shader
-    std::string gooch_shader_path = "vk-shaders/gooch.frag.spv";
-    if(manager.backend() == RenderFramework::OpenGL)
-	gooch_shader_path = "ogl-shaders/gooch.frag";
-    // manager->render->setShaders(
-    //      Pipeline::3D, Stage::Fragment,
-    //      gooch_shader_path);
     
     ResourcePool* pool = manager.render->pool();
     Resource::Texture tex = pool->tex()->load("textures/tile.png");
@@ -30,16 +24,31 @@ int main(int argc, char** argv) {
     manager.render->UseLoadedResources();
 
     camera::ThirdPerson cam;
-    cam.setTarget(glm::vec3(0), 10.0f);
+    cam.setTarget(glm::vec3(0), 4.0f);
+    cam.setForward(glm::vec3(1, 0, 0.8));
+    int timeSinceInput = 1000;
+    
     while(!glfwWindowShouldClose(manager.window)) {
+
 	manager.update();
-	cam.control(
-		0.01f*manager.timer.dt()
-		*glm::vec2(manager.input.m.dx(), manager.input.m.dy()));
-	manager.render->set3DViewMat(cam.getView(), cam.getPos());
+
+        glm::vec2 userInput = 0.0001f * manager.timer.dt()
+	    * glm::vec2(-manager.input.m.dx(), manager.input.m.dy());
+	
+	if(userInput == glm::vec2(0)) {
+	    timeSinceInput += manager.timer.dt();
+	    if(timeSinceInput > 1000)
+		userInput.x = manager.timer.dt() * 0.0001f;
+	} else
+	    timeSinceInput = 0;
+
+	cam.control(userInput);
+	
 	if(manager.input.kb.press(GLFW_KEY_ESCAPE))
 	    glfwSetWindowShouldClose(manager.window, GLFW_TRUE);
-	
+	   
+	manager.render->set3DViewMat(cam.getView(), cam.getPos());
+
 	if(manager.winActive()) {
 	    manager.render->DrawModel(monkey, model, normMat);	    
 	    manager.render->EndDraw();
