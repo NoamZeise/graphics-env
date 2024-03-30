@@ -30,34 +30,9 @@ namespace glenv {
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
       glEnable(GL_CULL_FACE);
 
-      shader3D = new GLShader("shaders/opengl/3D-lighting.vert", "shaders/opengl/blinnphong.frag");
-      shader3D->Use();
-      glUniform1i(shader3D->Location("image"), 0);
-
-      shader3DAnim = new GLShader("shaders/opengl/3D-lighting-anim.vert",
-				  "shaders/opengl/blinnphong.frag");
-      shader3DAnim->Use();
-      glUniform1i(shader3DAnim->Location("image"), 0);
-
-      flatShader = new GLShader("shaders/opengl/flat.vert", "shaders/opengl/flat.frag");
-      flatShader->Use();
-      glUniform1i(flatShader->Location("image"), 0);
-      
-      finalShader = new GLShader("shaders/opengl/final.vert", "shaders/opengl/final.frag");
-      finalShader->Use();
-      glUniformMatrix4fv(finalShader->Location("screenTransform"),
-			 1, GL_FALSE, &finalTransform[0][0]);
-
-      LOG("shaders loaded");
-      
       view2D = glm::mat4(1.0f);
-  
-      ogl_helper::createShaderStorageBuffer(&model3DSSBO, sizeAndPtr(perInstance3DModel));
-      ogl_helper::createShaderStorageBuffer(&normal3DSSBO, sizeAndPtr(perInstance3DNormal));
-      ogl_helper::createShaderStorageBuffer(&model2DSSBO, sizeAndPtr(perInstance2DModel));  
-      ogl_helper::createShaderStorageBuffer(&texOffset2DSSBO, sizeAndPtr(perInstance2DTexOffset));
-      LOG("shader buffers created");
-
+      createShaders();
+      
       pools = new GLPoolManager();
       defaultPool = CreateResourcePool()->id();
       FramebufferResize();
@@ -76,6 +51,42 @@ namespace glenv {
       delete flatShader;
       delete finalShader;
       delete pools;
+  }
+
+  void RenderGl::createShaders() {
+      shader3D = new GLShader(
+	      pipelineSetup.getPath(shader::pipeline::_3D, shader::stage::vert),
+	      pipelineSetup.getPath(shader::pipeline::_3D, shader::stage::frag));
+      shader3D->Use();
+      glUniform1i(shader3D->Location("image"), 0);
+
+      shader3DAnim = new GLShader(
+	      pipelineSetup.getPath(shader::pipeline::anim3D, shader::stage::vert),
+	      pipelineSetup.getPath(shader::pipeline::anim3D, shader::stage::frag));
+      shader3DAnim->Use();
+      glUniform1i(shader3DAnim->Location("image"), 0);
+
+      flatShader = new GLShader(
+	      pipelineSetup.getPath(shader::pipeline::_2D, shader::stage::vert),
+	      pipelineSetup.getPath(shader::pipeline::_2D, shader::stage::frag));
+      flatShader->Use();
+      glUniform1i(flatShader->Location("image"), 0);
+      
+      finalShader = new GLShader(
+	      pipelineSetup.getPath(shader::pipeline::final, shader::stage::vert),
+	      pipelineSetup.getPath(shader::pipeline::final, shader::stage::frag));
+      
+      finalShader->Use();
+      glUniformMatrix4fv(finalShader->Location("screenTransform"),
+			 1, GL_FALSE, &finalTransform[0][0]);
+
+      LOG("shaders loaded");
+  
+      ogl_helper::createShaderStorageBuffer(&model3DSSBO, sizeAndPtr(perInstance3DModel));
+      ogl_helper::createShaderStorageBuffer(&normal3DSSBO, sizeAndPtr(perInstance3DNormal));
+      ogl_helper::createShaderStorageBuffer(&model2DSSBO, sizeAndPtr(perInstance2DModel));  
+      ogl_helper::createShaderStorageBuffer(&texOffset2DSSBO, sizeAndPtr(perInstance2DTexOffset));
+      LOG("shader buffers created");
   }
 
   void RenderGl::FramebufferResize() {

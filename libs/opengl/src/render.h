@@ -61,6 +61,9 @@ namespace glenv {
       void setLightingProps(BPLighting lighting) override;
 
   private:
+
+      void createShaders();
+      
       void draw2DBatch(int drawCount, Resource::Texture texture,
 		       glm::vec4 currentColour);
       void draw3DBatch(int drawCount, Resource::Model model);

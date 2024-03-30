@@ -5,21 +5,30 @@
 #include <string>
 
 namespace shader {
-    const int pipeline_count = 4;
-    enum pipeline {
+    const int PIPELINE_COUNT = 4;
+    enum class pipeline {
 	_2D = 0,
 	_3D,
 	anim3D,
 	final,
     };
-    const int shader_stage_count = 2;
-    enum stage {
+    const int SHADER_STAGE_COUNT = 2;
+    enum class stage {
 	vert = 0,
 	frag,
     };
 
-    struct PipelineSetup {
-	std::string shader_path[pipeline_count][shader_stage_count];
+    class PipelineSetup {
+    public:
+	void setPath(pipeline pipeline, stage stage, std::string path) {
+	    shader_path[(int)pipeline][(int)stage] = path;
+	}
+	std::string getPath(pipeline pipeline, stage stage) {
+	    return shader_path[(int)pipeline][(int)stage];
+	}
+
+    private:
+	std::string shader_path[PIPELINE_COUNT][SHADER_STAGE_COUNT];
     };
 }
 

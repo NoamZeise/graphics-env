@@ -19,7 +19,7 @@ void mouseBtnCallback(GLFWwindow *window, int button, int action, int mods);
 void errorCallback(int error, const char *description);
 
 RenderFramework chooseRenderFramework(RenderFramework preferred);
-void setShaders(std::string* pshader_path,
+void setShaders(shader::PipelineSetup* p, shader::pipeline pipeline,
 		std::string default_vertex,
 		std::string default_fragment);
 
@@ -67,44 +67,50 @@ Manager::Manager(ManagerState state) {
     
     if(state.fixedWindowRatio)
 	glfwSetWindowAspectRatio(window, winWidth, winHeight);
-    
+
+    shader::PipelineSetup pl = state.getPipelineSetup(framework);
     switch(framework) {
     case RenderFramework::Vulkan:
 #ifndef NO_VULKAN
-	setShaders(state.pipeline.shader_path[shader::pipeline::_3D],
+	setShaders(&pl, shader::pipeline::_3D,
 		  "shaders/vulkan/3D-lighting.vert.spv",
 		  "shaders/vulkan/blinnphong.frag.spv");
-	setShaders(state.pipeline.shader_path[shader::pipeline::anim3D],
+	setShaders(&pl, shader::pipeline::anim3D,
 		  "shaders/vulkan/3D-lighting-anim.vert.spv",
 		  "shaders/vulkan/blinnphong.frag.spv");
-	setShaders(state.pipeline.shader_path[shader::pipeline::_2D],
+	setShaders(&pl, shader::pipeline::_2D,
 		  "shaders/vulkan/flat.vert.spv",
 		  "shaders/vulkan/flat.frag.spv");
-	setShaders(state.pipeline.shader_path[shader::pipeline::final],
+	setShaders(&pl, shader::pipeline::final,
 		  "shaders/vulkan/final.vert.spv",
 		  "shaders/vulkan/final.frag.spv");
-	render = static_cast<Render*>(new vkenv::RenderVk(window, state.render, state.pipeline));
+	render = static_cast<Render*>(new vkenv::RenderVk(window, state.render, pl));
 	break;
 #endif
     case RenderFramework::OpenGL:
 #ifndef NO_OPENGL
-	setShaders(state.pipeline.shader_path[shader::pipeline::_3D],
+	setShaders(&pl, shader::pipeline::_3D,
 		  "shaders/opengl/3D-lighting.vert",
 		  "shaders/opengl/blinnphong.frag");
-	setShaders(state.pipeline.shader_path[shader::pipeline::anim3D],
+	setShaders(&pl, shader::pipeline::anim3D,
 		  "shaders/opengl/3D-lighting-anim.vert",
 		  "shaders/opengl/blinnphong.frag");
-	setShaders(state.pipeline.shader_path[shader::pipeline::_2D],
+	setShaders(&pl, shader::pipeline::_2D,
 		  "shaders/opengl/flat.vert",
 		  "shaders/opengl/flat.frag");
-	setShaders(state.pipeline.shader_path[shader::pipeline::final],
+	setShaders(&pl, shader::pipeline::final,
 		  "shaders/opengl/final.vert",
 		  "shaders/opengl/final.frag");
-	render = static_cast<Render*>(new glenv::RenderGl(window, state.render, state.pipeline));
+	render = static_cast<Render*>(new glenv::RenderGl(window, state.render, pl));
 	break;
 #endif
     default:
 	throw std::runtime_error("Graphics Env manager: No renderer could be created!");
+    }
+    for(int i = 0; i < shader::PIPELINE_COUNT; i++) {
+	for(int j = 0; j < shader::SHADER_STAGE_COUNT; j++) {
+	    LOG("shader path: " << pl.getPath((shader::pipeline)i, (shader::stage)j));
+	}
     }
 }
 
@@ -185,6 +191,25 @@ glm::vec2 Manager::winSize() { return glm::vec2(winWidth, winHeight); }
 
 bool Manager::winActive() { return winHeight != 0 && winWidth != 0; }
 
+void ManagerState::setShader(RenderFramework framework,
+			     shader::pipeline pipeline,
+			     shader::stage stage,
+			     std::string path) {
+    this->pipeline[(int)framework].setPath(pipeline, stage, path);
+}
+
+void ManagerState::setShader(shader::pipeline pipeline,
+			     shader::stage stage,
+			     std::string vulkan_path,
+			     std::string ogl_path) {
+    setShader(RenderFramework::Vulkan, pipeline, stage, vulkan_path);
+    setShader(RenderFramework::OpenGL, pipeline, stage, ogl_path);
+}
+
+shader::PipelineSetup ManagerState::getPipelineSetup(RenderFramework framework) {
+    return this->pipeline[(int)framework];
+}
+
 // ---- HELPERS ----
 
 RenderFramework chooseRenderFramework(RenderFramework preferred) {
@@ -210,13 +235,13 @@ RenderFramework chooseRenderFramework(RenderFramework preferred) {
     throw std::runtime_error("Failed to load any graphics apis!");
 }
 
-void setShaders(std::string* pshader_path,
+void setShaders(shader::PipelineSetup* p, shader::pipeline pipeline,
 		std::string default_vertex,
 		std::string default_fragment) {
-    if(pshader_path[shader::stage::vert].size() == 0)
-	pshader_path[shader::stage::vert] = default_vertex;
-    if(pshader_path[shader::stage::frag].size() == 0)
-	pshader_path[shader::stage::frag] = default_fragment;
+    if(p->getPath(pipeline, shader::stage::vert).size() == 0)
+	p->setPath(pipeline, shader::stage::vert, default_vertex);
+    if(p->getPath(pipeline, shader::stage::frag).size() == 0)
+	p->setPath(pipeline, shader::stage::frag, default_fragment);
 }
 
 // ---- GLFW CALLBACKS ----

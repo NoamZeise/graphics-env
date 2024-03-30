@@ -6,15 +6,13 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <iostream>
 #include <fstream>
-#include <vector>
 
 #include <graphics/logger.h>
 
 namespace glenv {
 
-  GLShader::GLShader(const char* VertexShaderPath, const char* FragmentShaderPath) {
+  GLShader::GLShader(std::string VertexShaderPath, std::string FragmentShaderPath) {
       //create shader
       unsigned int vShader, fShader;
 
@@ -51,7 +49,7 @@ namespace glenv {
       glDeleteProgram(shaderProgram);
   }
 
-  unsigned int GLShader::compileShader(const char* path, int shaderType) {
+  unsigned int GLShader::compileShader(std::string path, int shaderType) {
       std::string dir = path;
       unsigned int shader = glCreateShader(shaderType);
 

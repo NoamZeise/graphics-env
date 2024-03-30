@@ -19,8 +19,9 @@ enum class cursorState {
   disabled,
 };
 
+const int RENDER_FRAMEWORK_COUNT = 2;
 enum class RenderFramework {
-   Vulkan,
+   Vulkan = 0,
    OpenGL,
 };
 
@@ -34,7 +35,17 @@ struct ManagerState {
     cursorState cursor = cursorState::normal;
     RenderFramework defaultRenderer = RenderFramework::Vulkan;
     RenderConfig render;
-    shader::PipelineSetup pipeline;
+    
+    void setShader(RenderFramework framework,
+		   shader::pipeline pipeline, shader::stage stage,
+		   std::string path);
+    void setShader(shader::pipeline pipeline,
+		   shader::stage stage,
+		   std::string vulkan_path,
+		   std::string ogl_path);
+    shader::PipelineSetup getPipelineSetup(RenderFramework framework);
+private:
+    shader::PipelineSetup pipeline[RENDER_FRAMEWORK_COUNT];
 };
 
 struct Manager {
