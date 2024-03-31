@@ -211,7 +211,7 @@ bool swapchainRecreationRequired(VkResult result) {
 				     AttachmentUse::Attachment,
 				     sampleCount, offscreenDepthFormat));
 	  }
-	  
+
 	  offscreenRenderPass = new RenderPass(manager->deviceState.device, offscreenAttachments,
 					       renderConf.clear_colour);
 	  if(useFinalRenderpass) {

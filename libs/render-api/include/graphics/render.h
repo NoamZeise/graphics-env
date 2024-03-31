@@ -8,13 +8,15 @@
 #include "shader_structs.h"
 #include "resource_pool.h"
 
+#include "logger.h"
+
 class Render {
  public:
     /// sets up graphics api, makes a default resource pool
     Render(GLFWwindow* window, RenderConfig conf, shader::PipelineSetup pipelineSetup) {
 	this->window = window;
-	this->renderConf = renderConf;
-	this->prevRenderConf = renderConf;
+	this->renderConf = conf;
+	this->prevRenderConf = conf;
 	this->pipelineSetup = pipelineSetup;
     }
     virtual ~Render() {};
