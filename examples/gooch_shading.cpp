@@ -13,9 +13,13 @@ int main(int argc, char** argv) {
     state.render.clear_colour[0] = 0.25f;
     state.render.clear_colour[1] = 0.25f;
     state.render.clear_colour[2] = 0.25f;
-    state.defaultRenderer = parseArgs(argc, argv, &state.windowTitle);
+    state.render.depth_range_3D[0] = 0.001f;
+    state.render.depth_range_3D[1] = 100.0f;
+    state.render.multisampling = true;
     state.setShader(shader::pipeline::_3D, shader::stage::frag,
 		    "vk-shaders/gooch.frag.spv", "ogl-shaders/gooch.frag");
+    state.defaultRenderer = parseArgs(argc, argv, &state.windowTitle);
+    state.cursor = cursorState::disabled;
     Manager manager(state);
 
     BPLighting l;
@@ -26,17 +30,18 @@ int main(int argc, char** argv) {
     ResourcePool* pool = manager.render->pool();
     Resource::Texture tex = pool->tex()->load("textures/tile.png");
     Resource::Model monkey = pool->model()->load("models/bunny.obj");
-    glm::mat4 model = glm::rotate(glm::scale(glm::mat4(1.0f), glm::vec3(5.0f)), 3.14159f/2, glm::vec3(1.0f, 0.0f, 0.0f));
+    glm::mat4 model = glm::rotate(glm::scale(glm::mat4(1.0f), glm::vec3(5.0f)),
+				  3.14159f/2, glm::vec3(1.0f, 0.0f, 0.0f));
     glm::mat4 normMat = glm::inverseTranspose(model);
 
     manager.render->LoadResourcesToGPU(pool);
     manager.render->UseLoadedResources();
 
     camera::ThirdPerson cam;
-    cam.setTarget(glm::vec3(0, 0, 0.5), 1.0f);
+    float camradius = 1.0f;
+    cam.setTarget(glm::vec3(0, 0, 0.5), camradius);
     cam.setForward(glm::vec3(1, 0, 0.1));
-    int timeSinceInput = 1000;
-    
+    int timeSinceInput = 1000;    
     while(!glfwWindowShouldClose(manager.window)) {
 
 	manager.update();
@@ -50,11 +55,14 @@ int main(int argc, char** argv) {
 		userInput.x = manager.timer.dt() * 0.0001f;
 	} else
 	    timeSinceInput = 0;
-
+	camradius -= manager.input.m.scroll()*manager.timer.dt()*0.001f;
+	cam.setTarget(camradius);
 	cam.control(userInput);
 	
 	if(manager.input.kb.press(GLFW_KEY_ESCAPE))
 	    glfwSetWindowShouldClose(manager.window, GLFW_TRUE);
+	if(manager.input.kb.press(GLFW_KEY_F))
+	    manager.toggleFullscreen();
 	   
 	manager.render->set3DViewMat(cam.getView(), cam.getPos());
 

@@ -117,6 +117,14 @@ namespace camera {
       this->radius = radius;
       updateView();
   }
+  void ThirdPerson::setTarget(float radius) {
+      this->radius = radius;
+      updateView();
+  }
+  void ThirdPerson::setTarget(glm::vec3 target) {
+      this->target = target;
+      updateView();
+  }
 
   void ThirdPerson::setForward(glm::vec3 forward) {
       float updot = glm::dot(forward, worldUp);

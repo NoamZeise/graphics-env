@@ -51,6 +51,8 @@ namespace camera {
       ThirdPerson();
       void control(glm::vec2 ctrlDir);
       void setTarget(glm::vec3 target, float radius);
+      void setTarget(float radius);
+      void setTarget(glm::vec3 target);
       /// camera perspective forward direction
       glm::vec3 getTargetForward();
       /// camera perspective left direction
