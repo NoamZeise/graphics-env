@@ -9,23 +9,32 @@
 int main(int argc, char** argv) {
     ManagerState state;
     state.windowTitle = "Gooch Shading";
+    state.render.forceFinalBuffer = true;
+    state.render.clear_colour[0] = 0.25f;
+    state.render.clear_colour[1] = 0.25f;
+    state.render.clear_colour[2] = 0.25f;
     state.defaultRenderer = parseArgs(argc, argv, &state.windowTitle);
     state.setShader(shader::pipeline::_3D, shader::stage::frag,
 		    "vk-shaders/gooch.frag.spv", "ogl-shaders/gooch.frag");
     Manager manager(state);
+
+    BPLighting l;
+    l.specular.w = 30.0f;
+    l.direction = glm::normalize(glm::vec4(0, 0.2, -1, 0));    
+    manager.render->setLightingProps(l);
     
     ResourcePool* pool = manager.render->pool();
     Resource::Texture tex = pool->tex()->load("textures/tile.png");
-    Resource::Model monkey = pool->model()->load("models/monkey.obj");
-    glm::mat4 model(1.0f);
+    Resource::Model monkey = pool->model()->load("models/bunny.obj");
+    glm::mat4 model = glm::rotate(glm::scale(glm::mat4(1.0f), glm::vec3(5.0f)), 3.14159f/2, glm::vec3(1.0f, 0.0f, 0.0f));
     glm::mat4 normMat = glm::inverseTranspose(model);
 
     manager.render->LoadResourcesToGPU(pool);
     manager.render->UseLoadedResources();
 
     camera::ThirdPerson cam;
-    cam.setTarget(glm::vec3(0), 4.0f);
-    cam.setForward(glm::vec3(1, 0, 0.8));
+    cam.setTarget(glm::vec3(0, 0, 0.5), 1.0f);
+    cam.setForward(glm::vec3(1, 0, 0.1));
     int timeSinceInput = 1000;
     
     while(!glfwWindowShouldClose(manager.window)) {

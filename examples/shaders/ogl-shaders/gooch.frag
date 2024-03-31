@@ -23,32 +23,22 @@ uniform LightingParams lighting;
 
 void main()
 {
-  vec4 objectColour;
-  if(enableTex)
-    objectColour = texture(image, inTexCoords) * spriteColour;
-  else
-    objectColour = spriteColour;
+  vec4 objectColour = spriteColour;
 
-  if(objectColour.w == 0)
-    discard;
-
-  vec3 ambient = lighting.ambient.xyz * lighting.ambient.w;
-
-  vec3 normal = normalize(inNormal);
-  vec3 lightDir = normalize(-lighting.direction.xyz);
-
-  float lambertian = max(dot(normal, lightDir), 0.0);
-  vec3 diffuse = lighting.diffuse.xyz * lighting.diffuse.w * lambertian;
-
-  float specularIntensity = 0.0;
-  if(lambertian > 0.0)
-  {
-    vec3 viewDir = normalize(lighting.camPos.xyz - inFragPos);
-
-    vec3 halfDir = normalize(lightDir + viewDir);
-    specularIntensity = pow(max(dot(normal, halfDir), 0.0), lighting.specular.w);
-  }
-  vec3 specular = lighting.specular.xyz * specularIntensity;
-
-  outColour = vec4(ambient + diffuse + specular, 1.0) * objectColour;
+  vec3 obj =  0.25 * objectColour.xyz;
+  vec3 cool = vec3(0, 0, 0.55) + obj;
+  vec3 warm = vec3(0.3, 0.3, 0) + obj;
+  vec3 highlight = vec3(1, 1, 1);
+  
+  vec3 n = normalize(inNormal);
+  vec3 l = -lighting.direction.xyz;
+  vec3 v = normalize(lighting.camPos.xyz - inFragPos);
+  
+  float t = (dot(n,l) + 1)/2;
+  vec3 r = 2*dot(n,l)*n - l;
+  float s = clamp(100*dot(r,v) - 97, 0, 1);
+  
+  vec3 shaded = s*highlight + (1-s)*((1-t)*warm + (t)*cool);
+  
+  outColour = vec4(shaded.xyz, objectColour.w);
 }
