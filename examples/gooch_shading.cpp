@@ -6,6 +6,9 @@
 
 #include "helper.h"
 
+
+glm::vec3 camControls(Input &input);
+
 int main(int argc, char** argv) {
     ManagerState state;
     state.windowTitle = "Gooch Shading";
@@ -43,21 +46,19 @@ int main(int argc, char** argv) {
     cam.setForward(glm::vec3(1, 0, 0.1));
     int timeSinceInput = 1000;    
     while(!glfwWindowShouldClose(manager.window)) {
-
 	manager.update();
-
-        glm::vec2 userInput = 0.0001f * manager.timer.dt()
-	    * glm::vec2(-manager.input.m.dx(), manager.input.m.dy());
+	float dt = manager.timer.dt();
 	
-	if(userInput == glm::vec2(0)) {
-	    timeSinceInput += manager.timer.dt();
+	glm::vec3 input = camControls(manager.input);
+	if(input.x == 0 && input.y == 0) {
+	    timeSinceInput += dt;
 	    if(timeSinceInput > 1000)
-		userInput.x = manager.timer.dt() * 0.0001f;
+		input.x = dt * 0.1f;
 	} else
 	    timeSinceInput = 0;
-	camradius -= manager.input.m.scroll()*manager.timer.dt()*0.001f;
+	cam.control(0.0001f * dt * glm::vec2(input.x, input.y));
+	camradius -= input.z*dt*0.001f;
 	cam.setTarget(camradius);
-	cam.control(userInput);
 	
 	if(manager.input.kb.press(GLFW_KEY_ESCAPE))
 	    glfwSetWindowShouldClose(manager.window, GLFW_TRUE);
@@ -71,4 +72,18 @@ int main(int argc, char** argv) {
 	    manager.render->EndDraw();
 	}
     }
+}
+
+glm::vec3 camControls(Input &input) {
+    glm::vec3 rawInput = glm::vec3(-input.m.dx(), input.m.dy(), 0) +
+	5.0f*glm::vec3((int)input.kb.hold(GLFW_KEY_D) -
+		       (int)input.kb.hold(GLFW_KEY_A),
+		       (int)input.kb.hold(GLFW_KEY_S) -
+		       (int)input.kb.hold(GLFW_KEY_W), 0);
+    
+    rawInput.z = input.m.scroll() +
+	(int)input.kb.hold(GLFW_KEY_Q) -
+	(int)input.kb.hold(GLFW_KEY_E);
+
+    return rawInput;
 }
