@@ -157,7 +157,7 @@ void Manager::toggleFullscreen() {
 }
 
 void Manager::setWindowSize(int width, int height) {
-    if(glfwGetWindowMonitor(window) == NULL) {
+    if(glfwGetWindowMonitor(window) == NULL) {	
 	winWidth = width;
 	winHeight = height;
 	glfwSetWindowSize(window, winWidth, winHeight);
@@ -167,6 +167,7 @@ void Manager::setWindowSize(int width, int height) {
 void Manager::_windowSizeCallback(int width, int height){
     winWidth = width;
     winHeight = height;
+    input.m.reset();
 }
 
 glm::vec2 Manager::screenToRenderSpace(glm::vec2 pos) {

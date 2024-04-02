@@ -14,7 +14,9 @@ struct MouseState {
     double y = 0.0;
     double scroll = 0.0;
     bool btn[GLFW_MOUSE_BUTTON_LAST + 1];
-    bool uninitialized = true;
+    
+    bool uninitialised = true;
+    int callbackCount = 0;
 };
 
 class Mouse {
@@ -27,8 +29,10 @@ class Mouse {
     bool press(MouseButton btn);
     bool hold(MouseButton btn);
 
-    /// called by glfw/app
+    /// called by glfw/manager
     void update();
+    // when resizing screen, to not affect dx/dy
+    void reset();
     void mousePosCallback(double x, double y);
     void mouseScrollCallback(double x, double y);
     void mouseButtonCallback(MouseButton btn, int action, int mods);

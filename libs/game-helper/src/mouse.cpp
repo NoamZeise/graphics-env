@@ -6,9 +6,13 @@
 #include <stdexcept>
 #endif
 
+//#include <iostream>
+
 void MouseState::mousePosCallback(double x, double y) {
     this->x = x;
     this->y = y;
+    if(uninitialised)
+	uninitialised = callbackCount++ > 1;
 }
 
 void MouseState::mouseScrollCallback(double x, double y) {
@@ -33,13 +37,13 @@ MouseState::MouseState() {
 double Mouse::x() { return this->state.x; }
 
 double Mouse::dx() {
-    if(this->prevState.uninitialized)
+    if(this->prevState.uninitialised)
 	return 0;
     return this->state.x - this->prevState.x;
 }
 
 double Mouse::dy() {
-    if(this->prevState.uninitialized)
+    if(this->prevState.uninitialised)
 	return 0;
     return this->state.y - this->prevState.y;
 }
@@ -61,7 +65,7 @@ bool Mouse::hold(MouseButton btn) {
 }
 
 bool Mouse::press(MouseButton btn) {
-    if(this->prevState.uninitialized)
+    if(this->prevState.uninitialised)
 	return false;
     return this->hold(btn) && !this->prevState.btn[btn];
 }
@@ -80,6 +84,11 @@ void Mouse::mouseButtonCallback(MouseButton btn, int action, int mods) {
 
 void Mouse::update() {
     this->prevState = this->state;
-    this->state.uninitialized = false;
     this->state.scroll = 0.0;
+}
+
+void Mouse::reset() {
+    this->state.uninitialised = true;
+    this->state.callbackCount = 0;
+    this->prevState = state;
 }
