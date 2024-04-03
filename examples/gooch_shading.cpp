@@ -46,8 +46,7 @@ int main(int argc, char** argv) {
     int timeSinceInput = 1000;    
     while(!glfwWindowShouldClose(manager.window)) {
 	manager.update();
-	float dt = manager.timer.dt();
-	
+	float dt = manager.timer.dt();	
 	
 	glm::vec3 input = camControls(manager.input);
 	if(input.x == 0 && input.y == 0) {
@@ -56,6 +55,7 @@ int main(int argc, char** argv) {
 		input.x = dt * 0.1f;
 	} else
 	    timeSinceInput = 0;
+	cam.control(0.0001f * dt * glm::vec2(input.x, input.y));
 	camradius -= input.z*dt*0.001f;
 	cam.setTarget(camradius);
 	
