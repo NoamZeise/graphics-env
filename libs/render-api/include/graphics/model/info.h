@@ -5,8 +5,7 @@
 #define MODEL_INFO_H
 
 #include <glm/glm.hpp>
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/quaternion.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 #include <vector>
 #include <map>
@@ -14,20 +13,25 @@
 
 namespace ModelInfo {
   /// A point on the model.
-  /// 2D models will only use position and texcoord.
-  /// 3D models will only use position, texcoord and normal.
-  /// 3D animated models will use all of these properties.
+  /// -------------
+  /// By default:
+  /// - 2D models will only use position and texcoord.
+  /// - 3D models will only use position, texcoord and normal.
+  /// - 3D animated models will use all of these properties.
+  /// --------------
+  /// If the model does not have certain properties,
+  /// it will have a value of zero for all vertices
   struct Vertex {
-      glm::vec3 Position;
-      glm::vec3 Normal;
-      glm::vec2 TexCoord;
+      glm::vec3 Position = glm::vec3(0);
+      glm::vec3 Normal = glm::vec3(0);
+      glm::vec3 Tangent = glm::vec3(0);
+      glm::vec3 Bitangent = glm::vec3(0);
+      
+      glm::vec2 TexCoord = glm::vec2(0);
+      glm::vec4 Colour = glm::vec4(0);
+      
       std::vector<unsigned int> BoneIDs;
       std::vector<float> BoneWeights;  
-      Vertex() {
-	  Position = {0.0f, 0.0f, 0.0f};
-	  Normal = {0.0f, 0.0f, 0.0f};
-	  TexCoord = {0.0f, 0.0f};
-      }
   };
 
   /// A collection of verticies with indicies, color and a bind transform.

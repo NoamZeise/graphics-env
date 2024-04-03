@@ -18,8 +18,11 @@ const auto IMPORT_PROPS =
     aiProcess_JoinIdenticalVertices |
     aiProcess_GenNormals |
     aiProcess_LimitBoneWeights;
-inline glm::mat4 aiToGLM(aiMatrix4x4 mat);
-inline aiMatrix4x4 glmToAi(glm::mat4 mat);
+glm::mat4 toGlm(aiMatrix4x4 mat);
+glm::vec3 toGlm(aiVector3D vec);
+glm::vec2 toGlm(aiVector2D vec);
+glm::vec4 toGlm(aiColor4D col);
+aiMatrix4x4 glmToAi(glm::mat4 mat);
 
 ModelInfo::Model AssimpLoader::LoadModel(std::string path) {
     auto model = ModelInfo::Model{};
@@ -52,7 +55,7 @@ void AssimpLoader::processNode(ModelInfo::Model* model, aiNode* node,
     
     model->nodes.push_back(ModelInfo::Node{});
     model->nodes.back().parentNode = parentNode;
-    model->nodes.back().transform = aiToGLM(node->mTransformation);
+    model->nodes.back().transform = toGlm(node->mTransformation);
 
     int thisID = (int)model->nodes.size() - 1;
     model->nodeMap[node->mName.C_Str()] = thisID;
@@ -78,7 +81,7 @@ glm::vec4 getColour(aiMaterial* material, const char* key, int type, int id);
 void AssimpLoader::processMesh(ModelInfo::Model* model, aiMesh* aimesh,
 			       const aiScene* scene, aiMatrix4x4 transform) {
     ModelInfo::Mesh* mesh = &model->meshes[model->meshes.size() - 1];
-    mesh->bindTransform = aiToGLM(transform);
+    mesh->bindTransform = toGlm(transform);
 
     auto material = scene->mMaterials[aimesh->mMaterialIndex];
 
@@ -88,22 +91,17 @@ void AssimpLoader::processMesh(ModelInfo::Model* model, aiMesh* aimesh,
     //vertcies
     for(unsigned int i = 0; i < aimesh->mNumVertices;i++) {
 	ModelInfo::Vertex vertex;
-	vertex.Position.x = aimesh->mVertices[i].x;
-	vertex.Position.y = aimesh->mVertices[i].y;
-	vertex.Position.z = aimesh->mVertices[i].z;
-	if(aimesh->HasNormals()) {
-	    vertex.Normal.x = aimesh->mNormals[i].x;
-	    vertex.Normal.y = aimesh->mNormals[i].y;
-	    vertex.Normal.z = aimesh->mNormals[i].z;
+	vertex.Position = toGlm(aimesh->mVertices[i]);       
+	if(aimesh->HasNormals())
+	    vertex.Normal = toGlm(aimesh->mNormals[i]);	
+	if(aimesh->HasTextureCoords(0))
+	    vertex.TexCoord = toGlm(aimesh->mTextureCoords[0][i]);	
+	if(aimesh->HasTangentsAndBitangents()) {
+	    vertex.Tangent = toGlm(aimesh->mTangents[i]);
+	    vertex.Bitangent = toGlm(aimesh->mBitangents[i]);
 	}
-	else
-	    vertex.Normal = glm::vec3(0);
-	if(aimesh->mTextureCoords[0]) {
-	    vertex.TexCoord.x = aimesh->mTextureCoords[0][i].x;
-	    vertex.TexCoord.y = aimesh->mTextureCoords[0][i].y;
-	}
-	else
-	    vertex.TexCoord = glm::vec2(0);
+	if(aimesh->HasVertexColors(0))
+	    vertex.Colour = toGlm(aimesh->mColors[0][i]);
 
 	mesh->verticies.push_back(vertex);
     }
@@ -113,7 +111,7 @@ void AssimpLoader::processMesh(ModelInfo::Model* model, aiMesh* aimesh,
 	unsigned int boneID;
 	std::string boneName = aibone->mName.C_Str();
 	if(model->boneMap.find(boneName) == model->boneMap.end()) {
-	    model->bones.push_back(aiToGLM(aibone->mOffsetMatrix) * mesh->bindTransform);
+	    model->bones.push_back(toGlm(aibone->mOffsetMatrix) * mesh->bindTransform);
 	    boneID = (unsigned int)(model->bones.size() - 1);
 	    model->boneMap[boneName] = boneID;
 	} else
@@ -209,7 +207,7 @@ void extractKeyframe(ModelInfo::AnimNodes *pNode, aiNodeAnim* pAssimpNode) {
     }
 }
 
-inline glm::mat4 aiToGLM(aiMatrix4x4 mat) {
+glm::mat4 toGlm(aiMatrix4x4 mat) {
     glm::mat4 glmmat;
     glmmat[0][0] = mat.a1;
     glmmat[0][1] = mat.b1;
@@ -234,7 +232,19 @@ inline glm::mat4 aiToGLM(aiMatrix4x4 mat) {
     return glmmat;
 }
 
-inline aiMatrix4x4 glmToAi(glm::mat4 mat) {
+glm::vec3 toGlm(aiVector3D vec) {
+    return glm::vec3(vec.x, vec.y, vec.z);
+}
+
+glm::vec2 toGlm(aiVector2D vec) {
+    return glm::vec2(vec.x, vec.y);
+}
+
+glm::vec4 toGlm(aiColor4D col) {
+    return glm::vec4(col.r, col.g, col.b, col.a);
+}
+
+aiMatrix4x4 glmToAi(glm::mat4 mat) {
     aiMatrix4x4 aiMat = aiMatrix4x4(
 	    mat[0][0], mat[0][1], mat[0][2], mat[0][3],
 	    mat[1][0], mat[1][1], mat[1][2], mat[1][3],

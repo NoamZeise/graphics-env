@@ -69,7 +69,7 @@ int main(int argc, char** argv) {
 	if(manager.input.kb.press(GLFW_KEY_N)) {
 	    wolf.nextAnim();
 	    robot.nextAnim();
-	}	    	
+	}
 	wolf.update(manager.timer);
 	robot.update(manager.timer);
 	if(manager.input.kb.press(GLFW_KEY_ESCAPE))

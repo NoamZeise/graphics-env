@@ -83,7 +83,7 @@ namespace Resource {
   
   glm::mat4 frameMat(const std::vector<ModelInfo::AnimationKey::RotationQ> &frames, FrameProps s) {
       glm::quat rot = glm::slerp(frames[s.f1].Rot, frames[s.f2].Rot, (float)s.r);
-      return glm::toMat4(glm::normalize(rot));
+      return glm::mat4_cast(glm::normalize(rot));
   }
 
   glm::mat4 frameMat(const std::vector<ModelInfo::AnimationKey::Scaling> &frames, FrameProps s) {
