@@ -33,21 +33,21 @@ int main(int argc, char** argv) {
     ResourcePool* pool = manager.render->pool();
     Resource::Texture tex = pool->tex()->load("textures/tile.png");
     Resource::Model monkey = pool->model()->load("models/bunny.obj");
-    glm::mat4 model = glm::rotate(glm::scale(glm::mat4(1.0f), glm::vec3(5.0f)),
-				  3.14159f/2, glm::vec3(1.0f, 0.0f, 0.0f));
+    glm::mat4 model = glm::mat4(1.0f);
     glm::mat4 normMat = glm::inverseTranspose(model);
 
     manager.render->LoadResourcesToGPU(pool);
     manager.render->UseLoadedResources();
 
     camera::ThirdPerson cam;
-    float camradius = 1.0f;
-    cam.setTarget(glm::vec3(0, 0, 0.5), camradius);
-    cam.setForward(glm::vec3(1, 0, 0.1));
+    float camradius = 1.3f;
+    cam.setTarget(glm::vec3(0, 0, 0), camradius);
+    cam.setForward(glm::vec3(1, 0, -0.4));
     int timeSinceInput = 1000;    
     while(!glfwWindowShouldClose(manager.window)) {
 	manager.update();
 	float dt = manager.timer.dt();
+	
 	
 	glm::vec3 input = camControls(manager.input);
 	if(input.x == 0 && input.y == 0) {
@@ -56,7 +56,6 @@ int main(int argc, char** argv) {
 		input.x = dt * 0.1f;
 	} else
 	    timeSinceInput = 0;
-	cam.control(0.0001f * dt * glm::vec2(input.x, input.y));
 	camradius -= input.z*dt*0.001f;
 	cam.setTarget(camradius);
 	
