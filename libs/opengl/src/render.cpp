@@ -105,7 +105,7 @@ namespace glenv {
       useFinalFramebuffer = renderConf.forceFinalBuffer ||
 	  targetResolution != windowResolution;
 
-      if(renderConf.multisampling) 
+      if(msaaSamples > 1) 
 	  glEnable(GL_MULTISAMPLE);
       else
 	  glDisable(GL_MULTISAMPLE);
@@ -113,15 +113,16 @@ namespace glenv {
       msaaSamples = 1;
       auto offscreenType = GlFramebuffer::AttachmentType::texture2D;
       if(renderConf.multisampling) {
-	  offscreenType = GlFramebuffer::AttachmentType::renderbuffer;
 	  glGetIntegerv(GL_MAX_SAMPLES, &msaaSamples);
+	  if(msaaSamples > 1)
+	      offscreenType = GlFramebuffer::AttachmentType::renderbuffer;
       }
       
       if(offscreenFramebuffer != nullptr)
 	  delete offscreenFramebuffer;
 
       std::vector<GlFramebuffer::Attachment> attachments;
-      if(useFinalFramebuffer || renderConf.multisampling) {
+      if(useFinalFramebuffer || msaaSamples > 1) {
 	  attachments.push_back(
 		  GlFramebuffer::Attachment(
 			  GlFramebuffer::Attachment::Position::color0,
@@ -136,12 +137,12 @@ namespace glenv {
 			  GlFramebuffer::AttachmentType::renderbuffer,
 			  GL_DEPTH24_STENCIL8));
 
-      if(renderConf.multisampling || useFinalFramebuffer)
+      if(useFinalFramebuffer || msaaSamples > 1)
 	  offscreenFramebuffer = new GlFramebuffer(
 		  (GLsizei)targetResolution.x, (GLsizei)targetResolution.y,
 		  msaaSamples, attachments);
       
-      if(useFinalFramebuffer && renderConf.multisampling) {
+      if(useFinalFramebuffer && msaaSamples > 1) {
 	  offscreenBlitFramebuffer = new GlFramebuffer(
 		  (GLsizei)targetResolution.x, (GLsizei)targetResolution.y, 1, {
 		      GlFramebuffer::Attachment(
@@ -265,7 +266,7 @@ namespace glenv {
   void RenderGl::EndDraw(std::atomic<bool>& submit) {
       glm::vec2 mainResolution = offscreenSize();
       
-      glBindFramebuffer(GL_FRAMEBUFFER, useFinalFramebuffer ?
+      glBindFramebuffer(GL_FRAMEBUFFER, useFinalFramebuffer || msaaSamples > 1 ?
 			offscreenFramebuffer->id() : 0);
 
       if(renderConf.useDepthTest)
@@ -334,7 +335,7 @@ namespace glenv {
       
       DRAW_BATCH();
 
-      if(renderConf.multisampling) {
+      if(msaaSamples > 1) {
 	  glBindFramebuffer(GL_DRAW_FRAMEBUFFER,
 			    useFinalFramebuffer ?
 			    offscreenBlitFramebuffer->id()
@@ -360,7 +361,7 @@ namespace glenv {
 	  
 	  finalShader->Use();
 	  glDisable(GL_DEPTH_TEST);
-	  glBindTexture(GL_TEXTURE_2D, renderConf.multisampling ?
+	  glBindTexture(GL_TEXTURE_2D, msaaSamples > 1 ?
 			offscreenBlitFramebuffer->textureId(0) :
 			offscreenFramebuffer->textureId(0));
 	  glDrawArrays(GL_TRIANGLES, 0, 3);
