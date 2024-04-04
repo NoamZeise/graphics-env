@@ -4,16 +4,14 @@
 
 # disable console window in release mode
 # build static when defined
-if(GCC OR MINGW)
-  if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    # get linux binary to check current dir for libraries
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,-rpath='${ORIGIN}'")
-    if(GRAPHICS_BUILD_STATIC)
-      target_link_libraries(${exec-name} -static -static-libgcc -static-libstdc++)
-    endif()
-  endif()
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  # get linux binary to check current dir for libraries
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,-rpath='${ORIGIN}'")
   target_link_libraries(${exec-name} -pthread)
-  if(CMAKE_BUILD_TYPE STREQUAL "Release")
+  if(GRAPHICS_BUILD_STATIC)
+    target_link_libraries(${exec-name} -static-libgcc -static-libstdc++)
+  endif()
+  if(CMAKE_BUILD_TYPE STREQUAL "Release" AND MINGW)
     target_link_libraries(${exec-name} -mwindows)
   endif()
 elseif(MSVC)
