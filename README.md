@@ -85,12 +85,12 @@ Then example binaries should be in `examples/` within the build folder . Note th
 
 ## Cmake Flags
 
-* NO\_AUDIO -> don't link to _sndfile_ or _portaudio_. Audio functions will not work.
-* NO\_FREETYPE -> don't build or link to _freetype_. Font loading/drawing will not work.
-* NO\_ASSIMP -> don't build or link to _assimp_. Loading 3D models from file will not work. 
-* NO\_VULKAN -> don't build or link to Vulkan backend.
-* NO\_OPENGL -> don't build or link to OpenGL backend
-* GRAPHICS\_BUILD\_STATIC -> build everything statically
+* NO\_AUDIO -> don't use sndfile or portaudio. Audio functions will not work.
+* NO\_FREETYPE -> don't use Freetype. Font file loading will not work.
+* NO\_ASSIMP -> don't use Assimp. Loading 3D model files won't work. 
+* NO\_VULKAN -> don't use Vulkan backend.
+* NO\_OPENGL -> don't use OpenGL backend
+* GRAPHICS\_STATIC -> build libraries statically
 
 
 # FAQ
