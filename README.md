@@ -1,76 +1,66 @@
-# Work in progress graphics library
-A 2D and 3D renderer with vulkan or opengl backend.
+# Graphics Library 
+A 2D and 3D graphics library with vulkan or opengl backend.
 See `examples/` folder for simple programs using this library.
 More complete programs are listed below.
 
 ## Features:
 
-Graphics Features
+Graphics Features:
 * Import and Draw 3D models, or generate your own (limited support for materials)
 * Import and Draw image textures, or generate your own
 * Import and Draw fonts
 * 3D Skeletal Animation
 * Optional Resource Pools - keep some assets loaded, load and unload other assets
-Non-Graphics Features
-* Simple keyboard/mouse/controller input 
-* First and Third person cameras
-* audio playback
+
+Non-Graphics Features:
+* Simple keyboard/mouse/controller input querying
+* First and Third person camera classes
+* audio file loading and playing
 
 ## Projects using this framework:
-* [Orbbit](https://github.com/NoamZeise/dsg-2024) - 2024 - 2D/3D planet gravity game
-* [Cat Flat](https://github.com/NoamZeise/GGJ2024) - 2024 - 2D physics based fish frying game
-* [Meditative Marble](https://github.com/NoamZeise/MeditativeMarble) - 2023 - 3D physics and procedurally loading world 
-* [Space Flight Explorer](https://github.com/NoamZeise/gbjam11) - 2023 - 3D Space Sim, GameBoy Graphics and Controls
-* [Robyn Hood](https://github.com/NoamZeise/Robyn-Hood) - 2022 - 2D On-rails Stealth Game
-* [Trials of The Pharaoh](https://github.com/NoamZeise/TrailsOfThePharaoh) - 2022 - 2D Light Ray Puzzle Game
 
-## External libraries and their uses:
+All made by me for various game jams
 
-included - this project is a submodule or included in the repo
-OPTIONAL - this library can be toggled with a cmake flag
-external - requires downloading external libraries
+* [Orbbit](https://noamzeise.com/gamejam/2024/02/27/Orbbit.html) - 2024 - 2D/3D planet gravity game
+* [Cat Flat](https://noamzeise.com/gamejam/2024/01/29/CatFlat.html) - 2024 - 2D physics based fish frying game
+* [Meditative Marble](https://noamzeise.com/gamejam/2023/12/16/Meditative-Marble.html) - 2023 - 3D physics and procedurally loading world 
+* [Space Flight Explorer](https://noamzeise.com/gamejam/2023/09/25/Space-Flight.html) - 2023 - 3D Space Sim, GameBoy Graphics and Controls
+* [Robyn Hood](https://noamzeise.com/gamejam/2022/09/28/Robyn-Hood.html) - 2022 - 2D On-rails Stealth Game
+* [Trials of The Pharaoh](https://noamzeise.com/gamejam/2022/05/30/TrialsOfThePharaoh.html) - 2022 - 2D Light Ray Puzzle Game
 
-* included: [volk](https://github.com/zeux/volk) dynamically loads pointers to vulkan from driver
-* included: [GLFW](https://www.glfw.org/) handles windowing and input
-* included: [GLM](https://github.com/g-truc/glm) handles glsl datatypes and linear algebra
-* included: [stb_image.h](https://github.com/nothings/stb) handles image loading
-* included OPTIONAL:   [Assimp](https://github.com/assimp/assimp) handles model loading
-* included OPTIONAL:   [freetype2](https://freetype.org/) handles font loading
-* external OPTIONAL:   [Vulkan SDK](https://vulkan.lunarg.com/) for vulkan type definitions, used by volk
-* external OPTIONAL:   [libsndfile](https://github.com/libsndfile/libsndfile) handles audio file loading
-* external OPTIONAL:   [portaudio](http://www.portaudio.com/) handles cross platform audio playback
-
-# setup
+# Setup
 
 Cmake is required for building on all platforms.
 
 ### linux with apt on debian based systems
-vulkan tools
+
+vulkan tools / vulkan loader / validation layers / spriv compilers
 ```
-$ sudo apt-get install vulkan-tools
-```
-vulkan loader / validation layers / spriv compilers
-```
-$ sudo apt-get install libvulkan-dev vulkan-validationlayers-dev spirv-tools
+$ sudo apt-get install vulkan-tools libvulkan-dev vulkan-validationlayers-dev spirv-tools
 ```
 test vulkan works
 ```
 $ vkcube
 ```
-additional libraries
+audio library dependancies
 ```
-$ sudo apt-get install libfreetype-dev libsndfile1-dev libasound-dev portaudio19-dev
+$ sudo apt-get install libsndfile1-dev libasound-dev portaudio19-dev
 ```
 
 ### windows
 
-* download [libsndfile](http://www.mega-nerd.com/libsndfile/#Download) compile and put in your lib and include directories, and distrubute dll with your binaries
+* Download the [Vulkan SDK](https://www.lunarg.com/vulkan-sdk/), for getting the vulkan validation layers and the tools for compiling shaders into spirv.
 
-* download [portaudio](http://files.portaudio.com/docs/v19-doxydocs/compile_windows.html) compile and put in your lib and include directories, and distrubute dll with your binaries
+* download a [libsndfile](https://github.com/libsndfile/libsndfile/releases) build 
+(self-building is annoying as there are many dependancies). Extract the zip and note the path.
 
-You may need to specify `sndfile_DIR` and `portaudio_DIR` with the cmake folders of those libraries ( ie where the `portaudioConfig.cmake` files are).
+* download [portaudio](http://files.portaudio.com/docs/v19-doxydocs/compile_windows.html) code, compile and note the build path.
 
-Download the [Vulkan SDK](https://www.lunarg.com/vulkan-sdk/), for getting the vulkan validation layers and the tools for compiling shaders into spirv.
+You will need to specify `sndfile_DIR` and `portaudio_DIR` with the cmake folders of those 
+libraries, so in the next part instead of `cmake ..` do
+```
+cmake .. -D portaudio_DIR="path_to_portaudio_build/cmake/portaudio" -D sndfile_DIR="path_to_sndfile_build/cmake/"
+```
 
 # Build with example using CMake
 
@@ -81,7 +71,10 @@ mkdir build && cd build
 cmake ..
 cmake --build .
 ```
-Then example binaries should be in `examples/` within the build folder . Note that _PortAudio_ and _Libsndfile_ dlls wont be built with this, so on windows you'll need to copy the dlls for those into the same path as the example binaries.
+Then example binaries should be in `examples/` within the build folder . 
+Note that _PortAudio_ and _Libsndfile_ wont be built with this, 
+so on windows you'll need to copy the dlls for these libraries 
+from their build folders to beside the binaries.
 
 
 # Customizing the build
@@ -130,6 +123,24 @@ If you don't need audio or want to use your own audio lib you can pass
 
 When exporting your models, ensure you are using relative paths to textures.
 Also ensure that models are exported with the Z Up direction option.
+
+### External libraries and their uses:
+
+key:
+- included - this project is a submodule or included in the repo
+- OPTIONAL - this library can be toggled with a cmake flag
+- external - requires downloading external libraries
+
+* included: [volk](https://github.com/zeux/volk) dynamically loads pointers to vulkan from driver
+* included: [GLFW](https://www.glfw.org/) handles windowing and input
+* included: [GLM](https://github.com/g-truc/glm) handles glsl datatypes and linear algebra
+* included: [stb_image.h](https://github.com/nothings/stb) handles image loading
+* included OPTIONAL:   [Assimp](https://github.com/assimp/assimp) handles model loading
+* included OPTIONAL:   [freetype2](https://freetype.org/) handles font loading
+* external OPTIONAL:   [Vulkan SDK](https://vulkan.lunarg.com/) for vulkan type definitions, used by volk
+* external OPTIONAL:   [libsndfile](https://github.com/libsndfile/libsndfile) handles audio file loading
+* external OPTIONAL:   [portaudio](http://www.portaudio.com/) handles cross platform audio playback
+
 
 # Todo list:
 bugs:
