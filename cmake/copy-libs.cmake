@@ -2,21 +2,24 @@
 # ie do "set(exec-name name-of-your-executable)"
 # before including this file (like in examples/CMakeLists.txt)
 
+# disable console window in release mode
+# build static when defined
 if(GCC OR MINGW)
   if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     # get linux binary to check current dir for libraries
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,-rpath='${ORIGIN}'")
     if(GRAPHICS_BUILD_STATIC)
-      message(WARNING "Static build!")
       target_link_libraries(${exec-name} -static -static-libgcc -static-libstdc++)
     endif()
   endif()
   target_link_libraries(${exec-name} -pthread)
-endif()
-
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
-  if(GCC OR MINGW)
+  if(CMAKE_BUILD_TYPE STREQUAL "Release")
     target_link_libraries(${exec-name} -mwindows)
+  endif()
+elseif(MSVC)
+  if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    target_link_options(${exec-name} PRIVATE "/SUBSYSTEM:WINDOWS")
+    target_link_options(${exec-name} PRIVATE "/ENTRY:mainCRTStartup")
   endif()
 endif()
 

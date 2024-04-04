@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
     
     ModelInfo::Model sphereData = genSurface([](float a, float b){
 	return glm::vec3(sin(a)*cos(b), sin(a)*sin(b), cos(a));
-    }, true, 1.0, {0, 22.0/7, 0.1}, {0, 44.0/7, 0.1});
+    }, true, 1.0, SurfaceParam(0, 22.0/7, 0.1), SurfaceParam(0, 44.0/7, 0.1));
     sphereData.meshes[0].diffuseColour = glm::vec4(0.5f, 0.7f, 0.0f, 1.0f);
     ModelDraw sphere = ModelDraw(
 	    pool1->model()->load(sphereData), glm::mat4(1.0f));

@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.21)
 
 include("cmake/project-setup.cmake")
 
-set(ProjectName "graphics-env")
-
 set(GRAPHICS_AS_ROOT OFF)
 if (${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
   set(GRAPHICS_AS_ROOT ON)
@@ -21,14 +19,14 @@ if(GRAPHICS_BUILD_STATIC)
   set(VKENV_BUILD_STATIC ON)
   set(BUILD_SHARED_LIBS OFF)
   if(MSVC)
-    set(USE_MSVC_RUNTIME_LIBRARY_DLL OFF)
+    cmake_policy(SET CMP0091 NEW)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
   endif()
 endif()
 
 project(graphics-env-project VERSION 1.0)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 11)
 
 add_subdirectory(external)
 add_subdirectory(libs)

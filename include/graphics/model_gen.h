@@ -8,6 +8,11 @@ struct SurfaceParam {
     float start;
     float end;
     float step = 1;
+    SurfaceParam(float start, float end, float step) {
+	this->start = start;
+	this->end = end;
+	this->step = step;
+    }
 };
 
 ModelInfo::Model genSurface(

@@ -48,9 +48,16 @@ namespace Resource {
   /// --- helpers ---
   
   struct FrameProps {
-      int f1 = 0;   // frame 1
-      int f2 = 0;   // frame 2
-      double r = 0; // factor
+      int f1 = 0;
+      int f2 = 0;
+      double r = 0;
+
+      FrameProps(){}
+      FrameProps(int frame1, int frame2, int factor) {
+	  this->f1 = frame1;
+	  this->f2 = frame2;
+	  this->r = factor;
+      }
   };
   
   double calcFactor(double t1, double t2, double currentTime) {
@@ -62,7 +69,7 @@ namespace Resource {
   template <typename T>
   FrameProps interpFrames(const std::vector<T> &frames, float currentTime) {
       if(frames.size() == 1)
-	  return FrameProps{0, 0, 0};      
+	  return FrameProps(0, 0, 0);
       int second = 0;
       for(int i = 0 ; i < frames.size(); i++) {
 	  if(getTime(frames[i]) >= currentTime) {
@@ -72,7 +79,7 @@ namespace Resource {
       }
       int first = (second - 1) % frames.size();
       double factor = calcFactor(getTime(frames[first]), getTime(frames[second]), currentTime);
-      return FrameProps{first, second, factor};
+      return FrameProps(first, second, factor);
   }
 
   glm::mat4 frameMat(const std::vector<ModelInfo::AnimationKey::Position> &frames, FrameProps s) {
