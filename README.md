@@ -83,6 +83,9 @@ cmake --build .
 ```
 Then example binaries should be in `examples/` within the build folder . Note that _PortAudio_ and _Libsndfile_ dlls wont be built with this, so on windows you'll need to copy the dlls for those into the same path as the example binaries.
 
+
+# Customizing the build
+
 ## Cmake Flags
 
 * NO\_AUDIO -> don't use sndfile or portaudio. Audio functions will not work.
@@ -92,24 +95,36 @@ Then example binaries should be in `examples/` within the build folder . Note th
 * NO\_OPENGL -> don't use OpenGL backend
 * GRAPHICS\_STATIC -> build libraries statically
 
+## Enabling other 3D model formats
 
-# FAQ
+To use formats other than those enabled by default, you must set `ASSIMP_BUILD_XYZ_IMPORTER` 
+to true, where `XYZ` is your format, before loading the cmake files for this project.
 
-### Common Build Errors
-
-* Missing <vulkan/...> error
-pass `-D VULKAN_HEADERS_INSTALL_DIR=/your/path/to/your/installed/vulkan/headers`
-to cmake when generating this project
-
-### Enabling other 3D model formats
-
-To use formats other than those enabled by default, you must set `ASSIMP_BUILD_XYZ_IMPORTER` to true, where `XYZ` is your format, before loading the cmake files for this project.
-
-For example to enable the blend format, you would have `set(ASSIMP_BUILD_BLEND_IMPORTER TRUE)` somewhere in your cmake file before calling `add_subdirectory(graphics-env)`. 
+For example to enable the blend format, you would have `set(ASSIMP_BUILD_BLEND_IMPORTER TRUE)`
+somewhere in your cmake file before calling `add_subdirectory(graphics-env)`. 
 Check the [assimp](https://assimp.org/) docs for more info 
 on supported formats.
 
 You should then be able to load these newly enabled formats the same as you load the default ones.
+
+# Common Build Errors
+
+##### Missing <vulkan/...> error
+pass `-D VULKAN_HEADERS_INSTALL_DIR=/your/path/to/your/installed/vulkan/headers`
+to cmake when generating this project
+
+##### Missing sndfile or portaudio dirs
+try building anyways, as they may be picked up at buildtime (especially with mingw or linux). 
+If there are still issues (usually for windows with MSVC compiler),
+assuming you have downloaded release builds of `sndfile` and `portaudio`,
+you can pass to cmake these options.
+- `-D sndfile_DIR=sndfile-build-folder/cmake`
+- `-D portaudio_DIR=portaudio-build-folder/cmake/portaudio`
+
+If you don't need audio or want to use your own audio lib you can pass
+`-D NO_AUDIO=true` to disable these dependancies.
+
+# Notes
 
 ### Proper export settings for 3D modelling software
 
@@ -121,5 +136,6 @@ bugs:
 * instability reported on some AMD GPUs (unable to test this directly)
 
 features:
+* user created fonts
 * define new shader pipelines outside of render
 * better model material support (right now just diffuse colour)

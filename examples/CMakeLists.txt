@@ -14,8 +14,8 @@ if((NOT NO_ASSIMP) AND (NOT NO_FREETYPE))
   add_example(gooch_shading gooch_shading.cpp)
 endif()
 
-# only need to copy files for one example
-# as they are all built in the same folder
+# Copy files for one executable - ie libs/resource files
+# this does mean only `minimum` will get built statically
 set(exec-name minimum)
 include("${CMAKE_CURRENT_SOURCE_DIR}/../cmake/copy-libs.cmake")
 # copy resources folder to built executable path
