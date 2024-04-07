@@ -652,7 +652,7 @@ void RenderVk::_startDraw() {
     if(usingFinalRenderPass) 
 	offscreenRenderPass->beginRenderPass(currentCommandBuffer, 0);
     else
-	offscreenRenderPass->beginRenderPass(currentCommandBuffer, swapchainFrameIndex);;
+	offscreenRenderPass->beginRenderPass(currentCommandBuffer, swapchainFrameIndex);
     
     currentBonesDynamicOffset = 0;
     currentModelPool = Resource::Pool();

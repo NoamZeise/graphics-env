@@ -2,7 +2,6 @@
 
 #include <glm/gtc/matrix_inverse.hpp>
 #include <iostream>
-#include <cstring>
 
 Resource::ModelType getModelType(Vertex2D vert) { return Resource::ModelType::m2D; }
 Resource::ModelType getModelType(Vertex3D vert) { return Resource::ModelType::m3D; }

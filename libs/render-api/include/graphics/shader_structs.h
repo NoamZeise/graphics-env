@@ -3,7 +3,6 @@
 
 #include <glm/glm.hpp>
 #include <string>
-#include <vector>
 
 namespace shader {
     const int PIPELINE_COUNT = 4;
@@ -31,41 +30,6 @@ namespace shader {
     private:
 	std::string shader_path[PIPELINE_COUNT][SHADER_STAGE_COUNT];
     };
-
-  enum class binding_type {
-      UniformBuffer,
-      UniformBufferDynamic,
-      StorageBuffer,
-      StorageBufferDynamic,
-      TextureSampler,
-      Texture,
-  };
-
-  class Binding {
-  public:
-      Binding(binding_type type);
-      
-  private:
-      void init(binding_type type,
-		size_t typeSize,
-		size_t arrayCount,
-		size_t dynamicCount);
-      binding_type type;
-  };
-  
-  class Set {
-  public:
-      Set(stage shader_stage) {
-	  this->shader_stage = shader_stage;
-      }
-      void addBinding(Binding binding) {
-	  bindings.push_back(binding);
-      }
-      
-  private:
-      stage shader_stage;
-      std::vector<Binding> bindings;
-  };
 }
 
 struct BPLighting {
