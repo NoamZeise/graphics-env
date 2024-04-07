@@ -2,7 +2,6 @@
 #ifndef VKENV_SHADER_STRUCTS_H
 #define VKENV_SHADER_STRUCTS_H
 
-#include "glm/glm.hpp"
 #include <graphics/resources.h>
 
 namespace shaderStructs {

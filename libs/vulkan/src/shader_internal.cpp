@@ -40,9 +40,8 @@ DescSet::DescSet(descriptor::Set set, size_t frameCount, VkDevice device) {
       binding.type = VK_DESCRIPTOR_TYPE_SAMPLER;
       binding.samplers = (VkSampler*)desc.pSamplerOrImageViews;
       break;
-    case descriptor::Type::SampledImagePerSet:
-	binding.viewsPerSet = true;
     case descriptor::Type::SampledImage:
+      binding.viewsPerSet = desc.differentViewPerSet;
       binding.type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
       binding.imageViews = (VkImageView*)desc.pSamplerOrImageViews;
       break;

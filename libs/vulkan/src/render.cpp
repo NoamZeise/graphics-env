@@ -408,8 +408,8 @@ bool swapchainRecreationRequired(VkResult result) {
 	  }
 	  descriptor::Set offscreen_Set("offscreen texture", descriptor::ShaderStage::Fragment);
 	  offscreen_Set.AddSamplerDescriptor("sampler", 1, &_offscreenTextureSampler);
-	  offscreen_Set.AddImageViewDescriptor("frame", descriptor::Type::SampledImagePerSet,
-					       1, offscreenViews.data());
+	  offscreen_Set.AddImageViewDescriptor("frame", descriptor::Type::SampledImage,
+					       1, offscreenViews[0]);
 	  offscreenTex = new DescSet(offscreen_Set, descriptorSizes,
 				     manager->deviceState.device);
 	  descriptorSets.push_back(offscreenTex);

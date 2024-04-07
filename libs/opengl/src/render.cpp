@@ -2,7 +2,6 @@
 
 #include "ogl_helper.h"
 #include "shader.h"
-#include "resources/vertex_data.h"
 #include "resources/resource_pool.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>

@@ -79,10 +79,9 @@ namespace descriptor {
   }
 
   void Set::AddImageViewDescriptor(std::string name, Type type, size_t viewCount, void* pImageViews) {
-      if(type != Type::SampledImage &&
-	 type != Type::SampledImagePerSet) {
-	  throw std::runtime_error("Tried to add image view to Descriptor Set that isn't"
-				   "sampled image or sampled image set");
+      if(type != Type::SampledImage) {
+	  throw std::runtime_error("Tried to add image view to Descriptor Set that isn't "
+				   "sampled image.");
       }
    this->descriptors.push_back(
 	   Descriptor(name,
