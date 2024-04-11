@@ -10,6 +10,7 @@
 
 #include <resource_loader/pool_manager.h>
 #include <graphics/glm_helper.h>
+#include <graphics/shader.h>
 
 #include <GLFW/glfw3.h>
 #include <cstring>
@@ -270,6 +271,7 @@ bool swapchainRecreationRequired(VkResult result) {
       //TODO: more recreation here, use max-frame-in-flight instead of swapchain count
 
       int descriptorSizes = frameCount;
+
       
       /// vertex descripor sets
       descriptor::Descriptor viewProjectionBinding(
@@ -385,7 +387,7 @@ bool swapchainRecreationRequired(VkResult result) {
 	      descriptorSizes, manager->deviceState.device);
       descriptorSets.push_back(emptyDS);
 
-      std::vector<VkImageView> offscreenViews;
+      std::vector<VkImageView> offscreenViews; // needs to be in scope for prepareShaderbuffersets
       if(useFinalRenderpass) {
 	  if(!offscreenSamplerCreated) {
 	      _offscreenTextureSampler = vkhelper::createTextureSampler(
@@ -397,19 +399,13 @@ bool swapchainRecreationRequired(VkResult result) {
 	      offscreenSamplerCreated = true;
 	  }
 	  offscreenViews = offscreenRenderPass->getAttachmentViews(0);
-	  if(offscreenViews.size() > descriptorSizes)
-	      offscreenViews.resize(descriptorSizes);
-	  else {
-	      if(offscreenViews.size() == 0)
-		  throw std::runtime_error(
-			  "Nothing returned for offscreen texture views");
-	      while(offscreenViews.size() < descriptorSizes)
-		  offscreenViews.push_back(offscreenViews[0]);
-	  }
+	  if(offscreenViews.size() == 0)
+	      throw std::runtime_error(
+		      "Nothing returned for offscreen texture views");
 	  descriptor::Set offscreen_Set("offscreen texture", descriptor::ShaderStage::Fragment);
 	  offscreen_Set.AddSamplerDescriptor("sampler", 1, &_offscreenTextureSampler);
 	  offscreen_Set.AddImageViewDescriptor("frame", descriptor::Type::SampledImage,
-					       1, offscreenViews[0]);
+					       1, &offscreenViews[0]);
 	  offscreenTex = new DescSet(offscreen_Set, descriptorSizes,
 				     manager->deviceState.device);
 	  descriptorSets.push_back(offscreenTex);
@@ -426,7 +422,7 @@ bool swapchainRecreationRequired(VkResult result) {
 	  for(int j = 0; j < descriptorSets[i]->bindings.size(); j++)
 	      bindings.push_back(&descriptorSets[i]->bindings[j]);
       }
-      
+     
       part::create::DescriptorPoolAndSet(
 	      manager->deviceState.device, &_descPool, sets,
 	      descriptorSizes);
