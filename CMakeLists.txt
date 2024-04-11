@@ -30,6 +30,7 @@ project(graphics-env-project VERSION 1.0)
 set(CMAKE_CXX_STANDARD 11)
 
 add_subdirectory(external)
+set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(libs)
 add_subdirectory(src)
 
