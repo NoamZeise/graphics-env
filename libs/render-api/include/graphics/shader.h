@@ -27,6 +27,12 @@ namespace pipeline {
 
   class Binding {
   public:
+      Binding UniformBuffer(int typeSize, int arrayCount) {
+	  return Binding(type::UniformBuffer, typeSize, arrayCount, 1);
+      }
+      Binding UniformBuffer(int typeSize) {
+	  return Binding(type::UniformBuffer, typeSize, 1, 1);
+      }
       enum class type {
 	  UniformBuffer,
 	  UniformBufferDynamic,
@@ -35,15 +41,24 @@ namespace pipeline {
 	  TextureSampler,
 	  Texture,
        };
-      Binding(type binding_type);
       
   private:
-      void init(type binding_type,
-		size_t typeSize,
-		size_t arrayCount,
-		size_t dynamicCount);
+      Binding(type binding_type,
+	      size_t typeSize,
+	      size_t arrayCount,
+	      size_t dynamicCount) {
+	  this->binding_type = binding_type;
+	  this->typeSize = typeSize;
+	  this->arrayCount = arrayCount;
+	  this->dynamicCount = dynamicCount;
+      }
       type binding_type;
+      size_t typeSize;
+      size_t arrayCount;
+      size_t dynamicCount;
   };
+
+  
 
   const int SHADER_STAGE_COUNT = 2;
   enum class stage {
