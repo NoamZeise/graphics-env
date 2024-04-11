@@ -7,10 +7,10 @@ namespace pipeline {
   public:
       enum class type {
 	  vec2,
-	      vec3,
-	      vec4,
-	      ivec4,
-	      };
+	  vec3,
+	  vec4,
+	  ivec4,
+      };
       struct Entry {
 	  type input_type;
 	  float offset;	  
