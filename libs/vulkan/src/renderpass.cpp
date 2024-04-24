@@ -262,6 +262,9 @@ RenderPass::RenderPass(VkDevice device, std::vector<AttachmentDesc> attachments,
 		std::runtime_error("Render Pass State Error: Can only have 1 resolve attachment");
 	    hasResolve = true;
 	    resolveRef = attachRef;
+	default:
+	    std::runtime_error("Render Pass Error: Unrecognised attachment type");
+	    clear.color = {0.0f, 0.0f, 0.0f};
 	}
 	attachmentClears[attachIndex] = clear;
     }
