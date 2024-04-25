@@ -2,9 +2,7 @@
 #define MODEL_RENDER_H
 
 #include <map>
-
-#include <resource_loader/model_loader.h>
-
+#include <resource-loaders/model_loader.h>
 #include "../device_state.h"
 
 struct ModelInGPU;

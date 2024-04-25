@@ -1,7 +1,7 @@
 #ifndef GL_MODEL_LOADER_H
 #define GL_MODEL_LOADER_H
 
-#include <resource_loader/vertex_model.h>
+#include <resource-loaders/vertex_model.h>
 #include <graphics/model_loader.h>
 #include <graphics/logger.h>
 #include <map>

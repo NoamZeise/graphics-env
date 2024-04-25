@@ -2,9 +2,9 @@
 #define GL_MODEL_RENDER_H
 
 #include "vertex_data.h"
-#include <resource_loader/texture_loader.h>
-#include <resource_loader/model_loader.h>
-#include <resource_loader/vertex_model.h>
+#include <resource-loaders/texture_loader.h>
+#include <resource-loaders/model_loader.h>
+#include <resource-loaders/vertex_model.h>
 
 struct GPUModelGL;
 

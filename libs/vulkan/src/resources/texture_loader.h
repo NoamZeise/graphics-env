@@ -1,7 +1,7 @@
 #ifndef TEXTURE_LOADER_H
 #define TEXTURE_LOADER_H
 
-#include <resource_loader/texture_loader.h>
+#include <resource-loaders/texture_loader.h>
 #include "../device_state.h"
 
 struct TextureInGPU;

@@ -3,8 +3,8 @@
 
 #include "texture_loader.h"
 #include "model_loader.h"
-#include <resource_loader/font_loader.h>
-#include <resource_loader/pool_manager.h>
+#include <resource-loaders/font_loader.h>
+#include <resource-loaders/pool_manager.h>
 #include <graphics/resource_pool.h>
 
 class ResourcePoolVk : public ResourcePool {

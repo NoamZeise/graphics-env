@@ -1,4 +1,4 @@
-#include <resource_loader/model_loader.h>
+#include <resource-loaders/model_loader.h>
 #include <graphics/logger.h>
 #include "assimp_loader.h"
 

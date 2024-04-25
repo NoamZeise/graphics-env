@@ -1,4 +1,4 @@
-#include <resource_loader/vertex_model.h>
+#include <resource-loaders/vertex_model.h>
 
 #include <glm/gtc/matrix_inverse.hpp>
 #include <iostream>
