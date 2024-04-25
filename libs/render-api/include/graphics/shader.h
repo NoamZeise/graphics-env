@@ -33,6 +33,7 @@ namespace pipeline {
       Binding UniformBuffer(int typeSize) {
 	  return Binding(type::UniformBuffer, typeSize, 1, 1);
       }
+      // Dynamic -> swap part of buffer used between draws
       enum class type {
 	  UniformBuffer,
 	  UniformBufferDynamic,

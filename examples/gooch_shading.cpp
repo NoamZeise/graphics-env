@@ -25,6 +25,43 @@ int main(int argc, char** argv) {
     state.cursor = cursorState::disabled;
     Manager manager(state);
 
+    // example shader use
+
+    /*
+      DescriptorSet* timeds = render.createDs(stage::vertex | stage::fragment); 
+
+      // option 1, easier, raw pointer
+      Binding *time = timeds->add(0, Binding::UniformBuffer(sizeof(timestruct)));
+      
+      time->data(&timeData); // upload data, automatically update to gpu during call;
+      //or
+      *(timestruct*)time->data() = dt;
+      //with offsets for arrays
+      time->data(&timeData, array_index);
+      //swap dynamic binding
+      timeds->dynamicIndex(2);
+
+      // option 2, somehow type checking, harder
+
+      time->data = dt; // so data is of type time
+      time->update(); // manually update to gpu
+      // requires lots of casting and annoying stuff
+      timeds->add(Binding::UniformBuffer<timestruct>());
+
+      // option 3: wrapper object with type - pass array size in generic
+
+      BindingData<timestruct> time(timeds->add(0, Binding::UniformBuffer(sizeof(timestruct))));
+      time.data = dt;
+      time.update();
+
+
+
+      // after creation
+
+      pipeline.attach(2, timeds); //set index, set
+      
+     */
+
     BPLighting l;
     l.specular.w = 30.0f;
     l.direction = glm::normalize(glm::vec4(0, 0.2, -1, 0));    
