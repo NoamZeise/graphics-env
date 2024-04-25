@@ -28,37 +28,22 @@ int main(int argc, char** argv) {
     // example shader use
 
     /*
-      DescriptorSet* timeds = render.createDs(stage::vertex | stage::fragment); 
 
-      // option 1, easier, raw pointer
-      Binding *time = timeds->add(0, Binding::UniformBuffer(sizeof(timestruct)));
-      
-      time->data(&timeData); // upload data, automatically update to gpu during call;
+      //init
+      shader::Set* timeds = render->CreateSet(shader::stage::vertex | shader::stage::fragment);
+      timeds->addBinding(shader::Binding::UniformBuffer(sizeof(TimeStruct)));
+
+      //this
+      render->AttachSet(pipeline::3D, 2, timeds);
       //or
-      *(timestruct*)time->data() = dt;
-      //with offsets for arrays
-      time->data(&timeData, array_index);
-      //swap dynamic binding
-      timeds->dynamicIndex(2);
+      pipeline* p = render->GetPipeline(pipeline::3D);
+      p->attach(2, timeds);
 
-      // option 2, somehow type checking, harder
+      // during update
+      timeds->setData(0, TimeStruct { dt });
 
-      time->data = dt; // so data is of type time
-      time->update(); // manually update to gpu
-      // requires lots of casting and annoying stuff
-      timeds->add(Binding::UniformBuffer<timestruct>());
-
-      // option 3: wrapper object with type - pass array size in generic
-
-      BindingData<timestruct> time(timeds->add(0, Binding::UniformBuffer(sizeof(timestruct))));
-      time.data = dt;
-      time.update();
-
-
-
-      // after creation
-
-      pipeline.attach(2, timeds); //set index, set
+      // if we want to update all? ie less frequent updates - need to change all frame's values
+      timeds->setAllFrameData(0, TimeStruct {dt});
       
      */
 

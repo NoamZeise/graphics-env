@@ -5,9 +5,9 @@ file(GLOB OGL_RENDER_SOURCES
 )
 add_library(opengl-env ${OGL_RENDER_SOURCES})
 
-add_dependencies(opengl-env resource-loader graphics-api glfw)
-target_link_libraries(opengl-env PRIVATE resource-loader)
-target_link_libraries(opengl-env PUBLIC graphics-api glfw)
+add_dependencies(opengl-env render-internal render-api glfw)
+target_link_libraries(opengl-env PRIVATE render-internal)
+target_link_libraries(opengl-env PUBLIC render-api glfw)
 
 target_include_directories(opengl-env PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}

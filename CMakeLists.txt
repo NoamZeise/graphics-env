@@ -27,7 +27,7 @@ if(GRAPHICS_STATIC)
 endif()
 
 project(graphics-env-project VERSION 1.0)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 add_subdirectory(external)
 set(BUILD_SHARED_LIBS OFF)

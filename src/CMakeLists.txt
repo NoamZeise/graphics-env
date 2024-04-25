@@ -3,9 +3,9 @@ add_library(graphics-env
   model_gen.cpp
 )
 
-add_dependencies(graphics-env game-helper graphics-api)
+add_dependencies(graphics-env game-helper render-api)
 target_link_libraries(graphics-env PUBLIC
-  game-helper graphics-api)
+  game-helper render-api)
 
 if(NOT NO_VULKAN)
   add_dependencies(graphics-env vulkan-env)
