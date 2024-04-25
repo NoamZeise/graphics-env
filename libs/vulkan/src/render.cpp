@@ -271,9 +271,6 @@ bool swapchainRecreationRequired(VkResult result) {
       //TODO: more recreation here, use max-frame-in-flight instead of swapchain count
 
       int descriptorSizes = frameCount;
-
-      pipeline::Binding vp = pipeline::Binding::UniformBuffer(
-	      sizeof(shaderStructs::viewProjection));
       
       /// vertex descripor sets
       descriptor::Descriptor viewProjectionBinding(
