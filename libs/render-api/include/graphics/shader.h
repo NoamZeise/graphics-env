@@ -27,10 +27,10 @@ namespace pipeline {
 
   class Binding {
   public:
-      Binding UniformBuffer(int typeSize, int arrayCount) {
+      static Binding UniformBuffer(int typeSize, int arrayCount) {
 	  return Binding(type::UniformBuffer, typeSize, arrayCount, 1);
       }
-      Binding UniformBuffer(int typeSize) {
+      static Binding UniformBuffer(int typeSize) {
 	  return Binding(type::UniformBuffer, typeSize, 1, 1);
       }
       enum class type {

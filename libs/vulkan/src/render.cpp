@@ -272,6 +272,8 @@ bool swapchainRecreationRequired(VkResult result) {
 
       int descriptorSizes = frameCount;
 
+      pipeline::Binding vp = pipeline::Binding::UniformBuffer(
+	      sizeof(shaderStructs::viewProjection));
       
       /// vertex descripor sets
       descriptor::Descriptor viewProjectionBinding(
