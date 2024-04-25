@@ -1,16 +1,5 @@
 # Settings for external libs
 
-if(NOT NO_AUDIO)
-  add_subdirectory(audio)
-endif()
-
-add_subdirectory(volk)
-
-# glfw setup
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "")
-set(GLFW_BUILD_TESTS OFF CACHE BOOL "")
-set(GLFW_BUILD_DOCS OFF CACHE BOOL "")
-set(GLFW_INSTALL OFF CACHE BOOL "")
 if(GRAPHICS_STATIC)
  if(MSVC)
     set(USE_MSVC_RUNTIME_LIBRARY_DLL OFF CACHE BOOL "")
@@ -19,18 +8,17 @@ if(GRAPHICS_STATIC)
 else()
   set(BUILD_SHARED_LIBS ON CACHE BOOL "")
 endif()
-add_subdirectory(glfw)
 
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "") # dont want shared lib version of glm and volk
-add_subdirectory(glm)
+# glfw setup
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "")
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "")
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "")
+set(GLFW_INSTALL OFF CACHE BOOL "")
+add_subdirectory(glfw)
 
 # assimp setup
 if(NOT NO_ASSIMP)
-  if(NOT GRAPHICS_STATIC)
-    set(BUILD_SHARED_LIBS ON CACHE BOOL "")
-  else()
-    # need this for static build working
-    set(BUILD_SHARED_LIBS OFF CACHE BOOL "")
+  if(GRAPHICS_STATIC)
     set(ASSIMP_BUILD_ZLIB ON CACHE BOOL "")
   endif()
   set(ASSIMP_WARNINGS_AS_ERRORS OFF CACHE BOOL "")
@@ -45,12 +33,7 @@ if(NOT NO_ASSIMP)
   add_subdirectory(assimp)
 endif()
 
-if(GRAPHICS_STATIC)
-  set(BUILD_SHARED_LIBS OFF CACHE BOOL "")
-else()
-  set(BUILD_SHARED_LIBS ON CACHE BOOL "")
-endif()
-
+# freetype setup
 if(NOT NO_FREETYPE)
   # disable freetype optional dependancies
   set(FT_DISABLE_ZLIB ON CACHE BOOL "")
@@ -59,4 +42,17 @@ if(NOT NO_FREETYPE)
   set(FT_DISABLE_HARFBUZZ ON CACHE BOOL "")
   set(FT_DISABLE_BROTLI ON CACHE BOOL "")
   add_subdirectory(freetype)
+endif()
+
+
+# dont want shared lib version of glm, volk, audio
+
+set(BUILD_SHARED_LIBS OFF)
+
+add_subdirectory(glm)
+
+add_subdirectory(volk)
+
+if(NOT NO_AUDIO)
+  add_subdirectory(audio)
 endif()

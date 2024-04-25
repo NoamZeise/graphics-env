@@ -2,92 +2,92 @@
 #include <string>
 #include <vector>
 
-namespace pipeline {
-  class Input {
-  public:
-      enum class type {
-	  vec2,
-	  vec3,
-	  vec4,
-	  ivec4,
+class PipelineInput {
+public:
+    enum class type {
+	vec2,
+	vec3,
+	vec4,
+	ivec4,
+    };
+    struct Entry {
+	type input_type;
+	float offset;	  
+	Entry(type input_type, float offset) {
+	    this->input_type = input_type;
+	    this->offset = offset;
+	}
       };
-      struct Entry {
-	  type input_type;
-	  float offset;	  
-	  Entry(type input_type, float offset) {
-	      this->input_type = input_type;
-	      this->offset = offset;
-	  }
-      };
+    
+private:
+    float size;
+    std::vector<Entry> entries;
+};
+
+// Pass to Set to create a binding
+class Binding {
+public:
+    Binding() { binding_type = type::None; }
+    
+    static Binding UniformBuffer(int typeSize, int arrayCount) {
+	return Binding(type::UniformBuffer, typeSize, arrayCount, 1);
+    }
+    static Binding UniformBuffer(int typeSize) {
+	return Binding(type::UniformBuffer, typeSize, 1, 1);
+    }
       
-  private:
-      float size;
-      std::vector<Entry> entries;
-  };
+    // Dynamic -> swap part of buffer used between draws
+    enum class type {
+	None,
+	UniformBuffer,
+	UniformBufferDynamic,
+	StorageBuffer,
+	StorageBufferDynamic,
+	TextureSampler,
+	Texture,
+    };
+    
+    Binding(type binding_type,
+	    size_t typeSize,
+	    size_t arrayCount,
+	    size_t dynamicCount) {
+	this->binding_type = binding_type;
+	this->typeSize = typeSize;
+	this->arrayCount = arrayCount;
+	this->dynamicCount = dynamicCount;
+    }
+    type binding_type;
+    size_t typeSize;
+    size_t arrayCount;
+    size_t dynamicCount;
+};
 
-  class Binding {
-  public:
-      static Binding UniformBuffer(int typeSize, int arrayCount) {
-	  return Binding(type::UniformBuffer, typeSize, arrayCount, 1);
-      }
-      static Binding UniformBuffer(int typeSize) {
-	  return Binding(type::UniformBuffer, typeSize, 1, 1);
-      }
-      enum class type {
-	  UniformBuffer,
-	  UniformBufferDynamic,
-	  StorageBuffer,
-	  StorageBufferDynamic,
-	  TextureSampler,
-	  Texture,
-       };
-      
-  private:
-      Binding(type binding_type,
-	      size_t typeSize,
-	      size_t arrayCount,
-	      size_t dynamicCount) {
-	  this->binding_type = binding_type;
-	  this->typeSize = typeSize;
-	  this->arrayCount = arrayCount;
-	  this->dynamicCount = dynamicCount;
-      }
-      type binding_type;
-      size_t typeSize;
-      size_t arrayCount;
-      size_t dynamicCount;
-  };
+const int SHADER_STAGE_COUNT = 2;
+enum class stageflag {
+  vert = 0b01,
+  frag = 0b10,
+};
 
+
+class Set {
+public:
+    virtual void addBinding(size_t index, Binding binding) = 0;
+};
+
+
+class PushConstant {
+private:
+    stageflag stageFlags;
+    //int offset; calc manually?
+    int size;
+};
   
+class PipelineLayout {
 
-  const int SHADER_STAGE_COUNT = 2;
-  enum class stage {
-      vert = 0,
-      frag,
-  };
-  
-  class Set {
-  public:
-      Set(stage shader_stage) {
-	  this->shader_stage = shader_stage;
-      }
-      void addBinding(Binding binding) {
-	  bindings.push_back(binding);
-      }
-      
-  private:
-      stage shader_stage;
-      std::vector<Binding> bindings;
-  };
-
-  
-  class Pipeline {
-
-  private:
-      Input input;
-      std::string shader[SHADER_STAGE_COUNT];
-      std::vector<Set> sets;     
-      std::vector<Binding> push_constants;
-  };
-  
-}
+private:
+    PipelineInput input;
+    std::string vertexShader;
+    std::string fragmentShader;
+    std::vector<Set> sets;  
+    std::vector<PushConstant> pushConstants;
+};

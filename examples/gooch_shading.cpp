@@ -25,6 +25,28 @@ int main(int argc, char** argv) {
     state.cursor = cursorState::disabled;
     Manager manager(state);
 
+    // example shader use
+
+    /*
+
+      //init
+      shader::Set* timeds = render->CreateSet(shader::stage::vertex | shader::stage::fragment);
+      timeds->addBinding(0, shader::Binding::UniformBuffer(sizeof(TimeStruct)));
+
+      //this
+      render->AttachSet(pipeline::3D, 2, timeds);
+      //or
+      pipeline* p = render->GetPipeline(pipeline::3D);
+      p->attach(2, timeds);
+
+      // during update
+      timeds->setData(0, TimeStruct { dt });
+
+      // if we want to update all? ie less frequent updates - need to change all frame's values
+      timeds->setAllFrameData(0, TimeStruct {dt});
+      
+     */
+
     BPLighting l;
     l.specular.w = 30.0f;
     l.direction = glm::normalize(glm::vec4(0, 0.2, -1, 0));    
