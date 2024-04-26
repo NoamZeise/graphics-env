@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 
+
 class PipelineInput {
 public:
     enum class type {
@@ -24,43 +25,6 @@ private:
     std::vector<Entry> entries;
 };
 
-// Pass to Set to create a binding
-class Binding {
-public:
-    Binding() { binding_type = type::None; }
-    
-    static Binding UniformBuffer(int typeSize, int arrayCount) {
-	return Binding(type::UniformBuffer, typeSize, arrayCount, 1);
-    }
-    static Binding UniformBuffer(int typeSize) {
-	return Binding(type::UniformBuffer, typeSize, 1, 1);
-    }
-      
-    // Dynamic -> swap part of buffer used between draws
-    enum class type {
-	None,
-	UniformBuffer,
-	UniformBufferDynamic,
-	StorageBuffer,
-	StorageBufferDynamic,
-	TextureSampler,
-	Texture,
-    };
-    
-    Binding(type binding_type,
-	    size_t typeSize,
-	    size_t arrayCount,
-	    size_t dynamicCount) {
-	this->binding_type = binding_type;
-	this->typeSize = typeSize;
-	this->arrayCount = arrayCount;
-	this->dynamicCount = dynamicCount;
-    }
-    type binding_type;
-    size_t typeSize;
-    size_t arrayCount;
-    size_t dynamicCount;
-};
 
 const int SHADER_STAGE_COUNT = 2;
 enum class stageflag {
@@ -71,7 +35,12 @@ enum class stageflag {
 
 class Set {
 public:
-    virtual void addBinding(size_t index, Binding binding) = 0;
+    virtual size_t nextFreeIndex() = 0;
+    
+    virtual void addUniformBuffer(size_t index, size_t typeSize, size_t arrayCount) = 0;
+    void addUniformBuffer(size_t index, size_t typeSize) { addUniformBuffer(index, typeSize, 1); }
+    
+    virtual void setData(size_t index, void* data) = 0;
 };
 
 
@@ -83,7 +52,7 @@ private:
 };
   
 class PipelineLayout {
-
+    
 private:
     PipelineInput input;
     std::string vertexShader;
