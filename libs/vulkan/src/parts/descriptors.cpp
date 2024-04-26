@@ -21,6 +21,32 @@ size_t _createHostVisibleShaderBufferMemory(DeviceState base, std::vector<DS::Bi
 	  throw std::runtime_error("failed to create descriptor sets");
   }
 
+  void DescriptorPool(VkDevice device,
+		      VkDescriptorPool* pool,
+		      std::vector<VkDescriptorPoolSize> &poolSizes,
+		      uint32_t maxSets) {
+
+      VkDescriptorPoolCreateInfo poolInfo{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
+      poolInfo.poolSizeCount = (uint32_t)poolSizes.size();
+      poolInfo.pPoolSizes = poolSizes.data();
+      poolInfo.maxSets = maxSets;
+      if(vkCreateDescriptorPool(device, &poolInfo, nullptr, pool) != VK_SUCCESS)
+	  throw std::runtime_error("Failed to create descriptor pool!");      
+  }
+
+  void DescriptorSets(VkDevice device,
+		      VkDescriptorPool pool,
+		      std::vector<VkDescriptorSetLayout> &layouts,
+		      std::vector<VkDescriptorSet> &sets) {
+      VkDescriptorSetAllocateInfo allocInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
+      allocInfo.descriptorPool = pool;
+      allocInfo.descriptorSetCount = static_cast<uint32_t>(layouts.size());
+      allocInfo.pSetLayouts = layouts.data();
+      if (vkAllocateDescriptorSets(device, &allocInfo, sets.data()) != VK_SUCCESS)
+	  throw std::runtime_error("failed to allocate descriptor sets");
+  }
+  
+
 void DescriptorSetLayout(VkDevice device, DS::DescriptorSet *ds, std::vector<DS::Binding*> bindings, VkShaderStageFlagBits stageFlags)
 {
 	//create layout
@@ -41,7 +67,7 @@ void DescriptorSetLayout(VkDevice device, DS::DescriptorSet *ds, std::vector<DS:
 
 	DescriptorSetLayout(device, layoutBindings, &ds->layout);
 }
-
+  
 void DescriptorPoolAndSet(VkDevice device, VkDescriptorPool* pool, std::vector<DS::DescriptorSet*> descriptorSets, uint32_t frameCount)
 {
   _createDescriptorPool(device, pool, descriptorSets, frameCount);
@@ -133,7 +159,6 @@ void DescriptorPoolAndSet(VkDevice device, VkDescriptorPool* pool, std::vector<D
 void _createDescriptorPool(VkDevice device, VkDescriptorPool* pool, std::vector<DS::DescriptorSet*> descriptorSets, uint32_t frameCount)
 {
   std::vector<VkDescriptorPoolSize> poolSizes;
-
   for(size_t i = 0; i < descriptorSets.size(); i++)
   {
     for(size_t j = 0; j < descriptorSets[i]->poolSize.size(); j++)
@@ -142,24 +167,14 @@ void _createDescriptorPool(VkDevice device, VkDescriptorPool* pool, std::vector<
 	poolSizes.back().descriptorCount *= frameCount;
     }
   }
-  VkDescriptorPoolCreateInfo poolInfo{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
-  poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
-  poolInfo.pPoolSizes = poolSizes.data();
-  poolInfo.maxSets = frameCount * static_cast<uint32_t>(descriptorSets.size());
-  if(vkCreateDescriptorPool(device, &poolInfo, nullptr, pool) != VK_SUCCESS)
-    throw std::runtime_error("Failed to create descriptor pool!");
+  DescriptorPool(device, pool, poolSizes, descriptorSets.size() * frameCount);
 }
 
 void _createDescriptorSet(VkDevice device, VkDescriptorPool pool, DS::DescriptorSet *ds, uint32_t frameCount)
 {
      std::vector<VkDescriptorSetLayout> layouts(frameCount, ds->layout);
-	VkDescriptorSetAllocateInfo allocInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
-	allocInfo.descriptorPool = pool;
-	allocInfo.descriptorSetCount = static_cast<uint32_t>(layouts.size());
-	allocInfo.pSetLayouts = layouts.data();
-	ds->sets.resize(frameCount);
-	if (vkAllocateDescriptorSets(device, &allocInfo, ds->sets.data()) != VK_SUCCESS)
-		throw std::runtime_error("failed to allocate descriptor sets");
+     ds->sets.resize(frameCount);
+     DescriptorSets(device, pool, layouts, ds->sets);
 }
 
 size_t _createHostVisibleShaderBufferMemory(DeviceState base, std::vector<DS::Binding*> ds, VkBuffer* buffer, VkDeviceMemory* memory)

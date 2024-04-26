@@ -13,6 +13,16 @@ namespace part {
 	      VkDevice device,
 	      std::vector<VkDescriptorSetLayoutBinding> &bindings,
 	      VkDescriptorSetLayout *layout);
+      void DescriptorPool(VkDevice device,
+			  VkDescriptorPool* pool,
+			  std::vector<VkDescriptorPoolSize> &poolSizes,
+			  uint32_t maxSets);
+
+      void DescriptorSets(VkDevice device,
+			  VkDescriptorPool pool,
+			  std::vector<VkDescriptorSetLayout> &layouts,
+			  std::vector<VkDescriptorSet> &sets);
+      
         void DescriptorSetLayout(
 		VkDevice device,
 		DS::DescriptorSet *ds,

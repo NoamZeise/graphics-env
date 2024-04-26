@@ -48,12 +48,49 @@ void SetVk::CreateSetLayout() {
 	layoutBindings.push_back(b);
 
 	VkDescriptorPoolSize p;
-	p.descriptorCount = b.descriptorCount * setCopies;
+	p.descriptorCount = b.descriptorCount;
 	p.type = b.descriptorType;
 	poolSizes.push_back(p);
     }
     part::create::DescriptorSetLayout(device, layoutBindings, &layout);
     layoutCreated = true;
+}
+
+
+void ShaderPoolVk::CreateGpuResources() {
+    std::vector<VkDescriptorPoolSize> poolSizes;
+    for(auto &set: sets) {
+	set.CreateSetLayout();
+	for(auto& ps: set.getPoolSizes()) {
+	    poolSizes.push_back(ps);
+	    poolSizes.back().descriptorCount *= setCopies;
+	}
+    }
+
+    size_t setCount = sets.size() * setCopies;
+    part::create::DescriptorPool(device, &pool, poolSizes, setCount);
+    std::vector<VkDescriptorSetLayout> setLayouts(setCount);
+
+    int layoutIndex = 0;
+    for(auto &set: sets)
+	for(int i = 0; i < setCopies; i++)
+	    setLayouts[layoutIndex++] = set.getLayout();
+
+    std::vector<VkDescriptorSet> setHandles(setLayouts.size());
+    part::create::DescriptorSets(device, pool, setLayouts, setHandles);
+    
+    int handleIndex = 0;
+    for(auto &set: sets) {
+	std::vector<VkDescriptorSet> handles;
+	for(int i = 0; i < setCopies; i++)
+	    handles.push_back(setHandles[handleIndex++]);
+	set.setHandles(handles);
+    }
+
+    
+	
+    
+    InternalShaderPool::CreateGpuResources();
 }
 
 

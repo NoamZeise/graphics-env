@@ -14,8 +14,7 @@
 
 class SetVk : public InternalSet {
 public:
-    SetVk(VkDevice device, size_t setCopies, stageflag flags) : InternalSet(flags) {
-	this->setCopies = setCopies;
+    SetVk(VkDevice device, stageflag flags) : InternalSet(flags) {
 	this->device = device;
     }
 
@@ -27,14 +26,21 @@ public:
     void setData(size_t index, void* data) override {}
 
     void CreateSetLayout();
+
     std::vector<VkDescriptorPoolSize> getPoolSizes() { return poolSizes; }
 
+    VkDescriptorSetLayout getLayout() { return layout; }
+
+    void setHandles(std::vector<VkDescriptorSet> handles) {
+	this->handles = handles;
+    }
+
 private:
-    size_t setCopies;
     VkDevice device;
     bool layoutCreated = false;
     VkDescriptorSetLayout layout;
     std::vector<VkDescriptorPoolSize> poolSizes;
+    std::vector<VkDescriptorSet> handles;
 };
 
 
@@ -43,34 +49,26 @@ public:
     ShaderPoolVk(VkDevice device, int setCopies) {
 	this->device = device;
 	this->setCopies = setCopies;
-    }
+    }    
     
     Set* CreateSet(stageflag flags) override {
-	sets.push_back(SetVk(device, setCopies, flags));
+	sets.push_back(SetVk(device, flags));
 	return &sets[sets.size() - 1];
     }
 
-    void CreateGpuResources() override {
-	std::vector<VkDescriptorPoolSize> poolSizes;
-	for(auto &set: sets) {
-	    set.CreateSetLayout();
-	    for(auto& ps: set.getPoolSizes()) {
-		poolSizes.push_back(ps);
-	    }
-	}
-	
-	InternalShaderPool::CreateGpuResources();
-    }
+    void CreateGpuResources() override;
 
-    void DestroyGpuResources() override {
-	sets.clear();
+    void DestroyGpuResources() override {	
+	sets.clear();       
+	vkDestroyDescriptorPool(device, pool, nullptr); // also frees sets
 	InternalShaderPool::DestroyGpuResources();
     }
     
 private:
     VkDevice device;
     int setCopies;
-    std::vector<SetVk> sets;    
+    std::vector<SetVk> sets;
+    VkDescriptorPool pool;
 };
 
 
