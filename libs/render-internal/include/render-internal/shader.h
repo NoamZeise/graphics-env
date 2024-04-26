@@ -82,5 +82,9 @@ class InternalSet : public Set {
 
 };
 
+class InternalShaderPool : public ShaderPool {
+    
+};
+
 
 #endif

@@ -48,15 +48,13 @@ void SetVk::CreateSetLayout() {
 	layoutBindings.push_back(b);
 
 	VkDescriptorPoolSize p;
-	p.descriptorCount = b.descriptorCount;
+	p.descriptorCount = b.descriptorCount * setCopies;
 	p.type = b.descriptorType;
 	poolSizes.push_back(p);
     }
     part::create::DescriptorSetLayout(device, layoutBindings, &layout);
     layoutCreated = true;
 }
-
-
 
 
 

@@ -69,7 +69,7 @@ VkFormat getDepthBufferFormat(VkPhysicalDevice physicalDevice) {
 RenderVk::~RenderVk() {
     vkDeviceWaitIdle(manager->deviceState.device);
 
-    shaderSets.clear();
+    shaderPools.clear();
     _destroyFrameResources();
     delete pools;
     if(offscreenRenderPass != nullptr || finalRenderPass != nullptr) {
@@ -273,7 +273,8 @@ bool swapchainRecreationRequired(VkResult result) {
 
       int descriptorSizes = MAX_CONCURRENT_FRAMES;
 
-      Set* vp3dset = CreateSet(stageflag::vert);
+      ShaderPool* shaderPool1 = CreateShaderPool();
+      Set* vp3dset = shaderPool1->CreateSet(stageflag::vert);
       vp3dset->addUniformBuffer(0, sizeof(shaderStructs::viewProjection));
       vp3dset->addUniformBuffer(1, sizeof(shaderStructs::timeUbo));
       ((SetVk*)vp3dset)->CreateSetLayout();
@@ -950,13 +951,12 @@ void RenderVk::FramebufferResize() {
 }
 
 
- Set* RenderVk::CreateSet(stageflag stages) {
-     shaderSets.push_back(
-	     SetVk(manager->deviceState.device,
-		   MAX_CONCURRENT_FRAMES,
-		   stages));
-     return &shaderSets[shaderSets.size() - 1];
- }
+ShaderPool* RenderVk::CreateShaderPool() {
+    shaderPools.push_back(
+	    ShaderPoolVk(manager->deviceState.device,
+			 MAX_CONCURRENT_FRAMES));
+    return &shaderPools[shaderPools.size() - 1];
+}
 
 void RenderVk::set3DViewMat(glm::mat4 view, glm::vec4 camPos) {
     VP3DData.view = view;

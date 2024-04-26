@@ -35,7 +35,6 @@ enum class stageflag {
     frag = 0b10,
 };
 
-
 class Set {
 public:
     virtual size_t nextFreeIndex() = 0;
@@ -44,6 +43,26 @@ public:
     void addUniformBuffer(size_t index, size_t typeSize) { addUniformBuffer(index, typeSize, 1); }
     
     virtual void setData(size_t index, void* data) = 0;
+};
+
+
+// Holds shader sets
+class ShaderPool {
+public:
+    ~ShaderPool() {
+	if(resourcesCreated)
+	    DestroyGpuResources();
+    }
+    virtual Set* CreateSet(stageflag flags) = 0;
+    virtual void CreateGpuResources() {
+	resourcesCreated = true;
+    }
+    virtual void DestroyGpuResources() {
+	resourcesCreated = false;
+    }
+
+private:
+    bool resourcesCreated = false;
 };
 
 
@@ -60,7 +79,7 @@ private:
     PipelineInput input;
     std::string vertexShader;
     std::string fragmentShader;
-    std::vector<Set> sets;  
+    std::vector<Set*> sets;  
     std::vector<PushConstant> pushConstants;
 };
 

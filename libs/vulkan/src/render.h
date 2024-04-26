@@ -60,7 +60,7 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
 
       void FramebufferResize() override;
 
-      Set* CreateSet(stageflag stages);
+      ShaderPool* CreateShaderPool();
       
       void set3DViewMat(glm::mat4 view, glm::vec4 camPos) override;
       void set2DViewMat(glm::mat4 view) override;
@@ -156,7 +156,7 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
       std::vector<DescSet*> descriptorSets;
 
 
-      std::vector<SetVk> shaderSets;
+      std::vector<ShaderPoolVk> shaderPools;
 
       Resource::Pool defaultPool;
       PoolManagerVk* pools;

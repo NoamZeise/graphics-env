@@ -30,7 +30,9 @@ int main(int argc, char** argv) {
     /*
 
       //init
-      shader::Set* timeds = render->CreateSet(shader::stage::vertex | shader::stage::fragment);
+      ShaderPool* sp = render->CreateShaderPool();
+            
+      shader::Set* timeds = sp->CreateSet(shaderstage::vertex | shaderstage::fragment);
       timeds->addBinding(0, shader::Binding::UniformBuffer(sizeof(TimeStruct)));
       timeds->addUniformBuffer(0, sizeof(TimeStruct));
 
