@@ -10,6 +10,32 @@
 #include "shader.h"
 #include <vector>
 
+#include <render-internal/shader.h>
+
+class SetVk : public InternalSet {
+public:
+    SetVk(VkDevice device, size_t copies, stageflag flags) : InternalSet(flags) {
+	this->copies = copies;
+	this->device = device;
+    }
+
+    ~SetVk() {
+	if(layoutCreated)
+	    vkDestroyDescriptorSetLayout(device, layout, nullptr);
+    }
+    
+    void setData(size_t index, void* data) override {}
+
+    void CreateSetLayout();
+
+private:
+    size_t copies;
+    VkDevice device;
+    bool layoutCreated = false;
+    std::vector<VkDescriptorPoolSize> poolSizes;
+    VkDescriptorSetLayout layout;
+};
+
 namespace DS {
   struct DescriptorSet {
       void destroySet(VkDevice device);
@@ -49,14 +75,12 @@ namespace DS {
 }
 
 struct DescSet {
-  DescSet(descriptor::Set set, size_t frameCount, VkDevice device);
-  ~DescSet();
-  descriptor::Set highLevelSet;
-  DS::DescriptorSet set;
-  std::vector<DS::Binding> bindings;
-  VkDevice device;
-
-  void logDetails();
+    DescSet(descriptor::Set set, size_t frameCount, VkDevice device);
+    ~DescSet();
+    descriptor::Set highLevelSet;
+    DS::DescriptorSet set;
+    std::vector<DS::Binding> bindings;
+    VkDevice device;
 };
 
 #endif

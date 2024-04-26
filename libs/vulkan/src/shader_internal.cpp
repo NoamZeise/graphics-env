@@ -1,9 +1,67 @@
 #include "shader_internal.h"
 
-#include "parts/descriptors.h"
-#include "logger.h"
 #include <cstring>
 #include <stdexcept>
+
+#include "parts/descriptors.h"
+
+#include <stdexcept>
+
+VkDescriptorType bindingTypeVk(Binding::type type) {
+    switch (type) {
+    case Binding::type::UniformBuffer:
+	return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    case Binding::type::UniformBufferDynamic:
+	return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+    case Binding::type::StorageBuffer:
+	return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    case Binding::type::StorageBufferDynamic:
+	return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
+    case Binding::type::Texture:
+	return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+    case Binding::type::TextureSampler:
+	return VK_DESCRIPTOR_TYPE_SAMPLER;
+    default:
+	throw std::runtime_error("Unrecognised shader set binding type, left as None?");
+    }
+}
+
+VkShaderStageFlags shaderFlagsVk(stageflag flags) {
+    VkShaderStageFlags f = 0;
+    if((unsigned int)flags & (unsigned int)stageflag::vert)
+	f |= VK_SHADER_STAGE_VERTEX_BIT;
+    if((unsigned int)flags & (unsigned int)stageflag::vert)
+	f |= VK_SHADER_STAGE_FRAGMENT_BIT;
+    return f;
+}
+
+void SetVk::CreateSetLayout() {
+    std::vector<VkDescriptorSetLayoutBinding> layoutBindings;	
+    for(uint32_t i = 0; i < bindings.size(); i++) {
+	if(bindings[i].binding_type == Binding::type::None)
+	    continue;
+	VkDescriptorSetLayoutBinding b;
+	b.binding = i;
+	b.descriptorCount = bindings[i].arrayCount;
+	b.descriptorType = bindingTypeVk(bindings[i].binding_type);
+	b.stageFlags = shaderFlagsVk(this->stageFlags);
+	layoutBindings.push_back(b);
+
+	VkDescriptorPoolSize p;
+	p.descriptorCount = b.descriptorCount;
+	p.type = b.descriptorType;
+	poolSizes.push_back(p);
+    }
+    part::create::DescriptorSetLayout(device, layoutBindings, &layout);
+    layoutCreated = true;
+}
+
+
+
+
+
+
+
 
 DescSet::DescSet(descriptor::Set set, size_t frameCount, VkDevice device) {
   this->highLevelSet = set;
@@ -72,19 +130,6 @@ DescSet::DescSet(descriptor::Set set, size_t frameCount, VkDevice device) {
 
 
 DescSet::~DescSet() { set.destroySet(device); }
-
-
-void DescSet::logDetails() {
-    this->highLevelSet.logDetails();
-    for(int i = 0; i < this->bindings.size(); i++) {
-	LOG("arraySize: " << this->bindings[i].arraySize
-	    << "\ntype: " << this->bindings[i].type
-	    << "\nBuffer size: " << this->bindings[i].bufferSize
-	    << "\nbinding: " << this->bindings[i].binding
-	    << "\nset count: " << this->bindings[i].setCount
-	    << "\ndesc count: " << this->bindings[i].descriptorCount);
-    }
-}
 
 namespace DS {
   void DescriptorSet::destroySet(VkDevice device) {

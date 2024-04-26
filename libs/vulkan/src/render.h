@@ -60,6 +60,8 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
 
       void FramebufferResize() override;
 
+      Set* CreateSet(stageflag stages);
+      
       void set3DViewMat(glm::mat4 view, glm::vec4 camPos) override;
       void set2DViewMat(glm::mat4 view) override;
       void set3DProjMat(glm::mat4 proj) override;
@@ -97,7 +99,7 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
   
       VulkanManager* manager = nullptr;
       uint32_t frameIndex = 0;
-      const uint32_t frameCount = 2;
+      const uint32_t MAX_CONCURRENT_FRAMES = 2;
       Frame** frames;
 
       VkFormat offscreenDepthFormat;
@@ -152,6 +154,9 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
       VkImageView textureViews[Resource::MAX_TEXTURES_SUPPORTED];
 
       std::vector<DescSet*> descriptorSets;
+
+
+      std::vector<SetVk> shaderSets;
 
       Resource::Pool defaultPool;
       PoolManagerVk* pools;

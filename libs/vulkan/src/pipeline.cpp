@@ -1,5 +1,6 @@
 #include "pipeline.h"
 
+#include "logger.h"
 
 Pipeline::Pipeline(
 	VkPipelineLayout layout, VkPipeline pipeline, std::vector<DS::DescriptorSet*> sets) {

@@ -1,3 +1,6 @@
+#ifndef GRAPHICS_ENV_RENDER_SHADER_H
+#define GRAPHICS_ENV_RENDER_SHADER_H
+
 #include <glm/glm.hpp>
 #include <string>
 #include <vector>
@@ -28,8 +31,8 @@ private:
 
 const int SHADER_STAGE_COUNT = 2;
 enum class stageflag {
-  vert = 0b01,
-  frag = 0b10,
+    vert = 0b01,
+    frag = 0b10,
 };
 
 
@@ -60,3 +63,5 @@ private:
     std::vector<Set> sets;  
     std::vector<PushConstant> pushConstants;
 };
+
+#endif

@@ -9,6 +9,10 @@ struct DeviceState;
 
 namespace part {
     namespace create {
+      void DescriptorSetLayout(
+	      VkDevice device,
+	      std::vector<VkDescriptorSetLayoutBinding> &bindings,
+	      VkDescriptorSetLayout *layout);
         void DescriptorSetLayout(
 		VkDevice device,
 		DS::DescriptorSet *ds,

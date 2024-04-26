@@ -54,7 +54,7 @@ class InternalSet : public Set {
 
  protected:
     
-    void addBinding(size_t index, Binding binding) {
+    virtual void addBinding(size_t index, Binding binding) {
 	if(index + 1 > bindings.size()) {
 	    bindings.resize(index + 1);
 	}
@@ -62,13 +62,6 @@ class InternalSet : public Set {
 	    throw std::runtime_error("Tried to add binding to Set for index already in use"); 
 	this->bindings[index] = binding;
     };
-
-    bool missingBindings() {
-	for(auto & b: bindings)
-	    if(b.binding_type == Binding::type::None)
-		return true;
-	return false;
-    }
     
     bool vaildSetData(size_t index, void* data) {
 	if(index > bindings.size()) {

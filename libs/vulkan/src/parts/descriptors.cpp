@@ -12,6 +12,15 @@ void _createDescriptorPool(VkDevice device, VkDescriptorPool* pool, std::vector<
 void _createDescriptorSet(VkDevice device, VkDescriptorPool pool, DS::DescriptorSet *ds, uint32_t frameCount);
 size_t _createHostVisibleShaderBufferMemory(DeviceState base, std::vector<DS::Binding*> ds, VkBuffer* buffer, VkDeviceMemory* memory);
 
+  void DescriptorSetLayout(VkDevice device, std::vector<VkDescriptorSetLayoutBinding> &bindings, VkDescriptorSetLayout *layout) {
+      VkDescriptorSetLayoutCreateInfo layoutInfo{
+	  VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
+      layoutInfo.bindingCount = (uint32_t)bindings.size();
+      layoutInfo.pBindings = bindings.data();
+      if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, layout) != VK_SUCCESS)
+	  throw std::runtime_error("failed to create descriptor sets");
+  }
+
 void DescriptorSetLayout(VkDevice device, DS::DescriptorSet *ds, std::vector<DS::Binding*> bindings, VkShaderStageFlagBits stageFlags)
 {
 	//create layout
@@ -30,11 +39,7 @@ void DescriptorSetLayout(VkDevice device, DS::DescriptorSet *ds, std::vector<DS:
 
 	}
 
-	VkDescriptorSetLayoutCreateInfo layoutInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
-	layoutInfo.bindingCount = static_cast<uint32_t>(layoutBindings.size());
-	layoutInfo.pBindings = layoutBindings.data();
-	if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &ds->layout) != VK_SUCCESS)
-		throw std::runtime_error("failed to create descriptor sets");
+	DescriptorSetLayout(device, layoutBindings, &ds->layout);
 }
 
 void DescriptorPoolAndSet(VkDevice device, VkDescriptorPool* pool, std::vector<DS::DescriptorSet*> descriptorSets, uint32_t frameCount)

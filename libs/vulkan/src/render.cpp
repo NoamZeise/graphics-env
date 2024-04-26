@@ -58,8 +58,8 @@ VkFormat getDepthBufferFormat(VkPhysicalDevice physicalDevice) {
     manager = new VulkanManager(window, features);
     offscreenDepthFormat = getDepthBufferFormat(manager->deviceState.physicalDevice);
     
-    frames = new Frame*[frameCount];
-    for(int i = 0; i < frameCount; i++)
+    frames = new Frame*[MAX_CONCURRENT_FRAMES];
+    for(int i = 0; i < MAX_CONCURRENT_FRAMES; i++)
 	frames[i] = new Frame(manager->deviceState.device,
 			      manager->deviceState.queue.graphicsPresentFamilyIndex);
     pools = new PoolManagerVk;
@@ -69,6 +69,7 @@ VkFormat getDepthBufferFormat(VkPhysicalDevice physicalDevice) {
 RenderVk::~RenderVk() {
     vkDeviceWaitIdle(manager->deviceState.device);
 
+    shaderSets.clear();
     _destroyFrameResources();
     delete pools;
     if(offscreenRenderPass != nullptr || finalRenderPass != nullptr) {
@@ -83,7 +84,7 @@ RenderVk::~RenderVk() {
 	vkDestroySampler(manager->deviceState.device, textureSampler, nullptr);
     if(swapchain != nullptr)
 	delete swapchain;
-    for(int i = 0; i < frameCount; i++)
+    for(int i = 0; i < MAX_CONCURRENT_FRAMES; i++)
 	delete frames[i];
     delete[] frames;
     delete manager;
@@ -270,7 +271,12 @@ bool swapchainRecreationRequired(VkResult result) {
 
       //TODO: more recreation here, use max-frame-in-flight instead of swapchain count
 
-      int descriptorSizes = frameCount;
+      int descriptorSizes = MAX_CONCURRENT_FRAMES;
+
+      Set* vp3dset = CreateSet(stageflag::vert);
+      vp3dset->addUniformBuffer(0, sizeof(shaderStructs::viewProjection));
+      vp3dset->addUniformBuffer(1, sizeof(shaderStructs::timeUbo));
+      ((SetVk*)vp3dset)->CreateSetLayout();
       
       /// vertex descripor sets
       descriptor::Descriptor viewProjectionBinding(
@@ -634,7 +640,7 @@ void RenderVk::_startDraw() {
 			       "drawing to the screen");                               
     }    
     
-    frameIndex = (frameIndex + 1) % frameCount;
+    frameIndex = (frameIndex + 1) % MAX_CONCURRENT_FRAMES;
     checkResultAndThrow(frames[frameIndex]->waitForPreviousFrame(),
 			"Render Error: failed to wait for previous frame fence");
     VkResult result = swapchain->acquireNextImage(
@@ -942,6 +948,15 @@ void RenderVk::EndDraw(std::atomic<bool> &submit) {
 void RenderVk::FramebufferResize() {
     _framebufferResized = true;
 }
+
+
+ Set* RenderVk::CreateSet(stageflag stages) {
+     shaderSets.push_back(
+	     SetVk(manager->deviceState.device,
+		   MAX_CONCURRENT_FRAMES,
+		   stages));
+     return &shaderSets[shaderSets.size() - 1];
+ }
 
 void RenderVk::set3DViewMat(glm::mat4 view, glm::vec4 camPos) {
     VP3DData.view = view;

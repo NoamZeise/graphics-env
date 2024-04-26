@@ -12,7 +12,6 @@
 #include <stdint.h>
 #include <vector>
 #include "shader_internal.h"
-#include "logger.h"
 
 class Pipeline {
 public:
