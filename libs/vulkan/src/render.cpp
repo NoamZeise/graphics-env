@@ -275,6 +275,7 @@ bool swapchainRecreationRequired(VkResult result) {
       vp3dset->addUniformBuffer(0, sizeof(shaderStructs::viewProjection));
       vp3dset->addUniformBuffer(1, sizeof(shaderStructs::timeUbo));
       ((SetVk*)vp3dset)->CreateSetLayout();
+      shaderPool1->CreateGpuResources();
       
       /// vertex descripor sets
       descriptor::Descriptor viewProjectionBinding(

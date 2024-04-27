@@ -16,19 +16,19 @@ struct Binding {
 	TextureSampler,
 	Texture,
     };
-    Binding() { bind_type = type::None; }
+    Binding() { bindType = type::None; }
 
     Binding(type binding_type,
 	    size_t typeSize,
 	    size_t arrayCount,
 	    size_t dynamicCount) {
-	this->bind_type = binding_type;
+	this->bindType = binding_type;
 	this->typeSize = typeSize;
 	this->arrayCount = arrayCount;
 	this->dynamicCount = dynamicCount;
     }
     
-    type bind_type;
+    type bindType;
     size_t typeSize;
     size_t arrayCount;
     size_t dynamicCount;
@@ -41,12 +41,15 @@ class InternalSet : public Set {
     }
 
     void addUniformBuffer(size_t index, size_t typeSize, size_t arrayCount) override {
+	if(arrayCount == 0 || typeSize == 0)
+	    throw std::runtime_error("array count or type size of uniform buffer equaled 0");
+	    
 	addBinding(index, Binding(Binding::type::UniformBuffer, typeSize, arrayCount, 1));
     }
 
     size_t nextFreeIndex() override {
 	for(int i = 0; i < numBindings(); i++)
-	    if(getBinding(i)->bind_type == Binding::type::None)
+	    if(getBinding(i)->bindType == Binding::type::None)
 		return i;
 	return numBindings();
     }
@@ -62,7 +65,7 @@ class InternalSet : public Set {
 	if(index >= numBindings()) {
 	    setNumBindings(index + 1);
 	}
-	if(getBinding(index)->bind_type != Binding::type::None)
+	if(getBinding(index)->bindType != Binding::type::None)
 	    throw std::runtime_error("Tried to add binding to Set for index already in use");
 	setBinding(index, binding);
     };
@@ -73,9 +76,9 @@ class InternalSet : public Set {
 	    return false;
 	}
 	Binding* b = getBinding(index);
-	if(b->bind_type == Binding::type::None ||
-	   b->bind_type == Binding::type::Texture ||
-	   b->bind_type == Binding::type::TextureSampler) {
+	if(b->bindType == Binding::type::None ||
+	   b->bindType == Binding::type::Texture ||
+	   b->bindType == Binding::type::TextureSampler) {
 	    LOG_ERROR("Tried to set shader Set data for texture or none element");
 	    return false;
 	}

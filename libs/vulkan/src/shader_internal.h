@@ -14,11 +14,29 @@
 #include "shader.h"
 #include "device_state.h"
 
-class BindingVk : public Binding {
-public:
+struct BindingVk : public Binding {
     BindingVk() {}
     BindingVk(Binding binding) :
-	Binding(binding.bind_type, binding.typeSize, binding.arrayCount, binding.dynamicCount) {}
+	Binding(binding.bindType, binding.typeSize, binding.arrayCount, binding.dynamicCount) {}
+
+    void clearMemoryOffsets();
+    
+    VkDescriptorType vkBindingType;
+    VkShaderStageFlags vkStageFlags;
+
+    /// Storage And Uniform Buffer Data
+    
+    VkBuffer buffer;
+    void* pData; // for host coherent buffers
+    
+    // offset of this binding in descriptor pool memory
+    size_t baseOffset = 0;
+    // size of base data with corrected alignment
+    size_t dataSize = 0;
+    /// Size of the data type * no. dynamic copies
+    size_t arrayElemSize = 0;
+    // Size of the binding for an individual set -> array elem * array size
+    size_t setSize = 0;
 };
 
 class SetVk : public InternalSet {
@@ -38,9 +56,13 @@ public:
     void DestroySetResources();
     std::vector<VkDescriptorPoolSize> getPoolSizes() { return poolSizes; }
     VkDescriptorSetLayout getLayout() { return layout; }
-    void setHandles(std::vector<VkDescriptorSet> handles) { this->handles = handles; }
+    void setDescSetHandles(std::vector<VkDescriptorSet> handles) { this->setHandles = handles; }
     void getMemoryRequirements(size_t* pMemSize, VkPhysicalDeviceProperties deviceProps);
-    void setMemoryPointer(void* mem);
+    void setMemoryPointer(void* p,
+			  VkBuffer buffer,
+			  std::vector<VkWriteDescriptorSet> &writes,
+			  std::vector<std::vector<VkDescriptorBufferInfo>> &buffers,
+			  std::vector<std::vector<VkDescriptorImageInfo>> &images);
 
 protected:
     
@@ -58,7 +80,7 @@ private:
     bool layoutCreated = false;
     VkDescriptorSetLayout layout;
     std::vector<VkDescriptorPoolSize> poolSizes;
-    std::vector<VkDescriptorSet> handles;
+    std::vector<VkDescriptorSet> setHandles;
 };
 
 

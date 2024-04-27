@@ -6,23 +6,27 @@
 
 namespace vkhelper {
 
-  uint32_t findMemoryIndex(VkPhysicalDevice physicalDevice, uint32_t memoryTypeBits,
+  uint32_t findMemoryIndex(VkPhysicalDevice physicalDevice,
+			   uint32_t memoryTypeBits,
 			   VkMemoryPropertyFlags properties) {
       VkPhysicalDeviceMemoryProperties memProperties;
       vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
-      for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
-	  {
-	      if (memoryTypeBits & (1 << i)
-		  && memProperties.memoryTypes[i].propertyFlags & properties)
-		  {
-		      return i;
-		  }
-	  }
+      for(uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+	  if(memoryTypeBits & (1 << i)
+	      && memProperties.memoryTypes[i].propertyFlags & properties) {
+		  return i;
+	      }
+      }
       throw std::runtime_error("VkHelper::findMemoryIndex Error: "
 			       "failed to find suitable memory type");
   }
 
-  VkResult createBufferAndMemory(DeviceState base, VkDeviceSize size, VkBuffer* buffer, VkDeviceMemory* memory, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties) {
+  VkResult createBufferAndMemory(DeviceState base,
+				 VkDeviceSize size,
+				 VkBuffer* buffer,
+				 VkDeviceMemory* memory,
+				 VkBufferUsageFlags usage,
+				 VkMemoryPropertyFlags properties) {
       VkBufferCreateInfo bufferInfo{ VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO, NULL};
       bufferInfo.size = size;
       bufferInfo.usage = usage;
@@ -42,11 +46,15 @@ namespace vkhelper {
 			    memory, properties, memReq.memoryTypeBits);
   }
 
-  VkResult allocateMemory(VkDevice device, VkPhysicalDevice physicalDevice, VkDeviceSize size, VkDeviceMemory* memory, VkMemoryPropertyFlags properties, uint32_t memoryTypeBits) {
+  VkResult allocateMemory(VkDevice device,
+			  VkPhysicalDevice physicalDevice,
+			  VkDeviceSize size,
+			  VkDeviceMemory* memory,
+			  VkMemoryPropertyFlags properties,
+			  uint32_t memoryTypeBits) {
       VkMemoryAllocateInfo memInfo{ VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO };
       memInfo.allocationSize = size;
       memInfo.memoryTypeIndex = findMemoryIndex(physicalDevice, memoryTypeBits, properties);
-
       return vkAllocateMemory(device, &memInfo, nullptr, memory);
   }
 
@@ -56,11 +64,12 @@ namespace vkhelper {
       return desiredSize;
   }
 
-  VkSampler createTextureSampler(VkDevice device, VkPhysicalDevice physicalDevice,
-				 float maxLod, bool enableAnisotrophy, bool useNearestFilter,
+  VkSampler createTextureSampler(VkDevice device,
+				 VkPhysicalDevice physicalDevice,
+				 float maxLod,
+				 bool enableAnisotrophy,
+				 bool useNearestFilter,
 				 VkSamplerAddressMode addressMode) {
-      VkSampler sampler;
-  
       VkPhysicalDeviceProperties deviceProps{};
       vkGetPhysicalDeviceProperties(physicalDevice, &deviceProps);
       VkSamplerCreateInfo samplerInfo{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
@@ -90,38 +99,45 @@ namespace vkhelper {
       samplerInfo.mipLodBias = 0.0f;
       samplerInfo.maxLod = maxLod;
       samplerInfo.minLod = 0.0f;
-      if (vkCreateSampler(device, &samplerInfo, nullptr, &sampler) !=
-	  VK_SUCCESS)
+      
+      VkSampler sampler;
+      if (vkCreateSampler(device, &samplerInfo, nullptr, &sampler) != VK_SUCCESS)
 	  throw std::runtime_error("Failed create sampler");
 
       return sampler;
   }
 
-  VkFormat findSupportedFormat(VkPhysicalDevice physicalDevice, const std::vector<VkFormat>& formats, VkImageTiling tiling, VkFormatFeatureFlags features) {
-      for (const auto& format : formats) {
+  VkFormat findSupportedFormat(VkPhysicalDevice physicalDevice,
+			       const std::vector<VkFormat>& formats,
+			       VkImageTiling tiling,
+			       VkFormatFeatureFlags features) {
+      for(const auto& format : formats) {
 	  VkFormatProperties props;
 	  vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &props);
-	  if(tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features)
+	  if(tiling == VK_IMAGE_TILING_LINEAR
+	     && (props.linearTilingFeatures & features) == features)
 	      return format;
-	  else if(tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features)
+	  else if(tiling == VK_IMAGE_TILING_OPTIMAL
+		  && (props.optimalTilingFeatures & features) == features)
 	      return format;
       }
       return VK_FORMAT_UNDEFINED;
   }
 
-  VkSampleCountFlagBits getMaxSupportedMsaaSamples(VkDevice device, VkPhysicalDevice physicalDevice)
-  {
+  VkSampleCountFlagBits getMaxSupportedMsaaSamples(
+	  VkDevice device, VkPhysicalDevice physicalDevice) {
       VkSampleCountFlagBits maxMsaaSamples = VK_SAMPLE_COUNT_1_BIT;
       VkPhysicalDeviceProperties props;
       vkGetPhysicalDeviceProperties(physicalDevice, &props);
-      VkSampleCountFlags samplesSupported = props.limits.framebufferColorSampleCounts & props.limits.framebufferDepthSampleCounts;
+      VkSampleCountFlags samplesSupported =
+	  props.limits.framebufferColorSampleCounts
+	  & props.limits.framebufferDepthSampleCounts;
       if     (samplesSupported & VK_SAMPLE_COUNT_64_BIT) maxMsaaSamples = VK_SAMPLE_COUNT_64_BIT;
       else if(samplesSupported & VK_SAMPLE_COUNT_32_BIT) maxMsaaSamples = VK_SAMPLE_COUNT_32_BIT;
       else if(samplesSupported & VK_SAMPLE_COUNT_16_BIT) maxMsaaSamples = VK_SAMPLE_COUNT_16_BIT;
       else if(samplesSupported & VK_SAMPLE_COUNT_8_BIT)  maxMsaaSamples = VK_SAMPLE_COUNT_8_BIT;
       else if(samplesSupported & VK_SAMPLE_COUNT_4_BIT)  maxMsaaSamples = VK_SAMPLE_COUNT_4_BIT;
       else if(samplesSupported & VK_SAMPLE_COUNT_2_BIT)  maxMsaaSamples = VK_SAMPLE_COUNT_2_BIT;
-
       return maxMsaaSamples;
   }
 
@@ -134,8 +150,10 @@ namespace vkhelper {
       return r;
   }
 
-  VkResult submitCmdBuffAndWait(VkDevice device, VkQueue queue,
-				VkCommandBuffer* cmdbuff, VkFence fence,
+  VkResult submitCmdBuffAndWait(VkDevice device,
+				VkQueue queue,
+				VkCommandBuffer* cmdbuff,
+				VkFence fence,
 				std::mutex* queueSubmitMutex) {
       VkSubmitInfo submitInfo{ VK_STRUCTURE_TYPE_SUBMIT_INFO };
       submitInfo.commandBufferCount = 1;

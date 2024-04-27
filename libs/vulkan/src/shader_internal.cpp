@@ -17,13 +17,15 @@ VkShaderStageFlags shaderFlagsVk(stageflag flags);
 void SetVk::CreateSetLayout() {
     std::vector<VkDescriptorSetLayoutBinding> layoutBindings;	
     for(uint32_t i = 0; i < bindings.size(); i++) {
-	if(bindings[i].bind_type == Binding::type::None)
+	if(bindings[i].bindType == Binding::type::None)
 	    continue;
 	VkDescriptorSetLayoutBinding b;
 	b.binding = i;
 	b.descriptorCount = bindings[i].arrayCount;
-	b.descriptorType = bindingTypeVk(bindings[i].bind_type);
-	b.stageFlags = shaderFlagsVk(this->stageFlags);
+	bindings[i].vkBindingType = bindingTypeVk(bindings[i].bindType);
+	b.descriptorType = bindings[i].vkBindingType;
+	bindings[i].vkStageFlags = shaderFlagsVk(this->stageFlags);
+	b.stageFlags = bindings[i].vkStageFlags;
 	layoutBindings.push_back(b);
 
 	VkDescriptorPoolSize p;
@@ -38,13 +40,28 @@ void SetVk::CreateSetLayout() {
 void SetVk::DestroySetResources() {
     if(layoutCreated)
 	vkDestroyDescriptorSetLayout(device, layout, nullptr);
+    for(auto& binding: bindings)
+	binding.clearMemoryOffsets();
     layoutCreated = false;
 }
 
 void SetVk::getMemoryRequirements(size_t* pMemSize, VkPhysicalDeviceProperties deviceProps) {
+    if(setHandles.size() <= 0)
+	throw std::runtime_error(
+		"No descriptor sets were assinged to the set handles array");
+    
     for(auto &binding: bindings) {
+	if(binding.bindType == Binding::type::None)
+	    continue;
+	
+	// ------ memory layout ------
+	// all sets data = | set1 | set 2 | ... |    num: set size (ie one per active frame)
+	// set = | array elem | array elem | ... |   num: array size
+	// array elem = | data | data | data | ... | num: dynamic size
+	// ---------------------------
+	
 	VkDeviceSize alignment;
-	switch(binding.bind_type) {
+	switch(binding.bindType) {
 	case Binding::type::UniformBuffer:
 	case Binding::type::UniformBufferDynamic:
 	    alignment = deviceProps.limits.minUniformBufferOffsetAlignment;
@@ -57,19 +74,76 @@ void SetVk::getMemoryRequirements(size_t* pMemSize, VkPhysicalDeviceProperties d
 	    continue;
 	}
 	*pMemSize = vkhelper::correctMemoryAlignment(*pMemSize, alignment);
-	size_t slotSize = vkhelper::correctMemoryAlignment(binding.typeSize, alignment);
-	size_t bindingOffset = *pMemSize;
-	size_t bindingSize = slotSize * binding.arrayCount;
-	size_t allBindingsSize = bindingSize * binding.dynamicCount * handles.size();
-
-	*pMemSize += allBindingsSize;
+	binding.baseOffset = *pMemSize;
+	binding.dataSize = vkhelper::correctMemoryAlignment(binding.typeSize, alignment);
+	binding.arrayElemSize = binding.dataSize * binding.dynamicCount;
+	binding.setSize = binding.arrayElemSize * binding.arrayCount;
+	
+	*pMemSize += binding.setSize * setHandles.size();
     }
 }
 
-void SetVk::setMemoryPointer(void* mem) {
-    
+VkDescriptorBufferInfo getBuffInfo(
+	BindingVk* binding, VkBuffer buffer, size_t arrayIndex, size_t setIndex) {
+    return VkDescriptorBufferInfo {
+	.buffer = buffer,
+	.offset = binding->baseOffset
+	+ binding->setSize * setIndex
+	+ binding->arrayElemSize * arrayIndex,
+	.range = binding->dataSize,
+    };
 }
 
+void SetVk::setMemoryPointer(void* p,
+			     VkBuffer buffer,
+			     std::vector<VkWriteDescriptorSet> &writes,
+			     std::vector<std::vector<VkDescriptorBufferInfo>> &buffers,
+			     std::vector<std::vector<VkDescriptorImageInfo>> &images) {
+    for(int bindingIndex = 0; bindingIndex < bindings.size(); bindingIndex++) {
+	BindingVk* b = &bindings[bindingIndex];
+	if(b->bindType == Binding::type::None)
+	    continue;	
+	
+	VkWriteDescriptorSet write {
+	    .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+	    .dstBinding = (uint32_t)bindingIndex,
+	    .dstArrayElement = 0,
+	    .descriptorCount = (uint32_t)b->arrayCount,
+	    .descriptorType = b->vkBindingType,
+	};
+	for(int setIndex = 0; setIndex < setHandles.size(); setIndex++) {
+	    write.dstSet = setHandles[setIndex];
+	    writes.push_back(write);
+	}
+
+	switch(b->bindType) {
+	case Binding::type::UniformBuffer:
+	case Binding::type::UniformBufferDynamic:
+	case Binding::type::StorageBuffer:
+	case Binding::type::StorageBufferDynamic:
+	    b->pData = p; // all buffers are host coherent for now
+	    b->buffer = buffer;
+	    buffers.push_back
+		(std::vector<VkDescriptorBufferInfo>(b->arrayCount * setHandles.size()));
+	    
+	    for(int setIndex = 0; setIndex < setHandles.size(); setIndex++) {
+		for(int arrayIndex = 0; arrayIndex < b->arrayCount; arrayIndex++)
+		    buffers.back()[setIndex * b->arrayCount + arrayIndex] =
+			getBuffInfo(b, buffer, arrayIndex, setIndex);
+		
+		writes[writes.size() - setHandles.size() + setIndex]
+		    .pBufferInfo = buffers.back().data() + (setIndex * b->arrayCount);
+	    }
+	    break;
+	case Binding::type::Texture:
+	case Binding::type::TextureSampler:
+	    throw std::runtime_error("image resources not implemented in sets");
+	    break;
+	default:
+	    continue;
+	}
+    }
+}
 
 
 /// ---  Shader Pool ---
@@ -109,7 +183,7 @@ void ShaderPoolVk::createSets() {
     for(auto &set: sets)
 	for(int i = 0; i < setCopies; i++)
 	    setLayouts[layoutIndex++] = set.getLayout();
-
+    
     std::vector<VkDescriptorSet> setHandles(setLayouts.size());
     part::create::DescriptorSets(state.device, pool, setLayouts, setHandles);
     
@@ -118,7 +192,7 @@ void ShaderPoolVk::createSets() {
 	std::vector<VkDescriptorSet> handles;
 	for(int i = 0; i < setCopies; i++)
 	    handles.push_back(setHandles[handleIndex++]);
-	set.setHandles(handles);
+	set.setDescSetHandles(handles);
     }
 }
 
@@ -129,18 +203,34 @@ void ShaderPoolVk::createBuffer() {
     VkDeviceSize memorySize = 0;
     for(auto &set: sets)
 	set.getMemoryRequirements(&memorySize, deviceProps);
+
+    // only support host coherent for now
     vkhelper::createBufferAndMemory(
 	    state, memorySize, &buffer, &memory,
 	    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
 	    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-
+    
     vkBindBufferMemory(state.device, buffer, memory, 0);
     void *p;
     vkMapMemory(state.device, memory, 0, memorySize, 0, &p);
+    
+    std::vector<VkWriteDescriptorSet> writes;
+    std::vector<std::vector<VkDescriptorBufferInfo>> buffers;
+    std::vector<std::vector<VkDescriptorImageInfo>> images;
+    for(auto &set: sets)
+    	set.setMemoryPointer(p, buffer, writes, buffers, images);
+    vkUpdateDescriptorSets(state.device, (uint32_t)writes.size(), writes.data(), 0, nullptr);
+}
 
-    for(auto &set: sets) {
-	
-    }
+/// ---- Binding ----
+
+void BindingVk::clearMemoryOffsets() {
+    pData = nullptr;
+    buffer = VK_NULL_HANDLE;
+    baseOffset = 0;
+    dataSize = 0;
+    arrayElemSize = 0;
+    setSize = 0;
 }
 
 
