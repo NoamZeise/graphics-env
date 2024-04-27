@@ -20,9 +20,6 @@
 #include <string>
 #include <vector>
 
-/// TODO Notes:
-// * graphics pipelines assume each descriptor set they contain has the same
-// number of sets (for frames).
 
 namespace vkenv {
 

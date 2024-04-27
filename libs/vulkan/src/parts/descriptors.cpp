@@ -83,10 +83,10 @@ void DescriptorPoolAndSet(VkDevice device, VkDescriptorPool* pool, std::vector<D
       vkBindBufferMemory(base.device, *buffer, *memory, 0);
       void* pointer;
       vkMapMemory(base.device, *memory, 0, memSize, 0, &pointer);
-
+      
       for (size_t bindingI = 0; bindingI < bind.size(); bindingI++){
 	  bind[bindingI]->pBuffer = nullptr;
-
+	  
 	  std::vector<VkWriteDescriptorSet> writes(bind[bindingI]->setCount, {VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET});
 	  std::vector<VkDescriptorBufferInfo> buffInfos;
 	  std::vector<VkDescriptorImageInfo> imageInfos;

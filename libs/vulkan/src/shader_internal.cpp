@@ -6,43 +6,23 @@
 #include "parts/descriptors.h"
 #include "vkhelper.h"
 
-VkDescriptorType bindingTypeVk(Binding::type type) {
-    switch (type) {
-    case Binding::type::UniformBuffer:
-	return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    case Binding::type::UniformBufferDynamic:
-	return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-    case Binding::type::StorageBuffer:
-	return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    case Binding::type::StorageBufferDynamic:
-	return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
-    case Binding::type::Texture:
-	return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-    case Binding::type::TextureSampler:
-	return VK_DESCRIPTOR_TYPE_SAMPLER;
-    default:
-	throw std::runtime_error("Unrecognised shader set binding type, left as None?");
-    }
-}
 
-VkShaderStageFlags shaderFlagsVk(stageflag flags) {
-    VkShaderStageFlags f = 0;
-    if((unsigned int)flags & (unsigned int)stageflag::vert)
-	f |= VK_SHADER_STAGE_VERTEX_BIT;
-    if((unsigned int)flags & (unsigned int)stageflag::vert)
-	f |= VK_SHADER_STAGE_FRAGMENT_BIT;
-    return f;
-}
+VkDescriptorType bindingTypeVk(Binding::type type);
+VkShaderStageFlags shaderFlagsVk(stageflag flags);
+
+
+/// --- Shader Set ---
+
 
 void SetVk::CreateSetLayout() {
     std::vector<VkDescriptorSetLayoutBinding> layoutBindings;	
     for(uint32_t i = 0; i < bindings.size(); i++) {
-	if(bindings[i].binding_type == Binding::type::None)
+	if(bindings[i].bind_type == Binding::type::None)
 	    continue;
 	VkDescriptorSetLayoutBinding b;
 	b.binding = i;
 	b.descriptorCount = bindings[i].arrayCount;
-	b.descriptorType = bindingTypeVk(bindings[i].binding_type);
+	b.descriptorType = bindingTypeVk(bindings[i].bind_type);
 	b.stageFlags = shaderFlagsVk(this->stageFlags);
 	layoutBindings.push_back(b);
 
@@ -55,13 +35,20 @@ void SetVk::CreateSetLayout() {
     layoutCreated = true;
 }
 
+void SetVk::DestroySetResources() {
+    if(layoutCreated)
+	vkDestroyDescriptorSetLayout(device, layout, nullptr);
+    layoutCreated = false;
+}
+
 void SetVk::getMemoryRequirements(size_t* pMemSize, VkPhysicalDeviceProperties deviceProps) {
     for(auto &binding: bindings) {
 	VkDeviceSize alignment;
-	switch(binding.binding_type) {
+	switch(binding.bind_type) {
 	case Binding::type::UniformBuffer:
 	case Binding::type::UniformBufferDynamic:
 	    alignment = deviceProps.limits.minUniformBufferOffsetAlignment;
+	    break;
 	case Binding::type::StorageBuffer:
 	case Binding::type::StorageBufferDynamic:
 	    alignment = deviceProps.limits.minStorageBufferOffsetAlignment;
@@ -69,9 +56,8 @@ void SetVk::getMemoryRequirements(size_t* pMemSize, VkPhysicalDeviceProperties d
 	default:
 	    continue;
 	}
-	size_t slotSize = vkhelper::correctMemoryAlignment(binding.typeSize, alignment);
 	*pMemSize = vkhelper::correctMemoryAlignment(*pMemSize, alignment);
-
+	size_t slotSize = vkhelper::correctMemoryAlignment(binding.typeSize, alignment);
 	size_t bindingOffset = *pMemSize;
 	size_t bindingSize = slotSize * binding.arrayCount;
 	size_t allBindingsSize = bindingSize * binding.dynamicCount * handles.size();
@@ -80,11 +66,29 @@ void SetVk::getMemoryRequirements(size_t* pMemSize, VkPhysicalDeviceProperties d
     }
 }
 
+void SetVk::setMemoryPointer(void* mem) {
+    
+}
+
+
+
+/// ---  Shader Pool ---
+
+
 void ShaderPoolVk::CreateGpuResources() {
     createPool();
     createSets();    	
     createBuffer();
     InternalShaderPool::CreateGpuResources();
+}
+
+void ShaderPoolVk::DestroyGpuResources() {
+    for(auto &set: sets)
+	set.DestroySetResources();
+    vkDestroyBuffer(state.device, buffer, nullptr);
+    vkFreeMemory(state.device, memory, nullptr);
+    vkDestroyDescriptorPool(state.device, pool, nullptr); // also frees sets
+    InternalShaderPool::DestroyGpuResources();
 }
 
 void ShaderPoolVk::createPool() {
@@ -101,7 +105,6 @@ void ShaderPoolVk::createPool() {
 
 void ShaderPoolVk::createSets() {
     std::vector<VkDescriptorSetLayout> setLayouts(sets.size() * setCopies);
-
     int layoutIndex = 0;
     for(auto &set: sets)
 	for(int i = 0; i < setCopies; i++)
@@ -136,9 +139,44 @@ void ShaderPoolVk::createBuffer() {
     vkMapMemory(state.device, memory, 0, memorySize, 0, &p);
 
     for(auto &set: sets) {
-
+	
     }
 }
+
+
+
+/// ----- Helpers -----
+
+
+VkDescriptorType bindingTypeVk(Binding::type type) {
+    switch (type) {
+    case Binding::type::UniformBuffer:
+	return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    case Binding::type::UniformBufferDynamic:
+	return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+    case Binding::type::StorageBuffer:
+	return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    case Binding::type::StorageBufferDynamic:
+	return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
+    case Binding::type::Texture:
+	return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+    case Binding::type::TextureSampler:
+	return VK_DESCRIPTOR_TYPE_SAMPLER;
+    default:
+	throw std::runtime_error("Unrecognised shader set binding type, left as None?");
+    }
+}
+
+VkShaderStageFlags shaderFlagsVk(stageflag flags) {
+    VkShaderStageFlags f = 0;
+    if((unsigned int)flags & (unsigned int)stageflag::vert)
+	f |= VK_SHADER_STAGE_VERTEX_BIT;
+    if((unsigned int)flags & (unsigned int)stageflag::vert)
+	f |= VK_SHADER_STAGE_FRAGMENT_BIT;
+    return f;
+}
+
+
 
 
 

@@ -14,32 +14,46 @@
 #include "shader.h"
 #include "device_state.h"
 
+class BindingVk : public Binding {
+public:
+    BindingVk() {}
+    BindingVk(Binding binding) :
+	Binding(binding.bind_type, binding.typeSize, binding.arrayCount, binding.dynamicCount) {}
+};
+
 class SetVk : public InternalSet {
 public:
     SetVk(VkDevice device, stageflag flags) : InternalSet(flags) {
 	this->device = device;
+	DestroySetResources();
     }
 
     ~SetVk() {
-	if(layoutCreated)
-	    vkDestroyDescriptorSetLayout(device, layout, nullptr);
-    }
+	DestroySetResources();
+    }    
     
     void setData(size_t index, void* data) override {}
 
     void CreateSetLayout();
-
+    void DestroySetResources();
     std::vector<VkDescriptorPoolSize> getPoolSizes() { return poolSizes; }
-
     VkDescriptorSetLayout getLayout() { return layout; }
+    void setHandles(std::vector<VkDescriptorSet> handles) { this->handles = handles; }
+    void getMemoryRequirements(size_t* pMemSize, VkPhysicalDeviceProperties deviceProps);
+    void setMemoryPointer(void* mem);
 
-    void setHandles(std::vector<VkDescriptorSet> handles) {
-	this->handles = handles;
+protected:
+    
+    Binding* getBinding(size_t index) override { return &bindings[index]; }
+    size_t numBindings() override { return bindings.size(); }
+    void setNumBindings(size_t size) override { bindings.resize(size); }
+    void setBinding(size_t index, Binding binding) override {
+	bindings[index] = BindingVk(binding);
     }
 
-    void getMemoryRequirements(size_t* pMemSize, VkPhysicalDeviceProperties deviceProps);
-
 private:
+    std::vector<BindingVk> bindings;
+    
     VkDevice device;
     bool layoutCreated = false;
     VkDescriptorSetLayout layout;
@@ -53,7 +67,7 @@ public:
     ShaderPoolVk(DeviceState deviceState, int setCopies) {
 	this->state = deviceState;
 	this->setCopies = setCopies;
-    }    
+    }
     
     Set* CreateSet(stageflag flags) override {
 	sets.push_back(SetVk(state.device, flags));
@@ -61,21 +75,14 @@ public:
     }
 
     void CreateGpuResources() override;
-
-    void DestroyGpuResources() override {	
-	sets.clear();
-	vkDestroyBuffer(state.device, buffer, nullptr);
-	vkFreeMemory(state.device, memory, nullptr);
-	vkDestroyDescriptorPool(state.device, pool, nullptr); // also frees sets
-	InternalShaderPool::DestroyGpuResources();
-    }
+    void DestroyGpuResources() override;
     
 private:
 
     void createPool();
     void createSets();
     void createBuffer();
-
+    
     DeviceState state;
     int setCopies;
     std::vector<SetVk> sets;

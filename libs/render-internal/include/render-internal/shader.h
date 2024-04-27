@@ -7,7 +7,6 @@
 
 // Pass to Set to create a binding
 struct Binding {
-public:
     enum class type {
 	None,
 	UniformBuffer,
@@ -17,19 +16,19 @@ public:
 	TextureSampler,
 	Texture,
     };
-    Binding() { binding_type = type::None; }
+    Binding() { bind_type = type::None; }
 
     Binding(type binding_type,
 	    size_t typeSize,
 	    size_t arrayCount,
 	    size_t dynamicCount) {
-	this->binding_type = binding_type;
+	this->bind_type = binding_type;
 	this->typeSize = typeSize;
 	this->arrayCount = arrayCount;
 	this->dynamicCount = dynamicCount;
-    }   
+    }
     
-    type binding_type;
+    type bind_type;
     size_t typeSize;
     size_t arrayCount;
     size_t dynamicCount;
@@ -46,31 +45,37 @@ class InternalSet : public Set {
     }
 
     size_t nextFreeIndex() override {
-	for(int i = 0; i < bindings.size(); i++)
-	    if(bindings[i].binding_type == Binding::type::None)
+	for(int i = 0; i < numBindings(); i++)
+	    if(getBinding(i)->bind_type == Binding::type::None)
 		return i;
-	return bindings.size();
+	return numBindings();
     }
 
  protected:
+
+    virtual Binding* getBinding(size_t index) = 0;    
+    virtual size_t numBindings() = 0;    
+    virtual void setNumBindings(size_t size) = 0;
+    virtual void setBinding(size_t index, Binding binding) = 0;
     
-    virtual void addBinding(size_t index, Binding binding) {
-	if(index + 1 > bindings.size()) {
-	    bindings.resize(index + 1);
+    void addBinding(size_t index, Binding binding) {
+	if(index >= numBindings()) {
+	    setNumBindings(index + 1);
 	}
-	if(this->bindings[index].binding_type != Binding::type::None)
-	    throw std::runtime_error("Tried to add binding to Set for index already in use"); 
-	this->bindings[index] = binding;
+	if(getBinding(index)->bind_type != Binding::type::None)
+	    throw std::runtime_error("Tried to add binding to Set for index already in use");
+	setBinding(index, binding);
     };
     
     bool vaildSetData(size_t index, void* data) {
-	if(index > bindings.size()) {
+	if(index >= numBindings()) {
 	    LOG_ERROR("Tried to set shader Set data to out of range index");
 	    return false;
 	}
-	if(bindings[index].binding_type == Binding::type::None ||
-	   bindings[index].binding_type == Binding::type::Texture ||
-	   bindings[index].binding_type == Binding::type::TextureSampler) {
+	Binding* b = getBinding(index);
+	if(b->bind_type == Binding::type::None ||
+	   b->bind_type == Binding::type::Texture ||
+	   b->bind_type == Binding::type::TextureSampler) {
 	    LOG_ERROR("Tried to set shader Set data for texture or none element");
 	    return false;
 	}
@@ -78,8 +83,6 @@ class InternalSet : public Set {
     }
     
     stageflag stageFlags;
-    std::vector<Binding> bindings;
-
 };
 
 class InternalShaderPool : public ShaderPool {
