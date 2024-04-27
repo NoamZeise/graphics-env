@@ -7,10 +7,12 @@
 #define VKENV_SHADER_INTERNAL_H
 
 #include <volk.h>
-#include "shader.h"
 #include <vector>
 
 #include <render-internal/shader.h>
+
+#include "shader.h"
+#include "device_state.h"
 
 class SetVk : public InternalSet {
 public:
@@ -35,6 +37,8 @@ public:
 	this->handles = handles;
     }
 
+    void getMemoryRequirements(size_t* pMemSize, VkPhysicalDeviceProperties deviceProps);
+
 private:
     VkDevice device;
     bool layoutCreated = false;
@@ -46,31 +50,39 @@ private:
 
 class ShaderPoolVk : public InternalShaderPool {
 public:
-    ShaderPoolVk(VkDevice device, int setCopies) {
-	this->device = device;
+    ShaderPoolVk(DeviceState deviceState, int setCopies) {
+	this->state = deviceState;
 	this->setCopies = setCopies;
     }    
     
     Set* CreateSet(stageflag flags) override {
-	sets.push_back(SetVk(device, flags));
+	sets.push_back(SetVk(state.device, flags));
 	return &sets[sets.size() - 1];
     }
 
     void CreateGpuResources() override;
 
     void DestroyGpuResources() override {	
-	sets.clear();       
-	vkDestroyDescriptorPool(device, pool, nullptr); // also frees sets
+	sets.clear();
+	vkDestroyBuffer(state.device, buffer, nullptr);
+	vkFreeMemory(state.device, memory, nullptr);
+	vkDestroyDescriptorPool(state.device, pool, nullptr); // also frees sets
 	InternalShaderPool::DestroyGpuResources();
     }
     
 private:
-    VkDevice device;
+
+    void createPool();
+    void createSets();
+    void createBuffer();
+
+    DeviceState state;
     int setCopies;
     std::vector<SetVk> sets;
     VkDescriptorPool pool;
+    VkBuffer buffer;
+    VkDeviceMemory memory;
 };
-
 
 
 

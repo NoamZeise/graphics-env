@@ -437,7 +437,7 @@ bool swapchainRecreationRequired(VkResult result) {
       part::create::PrepareShaderBufferSets(
 	      manager->deviceState, bindings,
 	      &_shaderBuffer, &_shaderMemory);
-
+      
       LOG("Creating Graphics Pipelines");
 
       // create pipeline for each shader set -> 3D, animated 3D, 2D, and final
@@ -953,7 +953,7 @@ void RenderVk::FramebufferResize() {
 
 ShaderPool* RenderVk::CreateShaderPool() {
     shaderPools.push_back(
-	    ShaderPoolVk(manager->deviceState.device,
+	    ShaderPoolVk(manager->deviceState,
 			 MAX_CONCURRENT_FRAMES));
     return &shaderPools[shaderPools.size() - 1];
 }

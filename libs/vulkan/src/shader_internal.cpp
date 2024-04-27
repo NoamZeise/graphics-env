@@ -4,8 +4,7 @@
 #include <stdexcept>
 
 #include "parts/descriptors.h"
-
-#include <stdexcept>
+#include "vkhelper.h"
 
 VkDescriptorType bindingTypeVk(Binding::type type) {
     switch (type) {
@@ -56,8 +55,39 @@ void SetVk::CreateSetLayout() {
     layoutCreated = true;
 }
 
+void SetVk::getMemoryRequirements(size_t* pMemSize, VkPhysicalDeviceProperties deviceProps) {
+    for(auto &binding: bindings) {
+	VkDeviceSize alignment;
+	switch(binding.binding_type) {
+	case Binding::type::UniformBuffer:
+	case Binding::type::UniformBufferDynamic:
+	    alignment = deviceProps.limits.minUniformBufferOffsetAlignment;
+	case Binding::type::StorageBuffer:
+	case Binding::type::StorageBufferDynamic:
+	    alignment = deviceProps.limits.minStorageBufferOffsetAlignment;
+	    break;
+	default:
+	    continue;
+	}
+	size_t slotSize = vkhelper::correctMemoryAlignment(binding.typeSize, alignment);
+	*pMemSize = vkhelper::correctMemoryAlignment(*pMemSize, alignment);
+
+	size_t bindingOffset = *pMemSize;
+	size_t bindingSize = slotSize * binding.arrayCount;
+	size_t allBindingsSize = bindingSize * binding.dynamicCount * handles.size();
+
+	*pMemSize += allBindingsSize;
+    }
+}
 
 void ShaderPoolVk::CreateGpuResources() {
+    createPool();
+    createSets();    	
+    createBuffer();
+    InternalShaderPool::CreateGpuResources();
+}
+
+void ShaderPoolVk::createPool() {
     std::vector<VkDescriptorPoolSize> poolSizes;
     for(auto &set: sets) {
 	set.CreateSetLayout();
@@ -66,10 +96,11 @@ void ShaderPoolVk::CreateGpuResources() {
 	    poolSizes.back().descriptorCount *= setCopies;
 	}
     }
+    part::create::DescriptorPool(state.device, &pool, poolSizes, sets.size() * setCopies);
+}
 
-    size_t setCount = sets.size() * setCopies;
-    part::create::DescriptorPool(device, &pool, poolSizes, setCount);
-    std::vector<VkDescriptorSetLayout> setLayouts(setCount);
+void ShaderPoolVk::createSets() {
+    std::vector<VkDescriptorSetLayout> setLayouts(sets.size() * setCopies);
 
     int layoutIndex = 0;
     for(auto &set: sets)
@@ -77,7 +108,7 @@ void ShaderPoolVk::CreateGpuResources() {
 	    setLayouts[layoutIndex++] = set.getLayout();
 
     std::vector<VkDescriptorSet> setHandles(setLayouts.size());
-    part::create::DescriptorSets(device, pool, setLayouts, setHandles);
+    part::create::DescriptorSets(state.device, pool, setLayouts, setHandles);
     
     int handleIndex = 0;
     for(auto &set: sets) {
@@ -86,11 +117,27 @@ void ShaderPoolVk::CreateGpuResources() {
 	    handles.push_back(setHandles[handleIndex++]);
 	set.setHandles(handles);
     }
+}
 
-    
-	
-    
-    InternalShaderPool::CreateGpuResources();
+void ShaderPoolVk::createBuffer() {
+    VkPhysicalDeviceProperties deviceProps;
+    vkGetPhysicalDeviceProperties(state.physicalDevice, &deviceProps);
+
+    VkDeviceSize memorySize = 0;
+    for(auto &set: sets)
+	set.getMemoryRequirements(&memorySize, deviceProps);
+    vkhelper::createBufferAndMemory(
+	    state, memorySize, &buffer, &memory,
+	    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+	    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+
+    vkBindBufferMemory(state.device, buffer, memory, 0);
+    void *p;
+    vkMapMemory(state.device, memory, 0, memorySize, 0, &p);
+
+    for(auto &set: sets) {
+
+    }
 }
 
 

@@ -79,7 +79,7 @@ void DescriptorPoolAndSet(VkDevice device, VkDescriptorPool* pool, std::vector<D
 
   void PrepareShaderBufferSets(DeviceState base, std::vector<DS::Binding*> bind, VkBuffer* buffer, VkDeviceMemory* memory) {
       size_t memSize = _createHostVisibleShaderBufferMemory(base, bind, buffer, memory);
-
+      
       vkBindBufferMemory(base.device, *buffer, *memory, 0);
       void* pointer;
       vkMapMemory(base.device, *memory, 0, memSize, 0, &pointer);
