@@ -68,24 +68,15 @@ public:
 	    size_t dynamicIndex) = 0;
 };
 
+#include <graphics/logger.h>
 
 /// Holds shader sets
 class ShaderPool {
 public:
-    ~ShaderPool() {
-	if(resourcesCreated)
-	    DestroyGpuResources();
-    }
     virtual Set* CreateSet(stageflag flags) = 0;
-    virtual void CreateGpuResources() {
-	resourcesCreated = true;
-    }
-    virtual void DestroyGpuResources() {
-	resourcesCreated = false;
-    }
-
-private:
-    bool resourcesCreated = false;
+    // automatically destroys created resources if already created
+    virtual void CreateGpuResources() = 0;
+    virtual void DestroyGpuResources() = 0;
 };
 
 

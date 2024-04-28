@@ -131,7 +131,7 @@ public:
     }
 
     ~ShaderPoolVk() {
-	InternalShaderPool::~InternalShaderPool();
+	DestroyGpuResources();
 	for(auto set: sets)
 	    delete set;
     }

@@ -69,6 +69,10 @@ class InternalSet : public Set {
 	    size_t destinationOffset,
 	    size_t arrayIndex,
 	    size_t dynamicIndex) override {
+	if(!gpuResourcesCreated)
+	    throw std::runtime_error(
+		    "Shader Set Error:  Tried to setData for set "
+		    "Whose parent pool has not created Gpu Resources for it");
 	throwOnBadIndexRange(index, numBindings(), "binding index");	
 	Binding* b = getBinding(index);
 	if(b->bindType == Binding::type::None ||
@@ -109,7 +113,8 @@ class InternalSet : public Set {
     };
     
     stageflag stageFlags;
-
+    bool gpuResourcesCreated = false;
+    
 private:
 
     void throwOnBadIndexRange(size_t given, size_t max, std::string message) {
@@ -124,7 +129,18 @@ private:
 };
 
 class InternalShaderPool : public ShaderPool {
-    
+public:
+    void CreateGpuResources() override {
+	if(resourcesCreated)
+	    DestroyGpuResources();
+	resourcesCreated = true;
+    }
+    void DestroyGpuResources() override {
+	resourcesCreated = false;
+    }
+
+private:
+    bool resourcesCreated = false;
 };
 
 

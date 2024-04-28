@@ -43,6 +43,7 @@ void SetVk::DestroySetResources() {
 	vkDestroyDescriptorSetLayout(device, layout, nullptr);
     for(auto& binding: bindings)
 	binding.clearMemoryOffsets();
+    gpuResourcesCreated = false;
     layoutCreated = false;
 }
 
@@ -97,14 +98,15 @@ void addBufferInfos(std::vector<VkWriteDescriptorSet> &writes,
 	// then we offset into it when we bind the descriptor set
 	//                    <----here---->
 	// set memory = | dynamic data 1 memory | dynamic data 2 memory | ... |
-	for(int arrayIndex = 0; arrayIndex < b->arrayCount; arrayIndex++)
-	    buffInfos[setIndex * b->arrayCount + arrayIndex] = VkDescriptorBufferInfo {
-		.buffer = buffer,
-		.offset = b->baseOffset
+	for(int arrayIndex = 0; arrayIndex < b->arrayCount; arrayIndex++) {
+	    VkDescriptorBufferInfo binfo;
+	    binfo.buffer = buffer;
+	    binfo.offset = b->baseOffset
 		+ b->setMemSize * setIndex
-		+ b->dataMemSize * arrayIndex,
-		.range = b->dataMemSize,
-	    };
+		+ b->dataMemSize * arrayIndex;
+	    binfo.range = b->dataMemSize;
+	    buffInfos[setIndex * b->arrayCount + arrayIndex] = binfo;
+	}
 	// assumes writes has >= setCount writes in vector
 	writes[writes.size() - setCount + setIndex]
 	    .pBufferInfo =  buffInfos.data() + setIndex * b->arrayCount;
@@ -122,14 +124,13 @@ void SetVk::setMemoryPointer(void* p,
 	    continue;
 	
 	for(int setIndex = 0; setIndex < setHandles.size(); setIndex++) {
-	    writes.push_back(VkWriteDescriptorSet {
-		    .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-		    .dstBinding = (uint32_t)bindingIndex,
-		    .dstArrayElement = 0,
-		    .descriptorCount = (uint32_t)b->arrayCount,
-		    .descriptorType = b->vkBindingType,
-		});
-	    writes.back().dstSet = setHandles[setIndex];
+	    VkWriteDescriptorSet write { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
+	    write.dstBinding = (uint32_t)bindingIndex;
+	    write.dstArrayElement = 0; // updating whole array of bindings
+	    write.descriptorCount = (uint32_t)b->arrayCount;
+	    write.descriptorType = b->vkBindingType;
+	    write.dstSet = setHandles[setIndex];
+	    writes.push_back(write);
 	}
 
 	switch(b->bindType) {
@@ -149,6 +150,7 @@ void SetVk::setMemoryPointer(void* p,
 	    continue;
 	}
     }
+    gpuResourcesCreated = true;
 }
 
 
