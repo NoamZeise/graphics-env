@@ -139,7 +139,7 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
       glm::mat4 perFrame2DVertData[Resource::MAX_2D_BATCH];
       DescSet *perFrame2DFrag;
       shaderStructs::Frag2DData perFrame2DFragData[Resource::MAX_2D_BATCH];
-      DescSet *lighting;
+      Set* lightingSet;
       BPLighting lightingData;
       DescSet *offscreenTransform;
       glm::mat4 offscreenTransformData;

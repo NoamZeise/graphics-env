@@ -274,6 +274,9 @@ bool swapchainRecreationRequired(VkResult result) {
       Set* vp3dset = shaderPool1->CreateSet(stageflag::vert | stageflag::frag);
       vp3dset->addUniformBuffer(0, sizeof(shaderStructs::viewProjection));
       vp3dset->addUniformBuffer(1, sizeof(shaderStructs::timeUbo));
+
+      lightingSet = shaderPool1->CreateSet(stageflag::vert);
+      lightingSet->addUniformBuffer(0, sizeof(BPLighting));
       shaderPool1->CreateGpuResources();
       
       /// vertex descripor sets
@@ -327,12 +330,6 @@ bool swapchainRecreationRequired(VkResult result) {
       }
 
       // fragment descriptor sets
-
-      descriptor::Set lighting_Set("3D Lighting", descriptor::ShaderStage::Fragment);
-      lighting_Set.AddDescriptor("Lighting properties", descriptor::Type::UniformBuffer,
-				 sizeof(lightingData), 1);
-      lighting = new DescSet(lighting_Set, descriptorSizes, manager->deviceState.device);
-      descriptorSets.push_back(lighting);
 
       float minMipmapLevel = 100000.0f;
       for(int i = 0; i < pools->PoolCount(); i++) {
@@ -447,7 +444,8 @@ bool swapchainRecreationRequired(VkResult result) {
       part::create::GraphicsPipeline(
 	      manager->deviceState.device, &_pipeline3D,
 	      offscreenRenderPass->getRenderPass(),
-	      {&VP3D->set, &perFrame3D->set, &emptyDS->set, &textures->set, &lighting->set},
+	      {&VP3D->set, &perFrame3D->set, &emptyDS->set, &textures->set},
+	      {(SetVk*)lightingSet},
 	      {{VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(fragPushConstants)}},
 	      pipelineSetup.getPath(shader::pipeline::_3D, shader::stage::vert),
 	      pipelineSetup.getPath(shader::pipeline::_3D, shader::stage::frag),
@@ -459,7 +457,8 @@ bool swapchainRecreationRequired(VkResult result) {
       part::create::GraphicsPipeline(
 	      manager->deviceState.device, &_pipelineAnim3D,
 	      offscreenRenderPass->getRenderPass(),
-	      {&VP3D->set, &perFrame3D->set, &bones->set, &textures->set, &lighting->set},
+	      {&VP3D->set, &perFrame3D->set, &bones->set, &textures->set},
+	      {(SetVk*)lightingSet},
 	      {{VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(fragPushConstants)}},
 	      pipelineSetup.getPath(shader::pipeline::anim3D, shader::stage::vert),
 	      pipelineSetup.getPath(shader::pipeline::anim3D, shader::stage::frag),
@@ -471,7 +470,9 @@ bool swapchainRecreationRequired(VkResult result) {
       part::create::GraphicsPipeline(
 	      manager->deviceState.device, &_pipeline2D,
 	      offscreenRenderPass->getRenderPass(),
-	      {&VP2D->set, &perFrame2DVert->set, &textures->set, &perFrame2DFrag->set}, {},
+	      {&VP2D->set, &perFrame2DVert->set, &textures->set, &perFrame2DFrag->set},
+	      {},
+	      {},
 	      pipelineSetup.getPath(shader::pipeline::_2D, shader::stage::vert),
 	      pipelineSetup.getPath(shader::pipeline::_2D, shader::stage::frag),
 	      offscreenBufferExtent,
@@ -488,7 +489,9 @@ bool swapchainRecreationRequired(VkResult result) {
 	  part::create::GraphicsPipeline(
 		  manager->deviceState.device, &_pipelineFinal,
 		  finalRenderPass->getRenderPass(),
-		  {&offscreenTransform->set, &offscreenTex->set}, {},
+		  {&offscreenTransform->set, &offscreenTex->set},
+		  {},
+		  {},
 		  pipelineSetup.getPath(shader::pipeline::final, shader::stage::vert),
 		  pipelineSetup.getPath(shader::pipeline::final, shader::stage::frag),
 		  swapchainExtent, {}, {},
@@ -661,7 +664,9 @@ void RenderVk::_startDraw() {
 void RenderVk::_store3DsetData() {
     VP3D->bindings[0].storeSetData(frameIndex, &VP3DData);
     VP3D->bindings[1].storeSetData(frameIndex, &timeData);
-    lighting->bindings[0].storeSetData(frameIndex, &lightingData);
+    for(auto &pool: this->shaderPools)
+	pool.setFrameIndex(frameIndex);
+    lightingSet->setData(0, &lightingData);
 }
 
 void RenderVk::_store2DsetData() {

@@ -118,16 +118,15 @@ void SetVk::setMemoryPointer(void* p,
 	if(b->bindType == Binding::type::None)
 	    continue;	
 	
-	VkWriteDescriptorSet write {
-	    .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-	    .dstBinding = (uint32_t)bindingIndex,
-	    .dstArrayElement = 0,
-	    .descriptorCount = (uint32_t)b->arrayCount,
-	    .descriptorType = b->vkBindingType,
-	};
 	for(int setIndex = 0; setIndex < setHandles.size(); setIndex++) {
-	    write.dstSet = setHandles[setIndex];
-	    writes.push_back(write);
+	    writes.push_back(VkWriteDescriptorSet {
+		    .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+		    .dstBinding = (uint32_t)bindingIndex,
+		    .dstArrayElement = 0,
+		    .descriptorCount = (uint32_t)b->arrayCount,
+		    .descriptorType = b->vkBindingType,
+		});
+	    writes.back().dstSet = setHandles[setIndex];
 	}
 
 	switch(b->bindType) {
@@ -135,7 +134,7 @@ void SetVk::setMemoryPointer(void* p,
 	case Binding::type::UniformBufferDynamic:
 	case Binding::type::StorageBuffer:
 	case Binding::type::StorageBufferDynamic:
-	    b->pData = p; // all buffers are host coherent for now
+	    b->pData = p;
 	    buffers.push_back(std::vector<VkDescriptorBufferInfo>());
 	    addBufferInfos(writes, buffers.back(), setHandles.size(), b, buffer);
 	    break;

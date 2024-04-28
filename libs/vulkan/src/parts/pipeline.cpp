@@ -14,7 +14,8 @@ namespace create
   VkPipelineLayout createPipelineLayout(
 	  VkDevice device,
 	  std::vector<VkPushConstantRange> &pushConsts,
-	  std::vector<DS::DescriptorSet*> &descSets);
+	  std::vector<DS::DescriptorSet*> &descSets,
+	  std::vector<SetVk*> &newSets);
 
   VkPipelineShaderStageCreateInfo shaderStageInfo(
 	  VkShaderModule module, VkShaderStageFlagBits stage);
@@ -23,7 +24,9 @@ namespace create
 
   void GraphicsPipeline(
 	  VkDevice device, Pipeline *pipeline,
-	  VkRenderPass renderPass, std::vector<DS::DescriptorSet*> descriptorSets,
+	  VkRenderPass renderPass,
+	  std::vector<DS::DescriptorSet*> descriptorSets,
+	  std::vector<SetVk*> newSets,
 	  std::vector<VkPushConstantRange> pushConstantsRanges,
 	  std::string vertexShaderPath, std::string fragmentShaderPath,
 	  VkExtent2D extent,
@@ -32,7 +35,8 @@ namespace create
 	  PipelineConfig config) {
 
       // load shader modules
-      VkPipelineLayout layout = createPipelineLayout(device, pushConstantsRanges, descriptorSets);
+      VkPipelineLayout layout = createPipelineLayout(
+	      device, pushConstantsRanges, descriptorSets, newSets);
 
       // config input assemby
       VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo{
@@ -153,7 +157,7 @@ namespace create
 				    &vkpipeline) != VK_SUCCESS)
 	  throw std::runtime_error("failed to create graphics pipelines!");
 
-      *pipeline = Pipeline(layout, vkpipeline, descriptorSets);
+      *pipeline = Pipeline(layout, vkpipeline, descriptorSets, newSets);
   
       // destory shader modules
       vkDestroyShaderModule(device, vertexShaderModule, nullptr);
@@ -167,12 +171,18 @@ namespace create
     VkPipelineLayout createPipelineLayout(
 	  VkDevice device,
 	  std::vector<VkPushConstantRange> &pushConsts,
-	  std::vector<DS::DescriptorSet*> &descSets) {
-      std::vector<VkDescriptorSetLayout> dslayout(descSets.size());
-      for(int i = 0; i < dslayout.size(); i++) {
+	  std::vector<DS::DescriptorSet*> &descSets,
+	  std::vector<SetVk*> &newSets) {
+      std::vector<VkDescriptorSetLayout> dslayout(descSets.size() + newSets.size());
+      for(int i = 0; i < descSets.size(); i++) {
 	  if(descSets[i] == nullptr)
 	      throw std::runtime_error("Descriptor Set was null in createPipelineLayout");
 	  dslayout[i] = descSets[i]->layout;
+      }
+      for(int i = 0; i < newSets.size(); i++) {
+	  if(newSets[i] == nullptr)
+	      throw std::runtime_error("New Descriptor Set was null in createPipelineLayout");
+	  dslayout[descSets.size() + i] = newSets[i]->getLayout();
       }
   
       VkPipelineLayoutCreateInfo pipelineLayoutInfo{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};

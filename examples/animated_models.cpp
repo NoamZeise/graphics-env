@@ -62,10 +62,29 @@ int main(int argc, char** argv) {
 
     camera::FirstPerson cam;
     cam.setPos(glm::vec3(30.0f, 0, 0));
+
+    BPLighting lighting;
     
     while(!glfwWindowShouldClose(manager.window)) {
 	manager.update();
 
+		
+	if(manager.input.kb.hold(GLFW_KEY_UP)) {
+	    lighting.direction.x += manager.timer.dt() * 0.001f;
+	}
+	if(manager.input.kb.hold(GLFW_KEY_DOWN)) {
+	    lighting.direction.x -= manager.timer.dt() * 0.001f;
+	}
+	if(manager.input.kb.hold(GLFW_KEY_LEFT)) {
+	    lighting.direction.y += manager.timer.dt() * 0.001f;
+	}
+	if(manager.input.kb.hold(GLFW_KEY_RIGHT)) {
+	    lighting.direction.y -= manager.timer.dt() * 0.001f;
+	}
+	lighting.direction = glm::normalize(lighting.direction);
+	manager.render->setLightingProps(lighting);
+	
+	
 	if(manager.input.kb.press(GLFW_KEY_N)) {
 	    wolf.nextAnim();
 	    robot.nextAnim();

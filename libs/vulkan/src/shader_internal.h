@@ -8,6 +8,7 @@
 
 #include <volk.h>
 #include <vector>
+#include <cstring>
 
 #include <render-internal/shader.h>
 
@@ -49,10 +50,34 @@ public:
     ~SetVk() {
 	DestroySetResources();
     }    
-    
-    void setData(size_t index, void* data) override {}
 
-    VkDescriptorSetLayout CreateSetLayout();
+    
+    void setData(size_t index, void* data) override {
+	if(index >= bindings.size())
+	    throw std::runtime_error("binding index out of range for setData!");
+	std::memcpy((char*)bindings[index].pData
+		    + bindings[index].baseOffset
+		    + handleIndex * bindings[index].setSize,
+		    data,
+		    bindings[index].typeSize);
+    }
+
+    
+    // for temp pipeline changes
+    VkDescriptorSetLayout getLayout() { return layout; }
+    VkDescriptorSet* getSet(size_t index)
+    {
+	if(index >= setHandles.size())
+	    throw std::runtime_error("out of range descriptor set index");
+	return &setHandles[index];
+    }
+
+    void setHandleIndex(size_t handleIndex) {
+	this->handleIndex = handleIndex;
+    }
+
+    
+    VkDescriptorSetLayout CreateSetLayout();    
     void DestroySetResources();
     std::vector<VkDescriptorPoolSize> getPoolSizes() { return poolSizes; }
     void setDescSetHandles(std::vector<VkDescriptorSet> handles) { this->setHandles = handles; }
@@ -80,6 +105,9 @@ private:
     VkDescriptorSetLayout layout;
     std::vector<VkDescriptorPoolSize> poolSizes;
     std::vector<VkDescriptorSet> setHandles;
+
+    //for temp pipeline change
+    size_t handleIndex;
 };
 
 
@@ -97,6 +125,11 @@ public:
 
     void CreateGpuResources() override;
     void DestroyGpuResources() override;
+
+    void setFrameIndex(size_t handleIndex) {
+	for(auto& set: sets)
+	    set.setHandleIndex(handleIndex);
+    }
     
 private:
 

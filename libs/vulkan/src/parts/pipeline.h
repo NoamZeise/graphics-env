@@ -25,6 +25,7 @@ namespace part {
 			  Pipeline* pipeline,
 			  VkRenderPass renderPass,
 			  std::vector<DS::DescriptorSet*> descriptorSets,
+			  std::vector<SetVk*> newSets,
 			  std::vector<VkPushConstantRange> pushConstantsRanges,
 			  std::string vertexShaderPath, std::string fragmentShaderPath,
 			  VkExtent2D extent,

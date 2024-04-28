@@ -3,11 +3,13 @@
 #include "logger.h"
 
 Pipeline::Pipeline(
-	VkPipelineLayout layout, VkPipeline pipeline, std::vector<DS::DescriptorSet*> sets) {
+	VkPipelineLayout layout, VkPipeline pipeline, std::vector<DS::DescriptorSet*> sets,
+	std::vector<SetVk*> newSets) {
     this->descriptorSets = sets;
     this->layout = layout;
     this->pipeline = pipeline;
     this->descriptorSetsActive = std::vector<bool>(descriptorSets.size(), true);
+    this->newSets = newSets;
 }
 
 void Pipeline::setDescSetState(DS::DescriptorSet *set, bool isActive) {
@@ -34,6 +36,16 @@ void Pipeline::begin(VkCommandBuffer cmdBuff, size_t frameIndex) {
 	    bindOffset++;
 	}
     }
+    
+    for (size_t i = 0; i < newSets.size(); i++) {       
+	vkCmdBindDescriptorSets(
+		cmdBuff, VK_PIPELINE_BIND_POINT_GRAPHICS, layout,
+		(uint32_t)(descriptorSets.size() + i), 1,
+		newSets[i]->getSet(frameIndex),
+		0, nullptr); // no dynamic yet
+	bindOffset++;
+    }
+    
     vkCmdBindPipeline(cmdBuff, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 }
 
