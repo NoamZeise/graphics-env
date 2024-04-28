@@ -28,16 +28,19 @@ struct BindingVk : public Binding {
     /// Storage And Uniform Buffer Data
     
     VkBuffer buffer;
-    void* pData; // for host coherent buffers
+    // pointer to start of buffer for this binding
+    // if it is host coherent (ie cpu visible)
+    void* pData;
     
-    // offset of this binding in descriptor pool memory
+    // offset of this binding from start of bound memory
+    // pData already has this added to it
     size_t baseOffset = 0;
     // size of base data with corrected alignment
-    size_t dataSize = 0;
-    /// Size of the data type * no. dynamic copies
-    size_t arrayElemSize = 0;
-    // Size of the binding for an individual set -> array elem * array size
-    size_t setSize = 0;
+    size_t dataMemSize = 0;
+    /// Size of the data type * arrayCount
+    size_t dynamicMemSize = 0;
+    // Size of the binding for an individual set -> dynamicSize * dynamicCount
+    size_t setMemSize = 0;
 };
 
 class SetVk : public InternalSet {
@@ -50,18 +53,28 @@ public:
     ~SetVk() {
 	DestroySetResources();
     }    
-
     
-    void setData(size_t index, void* data) override {
-	if(index >= bindings.size())
-	    throw std::runtime_error("binding index out of range for setData!");
-	std::memcpy((char*)bindings[index].pData
-		    + bindings[index].baseOffset
-		    + handleIndex * bindings[index].setSize,
+    void setData(
+	    size_t index,
+	    void* data,
+	    size_t bytesToRead,
+	    size_t destinationOffset,
+	    size_t arrayIndex,
+	    size_t dynamicIndex) override {
+	InternalSet::setData(
+		index, data, bytesToRead, destinationOffset,
+		arrayIndex, dynamicIndex);
+	if(bytesToRead == 0)
+	    bytesToRead = bindings[index].typeSize - destinationOffset;
+	
+	std::memcpy((unsigned char*)bindings[index].pData
+		    + handleIndex * bindings[index].setMemSize
+		    + dynamicIndex * bindings[index].dynamicMemSize
+		    + arrayIndex * bindings[index].dataMemSize
+		    + destinationOffset,
 		    data,
 		    bindings[index].typeSize);
     }
-
     
     // for temp pipeline changes
     VkDescriptorSetLayout getLayout() { return layout; }
@@ -75,7 +88,6 @@ public:
     void setHandleIndex(size_t handleIndex) {
 	this->handleIndex = handleIndex;
     }
-
     
     VkDescriptorSetLayout CreateSetLayout();    
     void DestroySetResources();
@@ -117,18 +129,24 @@ public:
 	this->state = deviceState;
 	this->setCopies = setCopies;
     }
+
+    ~ShaderPoolVk() {
+	InternalShaderPool::~InternalShaderPool();
+	for(auto set: sets)
+	    delete set;
+    }
     
     Set* CreateSet(stageflag flags) override {
-	sets.push_back(SetVk(state.device, flags));
-	return &sets[sets.size() - 1];
+	sets.push_back(new SetVk(state.device, flags));
+	return sets[sets.size() - 1];
     }
 
     void CreateGpuResources() override;
     void DestroyGpuResources() override;
 
     void setFrameIndex(size_t handleIndex) {
-	for(auto& set: sets)
-	    set.setHandleIndex(handleIndex);
+	for(auto set: sets)
+	    set->setHandleIndex(handleIndex);
     }
     
 private:
@@ -139,7 +157,7 @@ private:
     
     DeviceState state;
     int setCopies;
-    std::vector<SetVk> sets;
+    std::vector<SetVk*> sets;
     VkDescriptorPool pool;
     VkBuffer buffer;
     VkDeviceMemory memory;

@@ -55,11 +55,11 @@ void SetVk::getMemoryRequirements(size_t* pMemSize, VkPhysicalDeviceProperties d
 	if(binding.bindType == Binding::type::None)
 	    continue;
 	
-	// ------ memory layout ------
-	// all sets data = | set1 | set 2 | ... |    num: set size (ie one per active frame)
-	// set = | array elem | array elem | ... |   num: array size
-	// array elem = | data | data | data | ... | num: dynamic size
-	// ---------------------------
+	// ------ memory layout ------------------------
+	// | all sets data = | set1 | set 2 | ... |      |  num: set count (ie one per set handle)
+	// | set = | dynamic data | dynamic data | ... | |  num: dynamic count
+	// | dynamic data = | data | data | ... |        |  num: array count
+	// ---------------------------------------------
 	
 	VkDeviceSize alignment;
 	switch(binding.bindType) {
@@ -76,11 +76,11 @@ void SetVk::getMemoryRequirements(size_t* pMemSize, VkPhysicalDeviceProperties d
 	}
 	*pMemSize = vkhelper::correctMemoryAlignment(*pMemSize, alignment);
 	binding.baseOffset = *pMemSize;
-	binding.dataSize = vkhelper::correctMemoryAlignment(binding.typeSize, alignment);
-	binding.arrayElemSize = binding.dataSize * binding.dynamicCount;
-	binding.setSize = binding.arrayElemSize * binding.arrayCount;
+	binding.dataMemSize = vkhelper::correctMemoryAlignment(binding.typeSize, alignment);
+	binding.dynamicMemSize = binding.dataMemSize * binding.arrayCount;
+	binding.setMemSize = binding.dynamicMemSize * binding.dynamicCount;
 	
-	*pMemSize += binding.setSize * setHandles.size();
+	*pMemSize += binding.setMemSize * setHandles.size();
     }
 }
 
@@ -93,16 +93,19 @@ void addBufferInfos(std::vector<VkWriteDescriptorSet> &writes,
     b->buffer = buffer;
     buffInfos.resize(setCount * b->arrayCount);
     for(int setIndex = 0; setIndex < setCount; setIndex++) {
-	
+	// buff info points to the first dynamic data slot in memory
+	// then we offset into it when we bind the descriptor set
+	//                    <----here---->
+	// set memory = | dynamic data 1 memory | dynamic data 2 memory | ... |
 	for(int arrayIndex = 0; arrayIndex < b->arrayCount; arrayIndex++)
 	    buffInfos[setIndex * b->arrayCount + arrayIndex] = VkDescriptorBufferInfo {
 		.buffer = buffer,
 		.offset = b->baseOffset
-		+ b->setSize * setIndex
-		+ b->arrayElemSize * arrayIndex,
-		.range = b->dataSize,
+		+ b->setMemSize * setIndex
+		+ b->dataMemSize * arrayIndex,
+		.range = b->dataMemSize,
 	    };
-	// assume writes has >= setCount writes in vector
+	// assumes writes has >= setCount writes in vector
 	writes[writes.size() - setCount + setIndex]
 	    .pBufferInfo =  buffInfos.data() + setIndex * b->arrayCount;
     }
@@ -116,7 +119,7 @@ void SetVk::setMemoryPointer(void* p,
     for(int bindingIndex = 0; bindingIndex < bindings.size(); bindingIndex++) {
 	BindingVk* b = &bindings[bindingIndex];
 	if(b->bindType == Binding::type::None)
-	    continue;	
+	    continue;
 	
 	for(int setIndex = 0; setIndex < setHandles.size(); setIndex++) {
 	    writes.push_back(VkWriteDescriptorSet {
@@ -134,7 +137,7 @@ void SetVk::setMemoryPointer(void* p,
 	case Binding::type::UniformBufferDynamic:
 	case Binding::type::StorageBuffer:
 	case Binding::type::StorageBufferDynamic:
-	    b->pData = p;
+	    b->pData = (unsigned char*)p + b->baseOffset;
 	    buffers.push_back(std::vector<VkDescriptorBufferInfo>());
 	    addBufferInfos(writes, buffers.back(), setHandles.size(), b, buffer);
 	    break;
@@ -161,7 +164,7 @@ void ShaderPoolVk::CreateGpuResources() {
 
 void ShaderPoolVk::DestroyGpuResources() {
     for(auto &set: sets)
-	set.DestroySetResources();
+	set->DestroySetResources();
     vkDestroyBuffer(state.device, buffer, nullptr);
     vkFreeMemory(state.device, memory, nullptr);
     vkDestroyDescriptorPool(state.device, pool, nullptr); // also frees sets
@@ -171,8 +174,8 @@ void ShaderPoolVk::DestroyGpuResources() {
 void ShaderPoolVk::createPool() {
     std::vector<VkDescriptorPoolSize> poolSizes;
     for(auto &set: sets) {
-	set.CreateSetLayout();
-	for(auto& ps: set.getPoolSizes()) {
+	set->CreateSetLayout();
+	for(auto& ps: set->getPoolSizes()) {
 	    poolSizes.push_back(ps);
 	    poolSizes.back().descriptorCount *= setCopies;
 	}
@@ -184,30 +187,29 @@ void ShaderPoolVk::createSets() {
     std::vector<VkDescriptorSetLayout> setLayouts(sets.size() * setCopies);
     int layoutIndex = 0;
     for(auto &set: sets) {
-	VkDescriptorSetLayout layout = set.CreateSetLayout();
 	for(int i = 0; i < setCopies; i++)
-	    setLayouts[layoutIndex++] = layout;
+	    setLayouts[layoutIndex++] = set->getLayout();
     }
     
     std::vector<VkDescriptorSet> setHandles(setLayouts.size());
     part::create::DescriptorSets(state.device, pool, setLayouts, setHandles);
     
     int handleIndex = 0;
-    for(auto &set: sets) {
+    for(auto set: sets) {
 	std::vector<VkDescriptorSet> handles;
 	for(int i = 0; i < setCopies; i++)
 	    handles.push_back(setHandles[handleIndex++]);
-	set.setDescSetHandles(handles);
+	set->setDescSetHandles(handles);
     }
 }
 
 void ShaderPoolVk::createBuffer() {
     VkPhysicalDeviceProperties deviceProps;
     vkGetPhysicalDeviceProperties(state.physicalDevice, &deviceProps);
-
+    
     VkDeviceSize memorySize = 0;
-    for(auto &set: sets)
-	set.getMemoryRequirements(&memorySize, deviceProps);
+    for(auto set: sets)
+	set->getMemoryRequirements(&memorySize, deviceProps);
 
     // only support host coherent for now
     vkhelper::createBufferAndMemory(
@@ -222,8 +224,8 @@ void ShaderPoolVk::createBuffer() {
     std::vector<VkWriteDescriptorSet> writes;
     std::vector<std::vector<VkDescriptorBufferInfo>> buffers;
     std::vector<std::vector<VkDescriptorImageInfo>> images;
-    for(auto &set: sets)
-    	set.setMemoryPointer(p, buffer, writes, buffers, images);
+    for(auto set: sets)
+    	set->setMemoryPointer(p, buffer, writes, buffers, images);
     vkUpdateDescriptorSets(state.device, (uint32_t)writes.size(), writes.data(), 0, nullptr);
 }
 
@@ -233,9 +235,9 @@ void BindingVk::clearMemoryOffsets() {
     pData = nullptr;
     buffer = VK_NULL_HANDLE;
     baseOffset = 0;
-    dataSize = 0;
-    arrayElemSize = 0;
-    setSize = 0;
+    dataMemSize = 0;
+    dynamicMemSize = 0;
+    setMemSize = 0;
 }
 
 
@@ -264,10 +266,13 @@ VkDescriptorType bindingTypeVk(Binding::type type) {
 
 VkShaderStageFlags shaderFlagsVk(stageflag flags) {
     VkShaderStageFlags f = 0;
+
     if((unsigned int)flags & (unsigned int)stageflag::vert)
 	f |= VK_SHADER_STAGE_VERTEX_BIT;
-    if((unsigned int)flags & (unsigned int)stageflag::vert)
+    
+    if((unsigned int)flags & (unsigned int)stageflag::frag)
 	f |= VK_SHADER_STAGE_FRAGMENT_BIT;
+    
     return f;
 }
 

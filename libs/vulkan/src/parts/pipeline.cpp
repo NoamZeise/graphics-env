@@ -194,9 +194,9 @@ namespace create
       pipelineLayoutInfo.pPushConstantRanges = pushConsts.data();
 
       VkPipelineLayout layout;
-      if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr,
-				 &layout) != VK_SUCCESS)
+      if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &layout) != VK_SUCCESS)
 	  throw std::runtime_error("failed to create pipeline layout");
+
       return layout;
   }
 

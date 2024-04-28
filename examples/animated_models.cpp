@@ -100,15 +100,16 @@ int main(int argc, char** argv) {
 	    wolf.draw(manager.render);
 	    robot.draw(manager.render);
 
+	    glm::vec4 textColour(0.7f, 0.8f, 0.6f, 1.0f);
 	    manager.render->DrawString(font, "Press N to cycle animations",
 				       glm::vec2(20.0f, 30.0f),
-				       20.0f, 1.0f, glm::vec4(1.0f, 0.5f, 1.0f, 1.0f));
+				       20.0f, 1.0f, textColour);
 	    manager.render->DrawString(font, "Wolf Anim: " + wolf.active.getName(),
 				       glm::vec2(20.0f, 55.0f),
-				       20.0f, 1.0f, glm::vec4(1.0f, 0.5f, 1.0f, 1.0f));
+				       20.0f, 1.0f, textColour);
 	    manager.render->DrawString(font, "Robot Anim: " + robot.active.getName(),
 				       glm::vec2(20.0f, 75.0f),
-				       20.0f, 1.0f, glm::vec4(1.0f, 0.5f, 1.0f, 1.0f));
+				       20.0f, 1.0f, textColour);
 	    manager.render->EndDraw();
 	}
     }

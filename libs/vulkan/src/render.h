@@ -137,8 +137,9 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
       size_t currentBonesDynamicOffset;
       DescSet *perFrame2DVert;
       glm::mat4 perFrame2DVertData[Resource::MAX_2D_BATCH];
-      DescSet *perFrame2DFrag;
+      Set* perFrame2DSet;
       shaderStructs::Frag2DData perFrame2DFragData[Resource::MAX_2D_BATCH];
+      
       Set* lightingSet;
       BPLighting lightingData;
       DescSet *offscreenTransform;
@@ -156,7 +157,7 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
       std::vector<DescSet*> descriptorSets;
 
 
-      std::vector<ShaderPoolVk> shaderPools;
+      std::vector<ShaderPoolVk*> shaderPools;
 
       Resource::Pool defaultPool;
       PoolManagerVk* pools;

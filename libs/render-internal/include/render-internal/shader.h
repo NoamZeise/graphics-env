@@ -47,6 +47,44 @@ class InternalSet : public Set {
 	addBinding(index, Binding(Binding::type::UniformBuffer, typeSize, arrayCount, 1));
     }
 
+    void addStorageBuffer(size_t index, size_t typeSize, size_t arrayCount) override {
+	if(arrayCount == 0 || typeSize == 0)
+	    throw std::runtime_error("array count or type size of uniform buffer equaled 0");
+	    
+	addBinding(index, Binding(Binding::type::StorageBuffer, typeSize, arrayCount, 1));
+    }
+
+    void setData(size_t index, void* data) override {
+	setData(index, data, 0, 0, 0, 0);
+    }
+
+    void setData(size_t index, void* data, size_t size) override {
+	setData(index, data, size, 0, 0, 0);
+    }
+
+    void setData(
+	    size_t index,
+	    void* data,
+	    size_t bytesToRead,
+	    size_t destinationOffset,
+	    size_t arrayIndex,
+	    size_t dynamicIndex) override {
+	throwOnBadIndexRange(index, numBindings(), "binding index");	
+	Binding* b = getBinding(index);
+	if(b->bindType == Binding::type::None ||
+	   b->bindType == Binding::type::Texture ||
+	   b->bindType == Binding::type::TextureSampler) {
+	    throw std::runtime_error("Shader Set Error: Tried to setData for non buffer element");
+	}
+	throwOnBadIndexRange(arrayIndex, b->arrayCount, "array index");
+	throwOnBadIndexRange(arrayIndex, b->dynamicCount, "dynamic index");
+	if(bytesToRead == 0)
+	    bytesToRead = b->typeSize - destinationOffset;
+	throwOnBadIndexRange(bytesToRead, b->typeSize - destinationOffset + 1,
+			     "tried to set too much memory "
+			     "(bytes to read >= type size * destination offset),");
+    }
+
     size_t nextFreeIndex() override {
 	for(int i = 0; i < numBindings(); i++)
 	    if(getBinding(i)->bindType == Binding::type::None)
@@ -70,22 +108,19 @@ class InternalSet : public Set {
 	setBinding(index, binding);
     };
     
-    bool vaildSetData(size_t index, void* data) {
-	if(index >= numBindings()) {
-	    LOG_ERROR("Tried to set shader Set data to out of range index");
-	    return false;
-	}
-	Binding* b = getBinding(index);
-	if(b->bindType == Binding::type::None ||
-	   b->bindType == Binding::type::Texture ||
-	   b->bindType == Binding::type::TextureSampler) {
-	    LOG_ERROR("Tried to set shader Set data for texture or none element");
-	    return false;
-	}
-	return true;
-    }
-    
     stageflag stageFlags;
+
+private:
+
+    void throwOnBadIndexRange(size_t given, size_t max, std::string message) {
+	if(given >= max)
+	    throw std::runtime_error(
+		    "Shader Set Error - in setData: "
+		    + message + " out of range - given index: " + std::to_string(given)
+		    + "   max index: " + std::to_string(max));
+    }
+
+    
 };
 
 class InternalShaderPool : public ShaderPool {

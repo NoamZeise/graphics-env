@@ -66,7 +66,6 @@ VkFormat getDepthBufferFormat(VkPhysicalDevice physicalDevice) {
 RenderVk::~RenderVk() {
     vkDeviceWaitIdle(manager->deviceState.device);
 
-    shaderPools.clear();
     _destroyFrameResources();
     delete pools;
     if(offscreenRenderPass != nullptr || finalRenderPass != nullptr) {
@@ -271,13 +270,16 @@ bool swapchainRecreationRequired(VkResult result) {
       int descriptorSizes = MAX_CONCURRENT_FRAMES;
 
       ShaderPool* shaderPool1 = CreateShaderPool();
-      Set* vp3dset = shaderPool1->CreateSet(stageflag::vert | stageflag::frag);
-      vp3dset->addUniformBuffer(0, sizeof(shaderStructs::viewProjection));
-      vp3dset->addUniformBuffer(1, sizeof(shaderStructs::timeUbo));
-
-      lightingSet = shaderPool1->CreateSet(stageflag::vert);
+      
+      lightingSet = shaderPool1->CreateSet(stageflag::frag);
       lightingSet->addUniformBuffer(0, sizeof(BPLighting));
+
+      perFrame2DSet = shaderPool1->CreateSet(stageflag::frag);
+      perFrame2DSet->addStorageBuffer(
+	      0, sizeof(shaderStructs::Frag2DData) * Resource::MAX_2D_BATCH);
+
       shaderPool1->CreateGpuResources();
+
       
       /// vertex descripor sets
       descriptor::Descriptor viewProjectionBinding(
@@ -374,14 +376,6 @@ bool swapchainRecreationRequired(VkResult result) {
       textures = new DescSet(texture_Set, descriptorSizes, manager->deviceState.device);
       descriptorSets.push_back(textures);
       
-      descriptor::Set frag2D_Set("Per Frame 2D frag", descriptor::ShaderStage::Fragment);
-      frag2D_Set.AddSingleArrayStructDescriptor(
-	      "Per frag struct",
-	      descriptor::Type::StorageBuffer,
-	      sizeof(shaderStructs::Frag2DData), Resource::MAX_2D_BATCH);
-      perFrame2DFrag = new DescSet(frag2D_Set, descriptorSizes, manager->deviceState.device);
-      descriptorSets.push_back(perFrame2DFrag);
-      
       emptyDS = new DescSet(
 	      descriptor::Set("Empty", descriptor::ShaderStage::Vertex),
 	      descriptorSizes, manager->deviceState.device);
@@ -453,7 +447,7 @@ bool swapchainRecreationRequired(VkResult result) {
 	      pipeline_inputs::V3D::attributeDescriptions(),
 	      pipeline_inputs::V3D::bindingDescriptions(),
 	      pipelineConf);
-	    
+      
       part::create::GraphicsPipeline(
 	      manager->deviceState.device, &_pipelineAnim3D,
 	      offscreenRenderPass->getRenderPass(),
@@ -470,8 +464,8 @@ bool swapchainRecreationRequired(VkResult result) {
       part::create::GraphicsPipeline(
 	      manager->deviceState.device, &_pipeline2D,
 	      offscreenRenderPass->getRenderPass(),
-	      {&VP2D->set, &perFrame2DVert->set, &textures->set, &perFrame2DFrag->set},
-	      {},
+	      {&VP2D->set, &perFrame2DVert->set, &textures->set},
+	      {(SetVk*)perFrame2DSet},
 	      {},
 	      pipelineSetup.getPath(shader::pipeline::_2D, shader::stage::vert),
 	      pipelineSetup.getPath(shader::pipeline::_2D, shader::stage::frag),
@@ -517,6 +511,12 @@ bool swapchainRecreationRequired(VkResult result) {
       vkDestroyBuffer(manager->deviceState.device, _shaderBuffer, nullptr);
       vkFreeMemory(manager->deviceState.device, _shaderMemory, nullptr);
       LOG("    destroying descriptors");
+
+      // move to destructor after desc sets not remade each frame
+      for(ShaderPoolVk* sp: shaderPools)
+	  delete sp;
+      shaderPools.clear();
+      
       for(int i = 0; i < descriptorSets.size(); i++)
 	  delete descriptorSets[i];
       descriptorSets.clear();
@@ -664,8 +664,8 @@ void RenderVk::_startDraw() {
 void RenderVk::_store3DsetData() {
     VP3D->bindings[0].storeSetData(frameIndex, &VP3DData);
     VP3D->bindings[1].storeSetData(frameIndex, &timeData);
-    for(auto &pool: this->shaderPools)
-	pool.setFrameIndex(frameIndex);
+    for(auto pool: this->shaderPools)
+	pool->setFrameIndex(frameIndex);
     lightingSet->setData(0, &lightingData);
 }
 
@@ -897,9 +897,9 @@ void RenderVk::EndDraw(std::atomic<bool> &submit) {
   for (size_t i = 0; i < _current2DInstanceIndex; i++) {
       perFrame2DVert->bindings[0].storeSetData(
 	      frameIndex, &perFrame2DVertData[i], 0, i, 0);
-      perFrame2DFrag->bindings[0].storeSetData(
-	      frameIndex, &perFrame2DFragData[i], 0, i, 0);	  
   }
+  perFrame2DSet->setData(0, perFrame2DFragData,
+			 _current2DInstanceIndex * sizeof(shaderStructs::Frag2DData));
   
   _current2DInstanceIndex = 0;
 
@@ -955,9 +955,9 @@ void RenderVk::FramebufferResize() {
 
 ShaderPool* RenderVk::CreateShaderPool() {
     shaderPools.push_back(
-	    ShaderPoolVk(manager->deviceState,
-			 MAX_CONCURRENT_FRAMES));
-    return &shaderPools[shaderPools.size() - 1];
+	    new ShaderPoolVk(manager->deviceState,
+			     MAX_CONCURRENT_FRAMES));
+    return shaderPools[shaderPools.size() - 1];
 }
 
 void RenderVk::set3DViewMat(glm::mat4 view, glm::vec4 camPos) {
