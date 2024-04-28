@@ -86,6 +86,8 @@ public:
     }
 
     void setHandleIndex(size_t handleIndex) {
+	if(handleIndex >= setHandles.size())
+	    throw std::runtime_error("out of range descriptor set index");
 	this->handleIndex = handleIndex;
     }
     
