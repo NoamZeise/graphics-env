@@ -655,6 +655,9 @@ void RenderVk::_startDraw() {
 	offscreenRenderPass->beginRenderPass(currentCommandBuffer, 0);
     else
 	offscreenRenderPass->beginRenderPass(currentCommandBuffer, swapchainFrameIndex);
+
+    for(auto pool: this->shaderPools)
+	pool->setFrameIndex(frameIndex);
     
     currentBonesDynamicOffset = 0;
     currentModelPool = Resource::Pool();
@@ -664,8 +667,6 @@ void RenderVk::_startDraw() {
 void RenderVk::_store3DsetData() {
     VP3D->bindings[0].storeSetData(frameIndex, &VP3DData);
     VP3D->bindings[1].storeSetData(frameIndex, &timeData);
-    for(auto pool: this->shaderPools)
-	pool->setFrameIndex(frameIndex);
     lightingSet->setData(0, &lightingData);
 }
 

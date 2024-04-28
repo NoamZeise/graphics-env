@@ -156,7 +156,6 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
 
       std::vector<DescSet*> descriptorSets;
 
-
       std::vector<ShaderPoolVk*> shaderPools;
 
       Resource::Pool defaultPool;
