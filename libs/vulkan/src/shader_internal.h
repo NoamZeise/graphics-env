@@ -52,10 +52,9 @@ public:
     
     void setData(size_t index, void* data) override {}
 
-    void CreateSetLayout();
+    VkDescriptorSetLayout CreateSetLayout();
     void DestroySetResources();
     std::vector<VkDescriptorPoolSize> getPoolSizes() { return poolSizes; }
-    VkDescriptorSetLayout getLayout() { return layout; }
     void setDescSetHandles(std::vector<VkDescriptorSet> handles) { this->setHandles = handles; }
     void getMemoryRequirements(size_t* pMemSize, VkPhysicalDeviceProperties deviceProps);
     void setMemoryPointer(void* p,

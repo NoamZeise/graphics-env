@@ -271,10 +271,9 @@ bool swapchainRecreationRequired(VkResult result) {
       int descriptorSizes = MAX_CONCURRENT_FRAMES;
 
       ShaderPool* shaderPool1 = CreateShaderPool();
-      Set* vp3dset = shaderPool1->CreateSet(stageflag::vert);
+      Set* vp3dset = shaderPool1->CreateSet(stageflag::vert | stageflag::frag);
       vp3dset->addUniformBuffer(0, sizeof(shaderStructs::viewProjection));
       vp3dset->addUniformBuffer(1, sizeof(shaderStructs::timeUbo));
-      ((SetVk*)vp3dset)->CreateSetLayout();
       shaderPool1->CreateGpuResources();
       
       /// vertex descripor sets

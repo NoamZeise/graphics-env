@@ -14,7 +14,7 @@ VkShaderStageFlags shaderFlagsVk(stageflag flags);
 /// --- Shader Set ---
 
 
-void SetVk::CreateSetLayout() {
+VkDescriptorSetLayout SetVk::CreateSetLayout() {
     std::vector<VkDescriptorSetLayoutBinding> layoutBindings;	
     for(uint32_t i = 0; i < bindings.size(); i++) {
 	if(bindings[i].bindType == Binding::type::None)
@@ -35,6 +35,7 @@ void SetVk::CreateSetLayout() {
     }
     part::create::DescriptorSetLayout(device, layoutBindings, &layout);
     layoutCreated = true;
+    return layout;
 }
 
 void SetVk::DestroySetResources() {
@@ -83,15 +84,28 @@ void SetVk::getMemoryRequirements(size_t* pMemSize, VkPhysicalDeviceProperties d
     }
 }
 
-VkDescriptorBufferInfo getBuffInfo(
-	BindingVk* binding, VkBuffer buffer, size_t arrayIndex, size_t setIndex) {
-    return VkDescriptorBufferInfo {
-	.buffer = buffer,
-	.offset = binding->baseOffset
-	+ binding->setSize * setIndex
-	+ binding->arrayElemSize * arrayIndex,
-	.range = binding->dataSize,
-    };
+
+void addBufferInfos(std::vector<VkWriteDescriptorSet> &writes,
+		    std::vector<VkDescriptorBufferInfo> &buffInfos,
+		    size_t setCount,
+		    BindingVk* b,
+		    VkBuffer buffer) {
+    b->buffer = buffer;
+    buffInfos.resize(setCount * b->arrayCount);
+    for(int setIndex = 0; setIndex < setCount; setIndex++) {
+	
+	for(int arrayIndex = 0; arrayIndex < b->arrayCount; arrayIndex++)
+	    buffInfos[setIndex * b->arrayCount + arrayIndex] = VkDescriptorBufferInfo {
+		.buffer = buffer,
+		.offset = b->baseOffset
+		+ b->setSize * setIndex
+		+ b->arrayElemSize * arrayIndex,
+		.range = b->dataSize,
+	    };
+	// assume writes has >= setCount writes in vector
+	writes[writes.size() - setCount + setIndex]
+	    .pBufferInfo =  buffInfos.data() + setIndex * b->arrayCount;
+    }
 }
 
 void SetVk::setMemoryPointer(void* p,
@@ -122,18 +136,8 @@ void SetVk::setMemoryPointer(void* p,
 	case Binding::type::StorageBuffer:
 	case Binding::type::StorageBufferDynamic:
 	    b->pData = p; // all buffers are host coherent for now
-	    b->buffer = buffer;
-	    buffers.push_back
-		(std::vector<VkDescriptorBufferInfo>(b->arrayCount * setHandles.size()));
-	    
-	    for(int setIndex = 0; setIndex < setHandles.size(); setIndex++) {
-		for(int arrayIndex = 0; arrayIndex < b->arrayCount; arrayIndex++)
-		    buffers.back()[setIndex * b->arrayCount + arrayIndex] =
-			getBuffInfo(b, buffer, arrayIndex, setIndex);
-		
-		writes[writes.size() - setHandles.size() + setIndex]
-		    .pBufferInfo = buffers.back().data() + (setIndex * b->arrayCount);
-	    }
+	    buffers.push_back(std::vector<VkDescriptorBufferInfo>());
+	    addBufferInfos(writes, buffers.back(), setHandles.size(), b, buffer);
 	    break;
 	case Binding::type::Texture:
 	case Binding::type::TextureSampler:
@@ -151,7 +155,7 @@ void SetVk::setMemoryPointer(void* p,
 
 void ShaderPoolVk::CreateGpuResources() {
     createPool();
-    createSets();    	
+    createSets();
     createBuffer();
     InternalShaderPool::CreateGpuResources();
 }
@@ -180,9 +184,11 @@ void ShaderPoolVk::createPool() {
 void ShaderPoolVk::createSets() {
     std::vector<VkDescriptorSetLayout> setLayouts(sets.size() * setCopies);
     int layoutIndex = 0;
-    for(auto &set: sets)
+    for(auto &set: sets) {
+	VkDescriptorSetLayout layout = set.CreateSetLayout();
 	for(int i = 0; i < setCopies; i++)
-	    setLayouts[layoutIndex++] = set.getLayout();
+	    setLayouts[layoutIndex++] = layout;
+    }
     
     std::vector<VkDescriptorSet> setHandles(setLayouts.size());
     part::create::DescriptorSets(state.device, pool, setLayouts, setHandles);

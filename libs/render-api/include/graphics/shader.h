@@ -29,11 +29,15 @@ private:
 };
 
 
-const int SHADER_STAGE_COUNT = 2;
 enum class stageflag {
-    vert = 0b01,
-    frag = 0b10,
+  vert = 0b01,
+  frag = 0b10,
 };
+
+inline stageflag operator| (stageflag a, stageflag b) {
+    return (stageflag)((int)a | (int)b);
+}
+
 
 class Set {
 public:
@@ -46,7 +50,7 @@ public:
 };
 
 
-// Holds shader sets
+/// Holds shader sets
 class ShaderPool {
 public:
     ~ShaderPool() {
