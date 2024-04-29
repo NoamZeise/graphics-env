@@ -16,7 +16,7 @@ struct StagedTex {
 class InternalTexLoader : public TextureLoader {
 public:
     InternalTexLoader(Resource::Pool pool, RenderConfig conf);
-    ~InternalTexLoader();
+    virtual ~InternalTexLoader();
     Resource::Texture load(std::string path) override;
     Resource::Texture load(unsigned char* data,
 				  int width,

@@ -17,13 +17,13 @@
 #include "frame.h"
 #include "renderpass.h"
 #include "pipeline.h"
-#include "shader.h"
 #include "shader_internal.h"
 #include "shader_structs.h"
 #include <atomic>
 #include <vector>
 
 class PoolManagerVk;
+class ShaderPoolVk;
 
 namespace vkenv {
 
@@ -163,7 +163,6 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
 
       bool _begunDraw = false;
       RenderState _renderState;
-      VkSemaphore _imgAquireSem;
 
       unsigned int _modelRuns = 0;
       unsigned int _current3DInstanceIndex = 0;

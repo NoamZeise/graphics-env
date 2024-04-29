@@ -1,5 +1,5 @@
 #include <resource-loaders/texture_loader.h>
-#include <resource-loaders/stb_image.h>
+#include "stb_image.h"
 #include <graphics/logger.h>
 
 #include <stdexcept>

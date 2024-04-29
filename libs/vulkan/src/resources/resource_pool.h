@@ -11,7 +11,7 @@ class ResourcePoolVk : public ResourcePool {
  public:
     ResourcePoolVk(uint32_t poolID, BasePoolManager* pools, DeviceState base, VkCommandPool cmdpool,
 		 VkCommandBuffer cmdbuff, RenderConfig config);
-    ~ResourcePoolVk();
+    virtual ~ResourcePoolVk();
 
     void loadGpu();
     void unloadStaged();

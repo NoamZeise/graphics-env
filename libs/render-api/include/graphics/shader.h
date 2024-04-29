@@ -24,7 +24,7 @@ public:
       };
     
 private:
-    float size;
+    //float size;
     std::vector<Entry> entries;
 };
 
@@ -82,9 +82,9 @@ public:
 
 class PushConstant {
 private:
-    stageflag stageFlags;
+    //    stageflag stageFlags;
     //int offset; calc manually?
-    int size;
+    //int size;
 };
   
 class PipelineLayout {

@@ -3,6 +3,7 @@
 #include <graphics/glm_helper.h>
 #include <graphics/logger.h>
 #include <stdexcept>
+#include <map>
 
 const int FONT_LOAD_SIZE = 100;
 

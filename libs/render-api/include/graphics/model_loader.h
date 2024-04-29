@@ -2,7 +2,7 @@
 #define OUTFACING_MODEL_LOADER
 
 #include "resources.h"
-#include "model/info.h"
+#include "model/animation.h"
 
 
 class ModelLoader {

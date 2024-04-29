@@ -1,7 +1,6 @@
 #ifndef MODEL_RENDER_H
 #define MODEL_RENDER_H
 
-#include <map>
 #include <resource-loaders/model_loader.h>
 #include "../device_state.h"
 
@@ -11,7 +10,7 @@ class ModelLoaderVk : public InternalModelLoader {
 public:
     ModelLoaderVk(DeviceState base, VkCommandPool cmdpool, VkCommandBuffer generalCmdBuff,
 		  Resource::Pool pool, BasePoolManager *pools);
-    ~ModelLoaderVk();
+    ~ModelLoaderVk() override;
     void loadGPU() override;
     void clearGPU() override;
 

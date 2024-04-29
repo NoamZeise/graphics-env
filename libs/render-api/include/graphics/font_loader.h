@@ -1,7 +1,8 @@
 #ifndef OUTFACING_FONT_LOADER_H
 #define OUTFACING_FONT_LOADER_H
 
-#include "texture_loader.h"
+#include "resources.h"
+#include <string>
 
 class FontLoader {
  public:

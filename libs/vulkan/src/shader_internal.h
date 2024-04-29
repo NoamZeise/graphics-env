@@ -50,36 +50,20 @@ public:
 	DestroySetResources();
     }
 
-    ~SetVk() {
+    ~SetVk() override {
 	DestroySetResources();
     }    
     
-    void setData(
-	    size_t index,
-	    void* data,
-	    size_t bytesToRead,
-	    size_t destinationOffset,
-	    size_t arrayIndex,
-	    size_t dynamicIndex) override {
-	InternalSet::setData(
-		index, data, bytesToRead, destinationOffset,
-		arrayIndex, dynamicIndex);
-	if(bytesToRead == 0)
-	    bytesToRead = bindings[index].typeSize - destinationOffset;
-	
-	std::memcpy((unsigned char*)bindings[index].pData
-		    + handleIndex * bindings[index].setMemSize
-		    + dynamicIndex * bindings[index].dynamicMemSize
-		    + arrayIndex * bindings[index].dataMemSize
-		    + destinationOffset,
-		    data,
-		    bindings[index].typeSize);
-    }
+    void setData(size_t index,
+		 void* data,
+		 size_t bytesToRead,
+		 size_t destinationOffset,
+		 size_t arrayIndex,
+		 size_t dynamicIndex) override;
     
     // for temp pipeline changes
     VkDescriptorSetLayout getLayout() { return layout; }
-    VkDescriptorSet* getSet(size_t index)
-    {
+    VkDescriptorSet* getSet(size_t index) {
 	if(index >= setHandles.size())
 	    throw std::runtime_error("out of range descriptor set index");
 	return &setHandles[index];
@@ -132,8 +116,8 @@ public:
 	this->setCopies = setCopies;
     }
 
-    ~ShaderPoolVk() {
-	DestroyGpuResources();
+    ~ShaderPoolVk() override {
+	InternalShaderPool::~InternalShaderPool();
 	for(auto set: sets)
 	    delete set;
     }

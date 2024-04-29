@@ -140,8 +140,8 @@ namespace camera {
   void ThirdPerson::control(glm::vec2 ctrlDir) {
       if (ctrlDir.x != 0 || ctrlDir.y != 0) {
           float updot = glm::dot(forward, worldUp);
-          if (updot > camlimit && ctrlDir.y < 0 ||
-              -updot > camlimit && ctrlDir.y > 0)
+          if ((updot > camlimit && ctrlDir.y < 0) ||
+	      (-updot > camlimit && ctrlDir.y > 0))
               ctrlDir.y = 0;
           auto qx = glm::quat(cos(ctrlDir.x), (float)sin(ctrlDir.x) * up);
           auto qy = glm::quat(cos(ctrlDir.y), (float)sin(ctrlDir.y) * left);

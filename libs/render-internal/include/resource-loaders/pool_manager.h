@@ -8,7 +8,7 @@
 #include "texture_loader.h"
 
 class BasePoolManager {
-public:
+public:    
     InternalTexLoader* tex(Resource::Texture tex) {
 	return this->tex(tex.pool);
     }
@@ -23,7 +23,7 @@ public:
 template<class Pool>
 class InternalPoolManager : public BasePoolManager {
  public:
-    ~InternalPoolManager();
+    virtual ~InternalPoolManager();
     bool ValidPool(Resource::Pool pool);
     bool ValidPool(int id);
     Pool* get(Resource::Pool pool);
@@ -59,8 +59,7 @@ template <class Pool>
 InternalPoolManager<Pool>::~InternalPoolManager() {
     for(int i = 0; i < pools.size(); i++)
 	if(pools[i] != nullptr)
-	    delete pools[i];
-   
+	    delete pools[i];   
 }
 
 

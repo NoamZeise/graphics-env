@@ -4,14 +4,15 @@
 #include <graphics/font_loader.h>
 #include <graphics/texture_loader.h>
 #include <glm/glm.hpp>
-#include <map>
+#include <vector>
+#include <string>
 
 struct FontData;
 
 class InternalFontLoader : public FontLoader {
 public:
     InternalFontLoader(Resource::Pool pool, TextureLoader *texLoader);
-    ~InternalFontLoader();
+    virtual ~InternalFontLoader();
     Resource::Font load(std::string file) override;
     float length(Resource::Font font, std::string text, float size) override;
 

@@ -49,7 +49,7 @@ private:
 };
 
 /// Holds the attachment image resources
-struct AttachmentImage;
+class AttachmentImage;
 
 /// Holds the framebuffer resources;
 struct Framebuffer {

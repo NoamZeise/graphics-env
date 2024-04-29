@@ -1,4 +1,6 @@
 #include "model_loader.h"
+
+#include "vertex_data.h"
 #include <graphics/logger.h>
 
 struct GLMesh : public GPUMesh {

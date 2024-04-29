@@ -9,6 +9,7 @@
 /// ----- Attachment Image -----
 
 
+
 class AttachmentImage {
 public:
     AttachmentImage(AttachmentDesc &desc);
@@ -495,7 +496,7 @@ VkClearValue getClearValueAndSetRef(AttachmentDesc &attachment,
 	resolveRef = attachRef;
     default:
 	std::runtime_error("Render Pass Error: Unrecognised attachment type");
-	clear.color = {0.0f, 0.0f, 0.0f};
+	clear.color = {{0.0f, 0.0f, 0.0f}};
     }
     return clear;
 }

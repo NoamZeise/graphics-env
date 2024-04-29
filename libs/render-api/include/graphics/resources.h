@@ -6,7 +6,9 @@
 #ifndef RESOURCES_H
 #define RESOURCES_H
 
-#include "model/animation.h"
+#include <cstddef>
+#include <stdint.h>
+#include <glm/glm.hpp>
 
 namespace Resource {
 

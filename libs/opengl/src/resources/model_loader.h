@@ -1,7 +1,6 @@
 #ifndef GL_MODEL_RENDER_H
 #define GL_MODEL_RENDER_H
 
-#include "vertex_data.h"
 #include <resource-loaders/texture_loader.h>
 #include <resource-loaders/model_loader.h>
 #include <resource-loaders/vertex_model.h>
@@ -11,7 +10,7 @@ struct GPUModelGL;
 class ModelLoaderGL : public InternalModelLoader {
 public:
     ModelLoaderGL(Resource::Pool pool, BasePoolManager *pools);
-    ~ModelLoaderGL();
+    ~ModelLoaderGL() override;
     void loadGPU() override;
     void clearGPU() override;
     void DrawQuad(int count);

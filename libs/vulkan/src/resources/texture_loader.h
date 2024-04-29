@@ -10,7 +10,7 @@ class TexLoaderVk : public InternalTexLoader {
 public:
     TexLoaderVk(DeviceState base, VkCommandPool pool,
 		Resource::Pool resPool, RenderConfig config);
-    ~TexLoaderVk();
+    ~TexLoaderVk() override;
     void clearGPU() override;
     void loadGPU() override;
     float getMinMipmapLevel();

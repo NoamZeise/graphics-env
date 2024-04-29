@@ -58,7 +58,7 @@ struct GPUModel {
 class InternalModelLoader : public ModelLoader {
 public:
     InternalModelLoader(Resource::Pool pool, BasePoolManager* pools);
-    ~InternalModelLoader();
+    virtual ~InternalModelLoader();
     Resource::Model load(
 	    Resource::ModelType type,
 	    ModelInfo::Model &modelData,

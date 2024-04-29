@@ -14,6 +14,28 @@ VkShaderStageFlags shaderFlagsVk(stageflag flags);
 /// --- Shader Set ---
 
 
+void SetVk::setData(size_t index,
+		    void* data,
+		    size_t bytesToRead,
+		    size_t destinationOffset,
+		    size_t arrayIndex,
+		    size_t dynamicIndex) {
+    InternalSet::setData(
+	    index, data, bytesToRead, destinationOffset,
+	    arrayIndex, dynamicIndex);
+    if(bytesToRead == 0)
+	bytesToRead = bindings[index].typeSize - destinationOffset;
+    
+    std::memcpy((unsigned char*)bindings[index].pData
+		+ handleIndex * bindings[index].setMemSize
+		+ dynamicIndex * bindings[index].dynamicMemSize
+		+ arrayIndex * bindings[index].dataMemSize
+		+ destinationOffset,
+		data,
+		bindings[index].typeSize);
+}
+
+
 VkDescriptorSetLayout SetVk::CreateSetLayout() {
     std::vector<VkDescriptorSetLayoutBinding> layoutBindings;	
     for(uint32_t i = 0; i < bindings.size(); i++) {

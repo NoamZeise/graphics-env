@@ -8,8 +8,6 @@
 #include "shader_structs.h"
 #include "resource_pool.h"
 
-#include "logger.h"
-
 class Render {
  public:
     /// sets up graphics api, makes a default resource pool

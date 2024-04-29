@@ -7,7 +7,7 @@
 class TextureLoaderGL : public InternalTexLoader {
 public:
     TextureLoaderGL(Resource::Pool pool, RenderConfig conf);
-    ~TextureLoaderGL();
+    ~TextureLoaderGL() override;
     unsigned int getViewIndex(Resource::Texture tex) override;
     void loadGPU() override;
     void clearGPU() override;

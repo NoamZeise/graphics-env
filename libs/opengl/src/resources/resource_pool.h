@@ -10,7 +10,7 @@
 class GLResourcePool : public ResourcePool {
 public:
     GLResourcePool(Resource::Pool pool, RenderConfig config, BasePoolManager* pools);
-    ~GLResourcePool();
+    virtual ~GLResourcePool();
 
     void loadGpu();
     void unloadStaged();

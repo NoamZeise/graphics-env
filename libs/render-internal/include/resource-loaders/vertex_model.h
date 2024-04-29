@@ -5,7 +5,7 @@
 #include <vector>
 #include <string>
 #include <stdint.h>
-#include <graphics/model/info.h>
+#include <graphics/model/animation.h>
 #include "vertex_types.h"
 
 Resource::ModelType getModelType(Vertex2D vert);

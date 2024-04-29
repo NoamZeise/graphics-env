@@ -16,6 +16,7 @@ struct Binding {
 	TextureSampler,
 	Texture,
     };
+    
     Binding() { bindType = type::None; }
 
     Binding(type binding_type,
@@ -39,6 +40,8 @@ class InternalSet : public Set {
     InternalSet(stageflag stageFlags) {
 	this->stageFlags = stageFlags;
     }
+
+    virtual ~InternalSet() {}
 
     void addUniformBuffer(size_t index, size_t typeSize, size_t arrayCount) override {
 	if(arrayCount == 0 || typeSize == 0)
@@ -123,13 +126,15 @@ private:
 		    "Shader Set Error - in setData: "
 		    + message + " out of range - given index: " + std::to_string(given)
 		    + "   max index: " + std::to_string(max));
-    }
-
-    
+    }    
 };
 
 class InternalShaderPool : public ShaderPool {
 public:
+    virtual ~InternalShaderPool() {
+	if(resourcesCreated)
+	    DestroyGpuResources();
+    }
     void CreateGpuResources() override {
 	if(resourcesCreated)
 	    DestroyGpuResources();

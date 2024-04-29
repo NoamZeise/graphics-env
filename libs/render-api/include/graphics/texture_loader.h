@@ -2,6 +2,7 @@
 #define OUTFACING_TEXTURE_LOADER
 
 #include "resources.h"
+#include <string>
 
 class TextureLoader {
  public:
