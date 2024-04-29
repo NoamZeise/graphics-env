@@ -14,6 +14,17 @@ if((NOT NO_ASSIMP) AND (NOT NO_FREETYPE))
   add_example(gooch_shading gooch_shading.cpp)
 endif()
 
+add_example(spirv_testing spirv_testing.cpp)
+if(GRAPHICS_STATIC)
+  target_link_libraries(spirv_testing spirv-cross-c)
+else()
+  target_link_libraries(spirv_testing spirv-cross-c-shared)
+  add_custom_command(TARGET spirv_testing POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    $<TARGET_FILE_DIR:spirv-cross-c-shared>
+    $<TARGET_FILE_DIR:spirv_testing>)
+endif()
+
 # Copy files for one executable - ie libs/resource files
 # this does mean only `minimum` will get built statically
 set(exec-name minimum)

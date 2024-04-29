@@ -316,7 +316,7 @@ bool swapchainRecreationRequired(VkResult result) {
       textureSet = shaderPool1->CreateSet(stageflag::frag);
       
       /*
-	textureSet->addTextureSampler
+	textureSet->addTextureSampler(0, 
 	
 	
 	descriptor::Set texture_Set("textures", descriptor::ShaderStage::Fragment);
@@ -325,6 +325,39 @@ bool swapchainRecreationRequired(VkResult result) {
 					   Resource::MAX_TEXTURES_SUPPORTED,
 					   textureViews);
 	textures = new DescSet(texture_Set, descriptorSizes, manager->deviceState.device);
+
+	std::vector<VkImageView> offscreenViews;
+	if(useFinalRenderpass) {
+	
+	  if(!offscreenSamplerCreated) {
+	      _offscreenTextureSampler = vkhelper::createTextureSampler(
+		      manager->deviceState.device,
+		      manager->deviceState.physicalDevice, 1.0f,
+		      false,
+		      true,
+		      VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
+	      offscreenSamplerCreated = true;
+	  }
+	  
+	  offscreenViews = offscreenRenderPass->getAttachmentViews(0);
+	  
+	  if(offscreenViews.size() == 0)
+	      throw std::runtime_error(
+		      "Nothing returned for offscreen texture views");
+		      
+	  descriptor::Set offscreen_Set("offscreen texture", descriptor::ShaderStage::Fragment);
+	  
+	  offscreen_Set.AddSamplerDescriptor("sampler", 1, &_offscreenTextureSampler);
+	  
+	  offscreen_Set.AddImageViewDescriptor("frame", descriptor::Type::SampledImage,
+					       1, &offscreenViews[0]);
+					       
+	  offscreenTex = new DescSet(offscreen_Set, descriptorSizes,
+				     manager->deviceState.device);
+				     
+	  descriptorSets.push_back(offscreenTex);
+      }
+      
       */
 
       shaderPool1->CreateGpuResources();

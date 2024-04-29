@@ -22,3 +22,6 @@
 	path = external/freetype
 	url = https://gitlab.freedesktop.org/freetype/freetype.git
 	shallow = true
+[submodule "external/spirv-cross"]
+	path = external/spirv-cross
+	url = https://github.com/KhronosGroup/SPIRV-Cross.git

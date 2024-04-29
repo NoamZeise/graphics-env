@@ -44,6 +44,22 @@ if(NOT NO_FREETYPE)
   add_subdirectory(freetype)
 endif()
 
+# spirv-cross setup
+if(GRAPHICS_STATIC)
+  set(SPIRV_CROSS_STATIC ON CACHE BOOL "")
+  set(SPIRV_CROSS_SHARED OFF CACHE BOOL "")
+else()
+  set(SPIRV_CROSS_STATIC OFF CACHE BOOL "")
+  set(SPIRV_CROSS_SHARED ON CACHE BOOL "")
+endif()
+set(SPIRV_CROSS_CLI OFF CACHE BOOL "")
+set(SPIRV_CROSS_ENABLE_HLSL OFF CACHE BOOL "")
+set(SPIRV_CROSS_ENABLE_TESTS OFF CACHE BOOL "")
+set(SPIRV_CROSS_ENABLE_HLSL OFF CACHE BOOL "")
+set(SPIRV_CROSS_ENABLE_MSL OFF CACHE BOOL "")
+set(SPIRV_CROSS_ENABLE_CPP OFF CACHE BOOL "")
+set(SPIRV_CROSS_ENABLE_REFLECT OFF CACHE BOOL "")
+add_subdirectory(spirv-cross)
 
 # dont want shared lib version of glm, volk, audio
 
