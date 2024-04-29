@@ -276,7 +276,6 @@ void App::draw() {
       manager->render->EndDraw(finishedDrawSubmit);
   
 #ifdef TIME_APP_DRAW_UPDATE
-  auto stop = std::chrono::high_resolution_clock::now();
   monitored_draw_stats = "draw: " + std::to_string(
 	 1.0 / std::chrono::duration_cast<std::chrono::microseconds>(
 		  std::chrono::high_resolution_clock::now() - start).count() * 1000000.0) + " fps";
