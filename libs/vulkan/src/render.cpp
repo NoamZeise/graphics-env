@@ -265,7 +265,41 @@ bool swapchainRecreationRequired(VkResult result) {
       
       /// set shader  descripor sets
 
-      //TODO: more recreation here, use max-frame-in-flight instead of swapchain count
+      
+      float minMipmapLevel = 100000.0f;
+      for(int i = 0; i < pools->PoolCount(); i++) {
+	  ResourcePoolVk* p = pools->get(i);
+	  if(p == nullptr)
+	      continue;
+	  if(p->usingGPUResources) {
+	      float n = p->texLoader->getMinMipmapLevel();
+	      if(n < minMipmapLevel)
+		  minMipmapLevel = n;
+	  }
+      }
+    
+      if(textureSamplerCreated) {
+	  if(prevRenderConf.texture_filter_nearest != renderConf.texture_filter_nearest ||
+	     prevTexSamplerMinMipmap != minMipmapLevel) {
+	      textureSamplerCreated = false;
+	      vkDestroySampler(manager->deviceState.device, textureSampler, nullptr);
+	  }
+      }
+    
+      if(!textureSamplerCreated) {	  
+	  textureSampler = vkhelper::createTextureSampler(
+		  manager->deviceState.device,
+		  manager->deviceState.physicalDevice,
+		  minMipmapLevel,
+		  manager->deviceState.features.samplerAnisotropy,
+		  renderConf.texture_filter_nearest,
+		  VK_SAMPLER_ADDRESS_MODE_REPEAT);
+	  prevTexSamplerMinMipmap = minMipmapLevel;
+	  textureSamplerCreated = true;
+      }
+
+      // Add textures from resource pools into texture indexes
+      _loadActiveTextures();
 
       int descriptorSizes = MAX_CONCURRENT_FRAMES;
 
@@ -278,6 +312,22 @@ bool swapchainRecreationRequired(VkResult result) {
       perFrame2DSet->addStorageBuffer(
 	      0, sizeof(shaderStructs::Frag2DData) * Resource::MAX_2D_BATCH);
 
+
+      textureSet = shaderPool1->CreateSet(stageflag::frag);
+      
+      /*
+	textureSet->addTextureSampler
+	
+	
+	descriptor::Set texture_Set("textures", descriptor::ShaderStage::Fragment);
+	texture_Set.AddSamplerDescriptor("sampler", 1, &textureSampler);
+	texture_Set.AddImageViewDescriptor("views", descriptor::Type::SampledImage,
+					   Resource::MAX_TEXTURES_SUPPORTED,
+					   textureViews);
+	textures = new DescSet(texture_Set, descriptorSizes, manager->deviceState.device);
+      */
+
+      shaderPool1->CreateGpuResources();
       shaderPool1->CreateGpuResources();
 
       
@@ -332,41 +382,6 @@ bool swapchainRecreationRequired(VkResult result) {
       }
 
       // fragment descriptor sets
-
-      float minMipmapLevel = 100000.0f;
-      for(int i = 0; i < pools->PoolCount(); i++) {
-	  ResourcePoolVk* p = pools->get(i);
-	  if(p == nullptr)
-	      continue;
-	  if(p->usingGPUResources) {
-	      float n = p->texLoader->getMinMipmapLevel();
-	      if(n < minMipmapLevel)
-		  minMipmapLevel = n;
-	  }
-      }
-    
-      if(textureSamplerCreated) {
-	  if(prevRenderConf.texture_filter_nearest != renderConf.texture_filter_nearest ||
-	     prevTexSamplerMinMipmap != minMipmapLevel) {
-	      textureSamplerCreated = false;
-	      vkDestroySampler(manager->deviceState.device, textureSampler, nullptr);
-	  }
-      }
-    
-      if(!textureSamplerCreated) {	  
-	  textureSampler = vkhelper::createTextureSampler(
-		  manager->deviceState.device,
-		  manager->deviceState.physicalDevice,
-		  minMipmapLevel,
-		  manager->deviceState.features.samplerAnisotropy,
-		  renderConf.texture_filter_nearest,
-		  VK_SAMPLER_ADDRESS_MODE_REPEAT);
-	  prevTexSamplerMinMipmap = minMipmapLevel;
-	  textureSamplerCreated = true;
-      }
-
-      // Add textures from resource pools into texture indexes
-      _loadActiveTextures();
       
       descriptor::Set texture_Set("textures", descriptor::ShaderStage::Fragment);
       texture_Set.AddSamplerDescriptor("sampler", 1, &textureSampler);

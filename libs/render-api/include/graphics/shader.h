@@ -5,7 +5,6 @@
 #include <string>
 #include <vector>
 
-
 class PipelineInput {
 public:
     enum class type {
@@ -54,11 +53,10 @@ public:
     /// Lowest level shader buffer writing function
     ///
     /// Set up to `typeSize - destinationOffset` number of bytes
-    /// arrays and dynamics are not stored with C++ mem alignment
-    ///
-    /// passing 0 for bytes to read will read typeSize - destinationOffset bytes
-    ///
-    /// will throw if memory to write is out of range, or any indicies are out of range
+    /// arrays and dynamics are not stored with C++ mem alignment.
+    /// -> passing 0 for bytes to read will read typeSize - destinationOffset bytes
+    /// -> Prints error if memory to write is out of range, or any indicies are out of range
+    ///    And returns without writing the data
     virtual void setData(
 	    size_t index,
 	    void* data,
@@ -67,8 +65,6 @@ public:
 	    size_t arrayIndex,
 	    size_t dynamicIndex) = 0;
 };
-
-#include <graphics/logger.h>
 
 /// Holds shader sets
 class ShaderPool {

@@ -20,9 +20,14 @@ void SetVk::setData(size_t index,
 		    size_t destinationOffset,
 		    size_t arrayIndex,
 		    size_t dynamicIndex) {
-    InternalSet::setData(
-	    index, data, bytesToRead, destinationOffset,
-	    arrayIndex, dynamicIndex);
+    try {
+	InternalSet::setData(
+		index, data, bytesToRead, destinationOffset,
+		arrayIndex, dynamicIndex);
+    } catch(std::invalid_argument e) {
+	LOG_ERROR(e.what());
+	return;
+    }
     if(bytesToRead == 0)
 	bytesToRead = bindings[index].typeSize - destinationOffset;
     
@@ -71,7 +76,7 @@ void SetVk::DestroySetResources() {
 
 void SetVk::getMemoryRequirements(size_t* pMemSize, VkPhysicalDeviceProperties deviceProps) {
     if(setHandles.size() <= 0)
-	throw std::runtime_error(
+	throw std::invalid_argument(
 		"No descriptor sets were assinged to the set handles array");
     
     for(auto &binding: bindings) {
@@ -180,10 +185,10 @@ void SetVk::setMemoryPointer(void* p,
 
 
 void ShaderPoolVk::CreateGpuResources() {
+    InternalShaderPool::CreateGpuResources();
     createPool();
     createSets();
     createBuffer();
-    InternalShaderPool::CreateGpuResources();
 }
 
 void ShaderPoolVk::DestroyGpuResources() {
@@ -284,7 +289,7 @@ VkDescriptorType bindingTypeVk(Binding::type type) {
     case Binding::type::TextureSampler:
 	return VK_DESCRIPTOR_TYPE_SAMPLER;
     default:
-	throw std::runtime_error("Unrecognised shader set binding type, left as None?");
+	throw std::invalid_argument("Unrecognised shader set binding type, left as None?");
     }
 }
 
