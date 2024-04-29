@@ -54,7 +54,21 @@ struct AttachmentImage;
 /// Holds the framebuffer resources;
 struct Framebuffer {
     ~Framebuffer();
+    VkResult CreateImages(
+	    VkDevice device,
+	    std::vector<AttachmentImage> attachImages,
+	    VkImage *swapchainImage, // can be null
+	    VkExtent2D extent,
+	    VkDeviceSize* pMemSize,
+	    uint32_t* pMemFlags,
+	    bool createImage);
+    VkResult CreateFramebuffer(
+	    VkRenderPass renderpass,
+	    VkDeviceMemory imageMemory,
+	    Framebuffer* firstFramebuffer);
+    
     VkDevice device;
+    VkExtent2D extent;
     bool framebufferCreated = false;
     VkFramebuffer framebuffer;
     std::vector<AttachmentImage> attachments;
@@ -79,9 +93,9 @@ class RenderPass {
     /// caller is responsible for freeing the memory they allocated for the
     /// previous attachment images
     VkResult createFramebufferImages(std::vector<VkImage> *swapchainImages,
-				 VkExtent2D extent,
-				 VkDeviceSize *pMemReq,
-				 uint32_t *pMemFlags);
+				     VkExtent2D extent,
+				     VkDeviceSize *pMemReq,
+				     uint32_t *pMemFlags);
     VkResult createFramebuffers(VkDeviceMemory framebufferImageMemory);
 
     /// It's up to the caller to end the render pass.
@@ -90,8 +104,8 @@ class RenderPass {
     void beginRenderPass(VkCommandBuffer cmdBuff, uint32_t frameIndex);
     
     std::vector<VkImageView> getAttachmentViews(uint32_t attachmentIndex);
-    VkExtent2D getExtent();
-    VkRenderPass getRenderPass();
+    VkExtent2D getExtent() { return this->framebufferExtent; }
+    VkRenderPass getRenderPass() { return this->renderpass; }
 
  private:
     VkDevice device;
