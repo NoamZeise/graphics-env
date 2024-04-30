@@ -17,7 +17,7 @@ struct Binding {
 	Texture,
     };
     
-    Binding() { bindType = type::None; }
+    Binding() {}
 
     Binding(type binding_type,
 	    size_t typeSize,
@@ -31,10 +31,10 @@ struct Binding {
 
     Binding(TextureSampler sampler) {
 	this->bindType = type::TextureSampler;
-	this->samplerDesc = sampler;	
+	this->samplerDesc = sampler;
     }
     
-    type bindType = Binding::type::None;
+    type bindType = type::None;
     size_t typeSize = 0;
     size_t arrayCount = 1;
     size_t dynamicCount = 1;
@@ -88,9 +88,10 @@ class InternalSet : public Set {
 		    "Whose parent pool has not created Gpu Resources for it");
 	throwOnBadIndexRange(index, numBindings(), "binding index");	
 	Binding* b = getBinding(index);
-	if(b->bindType == Binding::type::None ||
-	   b->bindType == Binding::type::Texture ||
-	   b->bindType == Binding::type::TextureSampler) {
+	if(b->bindType != Binding::type::UniformBuffer &&
+	   b->bindType != Binding::type::UniformBufferDynamic &&
+	   b->bindType != Binding::type::StorageBuffer &&
+	   b->bindType != Binding::type::StorageBufferDynamic) {
 	    throw std::invalid_argument(
 		    "Shader Set Error: Tried to setData for non buffer element");
 	}

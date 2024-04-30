@@ -44,7 +44,8 @@ void SetVk::setData(size_t index,
 
 
 VkDescriptorSetLayout SetVk::CreateSetLayout() {
-    std::vector<VkDescriptorSetLayoutBinding> layoutBindings;	
+    std::vector<VkDescriptorSetLayoutBinding> layoutBindings;
+
     for(uint32_t i = 0; i < bindings.size(); i++) {
 	if(bindings[i].bindType == Binding::type::None)
 	    continue;
@@ -55,6 +56,7 @@ VkDescriptorSetLayout SetVk::CreateSetLayout() {
 	b.descriptorType = bindings[i].vkBindingType;
 	bindings[i].vkStageFlags = shaderFlagsVk(this->stageFlags);
 	b.stageFlags = bindings[i].vkStageFlags;
+	b.pImmutableSamplers = VK_NULL_HANDLE;
 	layoutBindings.push_back(b);
 
 	VkDescriptorPoolSize p;
@@ -62,7 +64,6 @@ VkDescriptorSetLayout SetVk::CreateSetLayout() {
 	p.type = b.descriptorType;
 	poolSizes.push_back(p);
     }
-    
     checkResultAndThrow(
 	    part::create::DescriptorSetLayout(state.device, layoutBindings, &layout),
 	    "Failed to create descriptor set layout");
@@ -71,10 +72,11 @@ VkDescriptorSetLayout SetVk::CreateSetLayout() {
 }
 
 void SetVk::DestroySetResources() {
-    if(layoutCreated)
+    if(layoutCreated) {
 	vkDestroyDescriptorSetLayout(state.device, layout, nullptr);
-    for(auto& binding: bindings)
-	binding.clear(state.device);
+	for(auto& binding: bindings)
+	    binding.clear(state.device);
+    }
     gpuResourcesCreated = false;
     layoutCreated = false;
 }
@@ -108,6 +110,7 @@ void SetVk::getMemoryRequirements(size_t* pMemSize, VkPhysicalDeviceProperties d
 	    alignment = deviceProps.limits.minStorageBufferOffsetAlignment;
 	    break;
 	case Binding::type::TextureSampler:
+	    LOG("creating tex sampler");
 	    checkResultAndThrow(
 		    part::create::TextureSampler(
 			    state.device, state.physicalDevice,
@@ -117,7 +120,9 @@ void SetVk::getMemoryRequirements(size_t* pMemSize, VkPhysicalDeviceProperties d
 			    toVkFilter(binding.samplerDesc.textureFilter),
 			    toVKAddressMode(binding.samplerDesc.addressMode)),
 		    "failed to create texture sampler!");
-	    break;
+	    continue;
+	case Binding::type::Texture:
+	    // todo
 	default:
 	    continue;
 	}
@@ -295,6 +300,7 @@ void BindingVk::clear(VkDevice device) {
     setMemSize = 0;
     if(this->bindType == Binding::type::TextureSampler)
 	vkDestroySampler(device, samplerVk, nullptr);
+    samplerVk = VK_NULL_HANDLE;
 }
 
 

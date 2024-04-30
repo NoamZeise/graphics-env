@@ -12,7 +12,10 @@ namespace part
     void _createDescriptorSet(VkDevice device, VkDescriptorPool pool, DS::DescriptorSet *ds, uint32_t frameCount);
     size_t _createHostVisibleShaderBufferMemory(DeviceState base, std::vector<DS::Binding*> ds, VkBuffer* buffer, VkDeviceMemory* memory);
 
-    VkResult DescriptorSetLayout(VkDevice device, std::vector<VkDescriptorSetLayoutBinding> &bindings, VkDescriptorSetLayout *layout) {
+    VkResult DescriptorSetLayout(
+	    VkDevice device,
+	    std::vector<VkDescriptorSetLayoutBinding> &bindings,
+	    VkDescriptorSetLayout *layout) {
 	VkDescriptorSetLayoutCreateInfo layoutInfo{
 	    VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
 	layoutInfo.bindingCount = (uint32_t)bindings.size();
@@ -24,7 +27,6 @@ namespace part
 			    VkDescriptorPool* pool,
 			    std::vector<VkDescriptorPoolSize> &poolSizes,
 			    uint32_t maxSets) {
-
 	VkDescriptorPoolCreateInfo poolInfo{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
 	poolInfo.poolSizeCount = (uint32_t)poolSizes.size();
 	poolInfo.pPoolSizes = poolSizes.data();

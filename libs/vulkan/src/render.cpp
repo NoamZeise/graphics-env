@@ -262,10 +262,11 @@ bool swapchainRecreationRequired(VkResult result) {
 
       LOG("Swapchain Image Count: " << swapchainImages->size());
             
-      LOG("Creating Descriptor Sets");
       
-      /// set shader  descripor sets
+      LOG("Creating Texture Sampler");
 
+      // Add textures from resource pools into texture indexes
+      _loadActiveTextures();
       
       float minMipmapLevel = 100000.0f;
       for(int i = 0; i < pools->PoolCount(); i++) {
@@ -303,8 +304,8 @@ bool swapchainRecreationRequired(VkResult result) {
 	  textureSamplerCreated = true;
       }
 
-      // Add textures from resource pools into texture indexes
-      _loadActiveTextures();
+
+      LOG("Creating Descriptor Sets");
 
       int descriptorSizes = MAX_CONCURRENT_FRAMES;
 

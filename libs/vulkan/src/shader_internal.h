@@ -17,8 +17,9 @@
 
 struct BindingVk : public Binding {
     BindingVk() {}
-    BindingVk(Binding binding) :
-	Binding(binding.bindType, binding.typeSize, binding.arrayCount, binding.dynamicCount) {}
+    BindingVk(Binding binding) {
+	Binding::operator=(binding);
+    }
 
     void clear(VkDevice device);
     
