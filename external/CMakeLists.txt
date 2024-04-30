@@ -44,14 +44,10 @@ if(NOT NO_FREETYPE)
   add_subdirectory(freetype)
 endif()
 
-# spirv-cross setup
-if(GRAPHICS_STATIC)
-  set(SPIRV_CROSS_STATIC ON CACHE BOOL "")
-  set(SPIRV_CROSS_SHARED OFF CACHE BOOL "")
-else()
-  set(SPIRV_CROSS_STATIC OFF CACHE BOOL "")
-  set(SPIRV_CROSS_SHARED ON CACHE BOOL "")
-endif()
+# spirv-cross setup 
+# static only works for me with gcc?
+set(SPIRV_CROSS_STATIC ON CACHE BOOL "")
+set(SPIRV_CROSS_SHARED OFF CACHE BOOL "")
 set(SPIRV_CROSS_CLI OFF CACHE BOOL "")
 set(SPIRV_CROSS_ENABLE_HLSL OFF CACHE BOOL "")
 set(SPIRV_CROSS_ENABLE_TESTS OFF CACHE BOOL "")
