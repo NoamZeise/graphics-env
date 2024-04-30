@@ -50,9 +50,7 @@ public:
 	DestroySetResources();
     }
 
-    ~SetVk() override {
-	DestroySetResources();
-    }    
+    ~SetVk() override { DestroySetResources(); }    
     
     void setData(size_t index,
 		 void* data,
@@ -117,7 +115,7 @@ public:
     }
 
     ~ShaderPoolVk() override {
-	InternalShaderPool::~InternalShaderPool();
+	DestroyGpuResources();
 	for(auto set: sets)
 	    delete set;
     }
@@ -149,6 +147,9 @@ private:
     VkDeviceMemory memory;
 };
 
+
+
+/// -- OLD ---
 
 
 

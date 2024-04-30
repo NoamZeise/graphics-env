@@ -136,17 +136,21 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
       DescSet *bones;
       size_t currentBonesDynamicOffset;
       DescSet *perFrame2DVert;
-      glm::mat4 perFrame2DVertData[Resource::MAX_2D_BATCH];
-      Set* perFrame2DSet;
-      shaderStructs::Frag2DData perFrame2DFragData[Resource::MAX_2D_BATCH];
-      
-      Set* lightingSet;
-      BPLighting lightingData;
+      glm::mat4 perFrame2DVertData[Resource::MAX_2D_BATCH];      
       DescSet *offscreenTransform;
       glm::mat4 offscreenTransformData;
       DescSet *textures;
       DescSet *emptyDS;
       DescSet *offscreenTex;
+
+      Set* perFrame2DSet;
+      shaderStructs::Frag2DData perFrame2DFragData[Resource::MAX_2D_BATCH];
+      
+      Set* lightingSet;
+      BPLighting lightingData;
+
+      Set* textureSet;
+      
       bool offscreenSamplerCreated = false;
       VkSampler _offscreenTextureSampler;
       bool textureSamplerCreated = false;
