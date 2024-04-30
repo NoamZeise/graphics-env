@@ -81,7 +81,7 @@ public:
     std::vector<VkDescriptorPoolSize> getPoolSizes() { return poolSizes; }
     void setDescSetHandles(std::vector<VkDescriptorSet> handles) { this->setHandles = handles; }
     void getMemoryRequirements(size_t* pMemSize, VkPhysicalDeviceProperties deviceProps);
-    void setMemoryPointer(void* p,
+    void writeDescriptorSets(void* p,
 			  VkBuffer buffer,
 			  std::vector<VkWriteDescriptorSet> &writes,
 			  std::vector<std::vector<VkDescriptorBufferInfo>> &buffers,

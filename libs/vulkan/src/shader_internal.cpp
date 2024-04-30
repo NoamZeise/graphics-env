@@ -164,7 +164,22 @@ void addBufferInfos(std::vector<VkWriteDescriptorSet> &writes,
     }
 }
 
-void SetVk::setMemoryPointer(void* p,
+void genImageSamplerWrite(std::vector<VkWriteDescriptorSet> &writes,
+			  std::vector<VkDescriptorImageInfo> &images,
+			  BindingVk *b,
+			  size_t setCount) {    
+    images.resize(setCount * b->arrayCount);
+    for(int setIndex = 0; setIndex < setCount; setIndex++) {
+	for(int arrayIndex = 0; arrayIndex < b->arrayCount; arrayIndex++) {
+	    VkDescriptorImageInfo info;
+	    info.sampler = b->samplerVk;
+	}
+	writes[writes.size() - setCount + setIndex]
+	    .pImageInfo = images.data() + setIndex * b->arrayCount;
+    }
+}
+
+void SetVk::writeDescriptorSets(void* p,
 			     VkBuffer buffer,
 			     std::vector<VkWriteDescriptorSet> &writes,
 			     std::vector<std::vector<VkDescriptorBufferInfo>> &buffers,
@@ -193,9 +208,12 @@ void SetVk::setMemoryPointer(void* p,
 	    buffers.push_back(std::vector<VkDescriptorBufferInfo>());
 	    addBufferInfos(writes, buffers.back(), setHandles.size(), b, buffer);
 	    break;
-	case Binding::type::Texture:
 	case Binding::type::TextureSampler:
 	    // do texture sampler + let it be updated
+	    images.push_back(std::vector<VkDescriptorImageInfo>());
+	    genImageSamplerWrite(writes, images.back(), b, setHandles.size());
+	    break;
+	case Binding::type::Texture:
 	    throw std::runtime_error("image resources not implemented in sets");
 	    break;
 	default:
@@ -285,7 +303,7 @@ void ShaderPoolVk::createData() {
     std::vector<std::vector<VkDescriptorBufferInfo>> buffers;
     std::vector<std::vector<VkDescriptorImageInfo>> images;
     for(auto set: sets)
-    	set->setMemoryPointer(p, buffer, writes, buffers, images);
+    	set->writeDescriptorSets(p, buffer, writes, buffers, images);
     vkUpdateDescriptorSets(state.device, (uint32_t)writes.size(), writes.data(), 0, nullptr);
 }
 
