@@ -28,11 +28,17 @@ struct Binding {
 	this->arrayCount = arrayCount;
 	this->dynamicCount = dynamicCount;
     }
+
+    Binding(TextureSampler sampler) {
+	this->bindType = type::TextureSampler;
+	this->samplerDesc = sampler;	
+    }
     
-    type bindType;
-    size_t typeSize;
-    size_t arrayCount;
-    size_t dynamicCount;
+    type bindType = Binding::type::None;
+    size_t typeSize = 0;
+    size_t arrayCount = 1;
+    size_t dynamicCount = 1;
+    TextureSampler samplerDesc;
 };
 
 class InternalSet : public Set {
@@ -55,6 +61,10 @@ class InternalSet : public Set {
 	    throw std::invalid_argument("array count or type size of uniform buffer equaled 0");
 	    
 	addBinding(index, Binding(Binding::type::StorageBuffer, typeSize, arrayCount, 1));
+    }
+
+    void addTextureSampler(size_t index, TextureSampler sampler) override {
+	addBinding(index, Binding(sampler));
     }
 
     void setData(size_t index, void* data) override {
@@ -93,6 +103,16 @@ class InternalSet : public Set {
 			     "(bytes to read >= type size * destination offset),");
     }
 
+    void updateSampler(size_t index, TextureSampler sampler) override {
+	throwOnBadIndexRange(index, numBindings(), "binding index");
+	if(getBinding(index)->bindType != Binding::type::TextureSampler &&
+	   getBinding(index)->bindType != Binding::type::None)
+	    throw std::invalid_argument(
+		    "Update Sampler Error: Tried to update sampler for non sampler index");
+	if(!gpuResourcesCreated)
+	    setBinding(index, Binding(sampler));
+    }
+
     size_t nextFreeIndex() override {
 	for(int i = 0; i < numBindings(); i++)
 	    if(getBinding(i)->bindType == Binding::type::None)
@@ -124,7 +144,7 @@ private:
     void throwOnBadIndexRange(size_t given, size_t max, std::string message) {
 	if(given >= max)
 	    throw std::invalid_argument(
-		    "Shader Set Error - in setData: "
+		    "Shader Set Error - in update data: "
 		    + message + " out of range - given index: " + std::to_string(given)
 		    + "   max index: " + std::to_string(max));
     }    

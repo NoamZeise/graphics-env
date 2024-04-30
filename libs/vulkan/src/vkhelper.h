@@ -21,10 +21,6 @@ namespace vkhelper {
 
   /// return the desired size padded to match the required alignment
   VkDeviceSize correctMemoryAlignment(VkDeviceSize desiredSize, VkDeviceSize alignment);
-  
-  VkSampler createTextureSampler(VkDevice device, VkPhysicalDevice physicalDevice,
-				 float maxLod, bool enableAnisotrophy, bool useNearestFilter,
-				 VkSamplerAddressMode addressMode);
 
   /// return a vector list of formats the hardware supports
   VkFormat findSupportedFormat(VkPhysicalDevice physicalDevice,

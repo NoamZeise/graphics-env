@@ -2,6 +2,7 @@
 
 #include "parts/pipeline.h"
 #include "parts/descriptors.h"
+#include "parts/images.h"
 #include "pipeline.h"
 #include "pipeline_data.h"
 #include "resources/resource_pool.h"
@@ -287,13 +288,17 @@ bool swapchainRecreationRequired(VkResult result) {
       }
     
       if(!textureSamplerCreated) {	  
-	  textureSampler = vkhelper::createTextureSampler(
-		  manager->deviceState.device,
-		  manager->deviceState.physicalDevice,
-		  minMipmapLevel,
-		  manager->deviceState.features.samplerAnisotropy,
-		  renderConf.texture_filter_nearest,
-		  VK_SAMPLER_ADDRESS_MODE_REPEAT);
+	  checkResultAndThrow(
+		  part::create::TextureSampler(
+			  manager->deviceState.device,
+			  manager->deviceState.physicalDevice,
+			  &textureSampler,
+			  minMipmapLevel,
+			  manager->deviceState.features.samplerAnisotropy,
+			  renderConf.texture_filter_nearest ?
+			  VK_FILTER_NEAREST : VK_FILTER_LINEAR,
+			  VK_SAMPLER_ADDRESS_MODE_REPEAT),
+		  "Failed to create texture sampler");
 	  prevTexSamplerMinMipmap = minMipmapLevel;
 	  textureSamplerCreated = true;
       }
@@ -311,14 +316,16 @@ bool swapchainRecreationRequired(VkResult result) {
       perFrame2DSet = shaderPool1->CreateSet(stageflag::frag);
       perFrame2DSet->addStorageBuffer(
 	      0, sizeof(shaderStructs::Frag2DData) * Resource::MAX_2D_BATCH);
-
+      
 
       textureSet = shaderPool1->CreateSet(stageflag::frag);
+      textureSet->addTextureSampler(
+	      0, TextureSampler(renderConf.texture_filter_nearest ?
+				TextureSampler::filter::nearest : TextureSampler::filter::linear,
+				TextureSampler::address_mode::repeat,
+				minMipmapLevel));
       
-      /*
-	textureSet->addTextureSampler(0, 
-	
-	
+      /*		
 	descriptor::Set texture_Set("textures", descriptor::ShaderStage::Fragment);
 	texture_Set.AddSamplerDescriptor("sampler", 1, &textureSampler);
 	texture_Set.AddImageViewDescriptor("views", descriptor::Type::SampledImage,
@@ -432,12 +439,15 @@ bool swapchainRecreationRequired(VkResult result) {
       std::vector<VkImageView> offscreenViews; // needs to be in scope for prepareShaderbuffersets
       if(useFinalRenderpass) {
 	  if(!offscreenSamplerCreated) {
-	      _offscreenTextureSampler = vkhelper::createTextureSampler(
-		      manager->deviceState.device,
-		      manager->deviceState.physicalDevice, 1.0f,
-		      false,
-		      true,
-		      VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
+	      checkResultAndThrow(
+		      part::create::TextureSampler(
+			      manager->deviceState.device,
+			      manager->deviceState.physicalDevice,
+			      &_offscreenTextureSampler,
+			      1.0f, false,
+			      VK_FILTER_NEAREST,
+			      VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER),
+		      "Failed to create texture sampler");
 	      offscreenSamplerCreated = true;
 	  }
 	  offscreenViews = offscreenRenderPass->getAttachmentViews(0);

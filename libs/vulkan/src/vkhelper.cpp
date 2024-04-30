@@ -64,48 +64,6 @@ namespace vkhelper {
       return desiredSize;
   }
 
-  VkSampler createTextureSampler(VkDevice device,
-				 VkPhysicalDevice physicalDevice,
-				 float maxLod,
-				 bool enableAnisotrophy,
-				 bool useNearestFilter,
-				 VkSamplerAddressMode addressMode) {
-      VkPhysicalDeviceProperties deviceProps{};
-      vkGetPhysicalDeviceProperties(physicalDevice, &deviceProps);
-      VkSamplerCreateInfo samplerInfo{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
-      samplerInfo.addressModeU = addressMode;
-      samplerInfo.addressModeV = samplerInfo.addressModeU;
-      samplerInfo.addressModeW = samplerInfo.addressModeU;
-      if (useNearestFilter) {
-	  samplerInfo.magFilter = VK_FILTER_NEAREST;
-	  samplerInfo.minFilter = VK_FILTER_NEAREST;
-      }
-      else {
-	  samplerInfo.magFilter = VK_FILTER_LINEAR;
-	  samplerInfo.minFilter = VK_FILTER_LINEAR;
-      }
-      if(enableAnisotrophy) {
-	  samplerInfo.anisotropyEnable = VK_TRUE;
-	  samplerInfo.maxAnisotropy = deviceProps.limits.maxSamplerAnisotropy;
-      }
-      else {
-	  samplerInfo.maxAnisotropy = 1.0f;
-      }
-      samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-      samplerInfo.unnormalizedCoordinates = VK_FALSE;
-      samplerInfo.compareEnable = VK_FALSE;
-      samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-      samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-      samplerInfo.mipLodBias = 0.0f;
-      samplerInfo.maxLod = maxLod;
-      samplerInfo.minLod = 0.0f;
-      
-      VkSampler sampler;
-      if (vkCreateSampler(device, &samplerInfo, nullptr, &sampler) != VK_SUCCESS)
-	  throw std::runtime_error("Failed create sampler");
-
-      return sampler;
-  }
 
   VkFormat findSupportedFormat(VkPhysicalDevice physicalDevice,
 			       const std::vector<VkFormat>& formats,

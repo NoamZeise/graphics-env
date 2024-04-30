@@ -4,7 +4,9 @@
 #include <stdexcept>
 
 #include "parts/descriptors.h"
+#include "parts/images.h"
 #include "vkhelper.h"
+#include "logger.h"
 
 
 VkDescriptorType bindingTypeVk(Binding::type type);
@@ -60,19 +62,25 @@ VkDescriptorSetLayout SetVk::CreateSetLayout() {
 	p.type = b.descriptorType;
 	poolSizes.push_back(p);
     }
-    part::create::DescriptorSetLayout(device, layoutBindings, &layout);
+    
+    checkResultAndThrow(
+	    part::create::DescriptorSetLayout(state.device, layoutBindings, &layout),
+	    "Failed to create descriptor set layout");
     layoutCreated = true;
     return layout;
 }
 
 void SetVk::DestroySetResources() {
     if(layoutCreated)
-	vkDestroyDescriptorSetLayout(device, layout, nullptr);
+	vkDestroyDescriptorSetLayout(state.device, layout, nullptr);
     for(auto& binding: bindings)
-	binding.clearMemoryOffsets();
+	binding.clear(state.device);
     gpuResourcesCreated = false;
     layoutCreated = false;
 }
+
+VkFilter toVkFilter(TextureSampler::filter filter);
+VkSamplerAddressMode toVKAddressMode(TextureSampler::address_mode addressMode);
 
 void SetVk::getMemoryRequirements(size_t* pMemSize, VkPhysicalDeviceProperties deviceProps) {
     if(setHandles.size() <= 0)
@@ -98,6 +106,17 @@ void SetVk::getMemoryRequirements(size_t* pMemSize, VkPhysicalDeviceProperties d
 	case Binding::type::StorageBuffer:
 	case Binding::type::StorageBufferDynamic:
 	    alignment = deviceProps.limits.minStorageBufferOffsetAlignment;
+	    break;
+	case Binding::type::TextureSampler:
+	    checkResultAndThrow(
+		    part::create::TextureSampler(
+			    state.device, state.physicalDevice,
+			    &binding.samplerVk,
+			    binding.samplerDesc.maxLod,
+			    state.features.samplerAnisotropy,
+			    toVkFilter(binding.samplerDesc.textureFilter),
+			    toVKAddressMode(binding.samplerDesc.addressMode)),
+		    "failed to create texture sampler!");
 	    break;
 	default:
 	    continue;
@@ -171,6 +190,7 @@ void SetVk::setMemoryPointer(void* p,
 	    break;
 	case Binding::type::Texture:
 	case Binding::type::TextureSampler:
+	    // do texture sampler + let it be updated
 	    throw std::runtime_error("image resources not implemented in sets");
 	    break;
 	default:
@@ -188,7 +208,7 @@ void ShaderPoolVk::CreateGpuResources() {
     InternalShaderPool::CreateGpuResources();
     createPool();
     createSets();
-    createBuffer();
+    createData();
 }
 
 void ShaderPoolVk::DestroyGpuResources() {
@@ -209,7 +229,9 @@ void ShaderPoolVk::createPool() {
 	    poolSizes.back().descriptorCount *= setCopies;
 	}
     }
-    part::create::DescriptorPool(state.device, &pool, poolSizes, sets.size() * setCopies);
+    checkResultAndThrow(part::create::DescriptorPool(
+				state.device, &pool, poolSizes, sets.size() * setCopies),
+			"Failed to create Descriptor Pool!");
 }
 
 void ShaderPoolVk::createSets() {
@@ -221,7 +243,9 @@ void ShaderPoolVk::createSets() {
     }
     
     std::vector<VkDescriptorSet> setHandles(setLayouts.size());
-    part::create::DescriptorSets(state.device, pool, setLayouts, setHandles);
+    checkResultAndThrow(
+	    part::create::DescriptorSets(state.device, pool, setLayouts, setHandles),
+	    "Failed to create descriptor sets");
     
     int handleIndex = 0;
     for(auto set: sets) {
@@ -232,7 +256,7 @@ void ShaderPoolVk::createSets() {
     }
 }
 
-void ShaderPoolVk::createBuffer() {
+void ShaderPoolVk::createData() {
     VkPhysicalDeviceProperties deviceProps;
     vkGetPhysicalDeviceProperties(state.physicalDevice, &deviceProps);
     
@@ -241,10 +265,12 @@ void ShaderPoolVk::createBuffer() {
 	set->getMemoryRequirements(&memorySize, deviceProps);
 
     // only support host coherent for now
-    vkhelper::createBufferAndMemory(
-	    state, memorySize, &buffer, &memory,
-	    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-	    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+    checkResultAndThrow(
+	    vkhelper::createBufferAndMemory(
+		    state, memorySize, &buffer, &memory,
+		    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+		    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT),
+	    "Failed to allocate memory and buffer for shader pool");
     
     vkBindBufferMemory(state.device, buffer, memory, 0);
     void *p;
@@ -260,13 +286,15 @@ void ShaderPoolVk::createBuffer() {
 
 /// ---- Binding ----
 
-void BindingVk::clearMemoryOffsets() {
+void BindingVk::clear(VkDevice device) {
     pData = nullptr;
     buffer = VK_NULL_HANDLE;
     baseOffset = 0;
     dataMemSize = 0;
     dynamicMemSize = 0;
     setMemSize = 0;
+    if(this->bindType == Binding::type::TextureSampler)
+	vkDestroySampler(device, samplerVk, nullptr);
 }
 
 
@@ -305,6 +333,33 @@ VkShaderStageFlags shaderFlagsVk(stageflag flags) {
     return f;
 }
 
+VkFilter toVkFilter(TextureSampler::filter filter) {
+    switch(filter) {
+    case TextureSampler::filter::linear:
+	return VK_FILTER_LINEAR;
+    case TextureSampler::filter::nearest:
+	return VK_FILTER_NEAREST;
+    default:
+	LOG_ERROR("Unrecognised filter for texture sampler");
+	return VK_FILTER_LINEAR;
+    }
+}
+
+VkSamplerAddressMode toVKAddressMode(TextureSampler::address_mode addressMode) {
+    switch(addressMode) {
+    case TextureSampler::address_mode::repeat:
+	return VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    case TextureSampler::address_mode::mirrored_repeat:
+	return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+    case TextureSampler::address_mode::clamp_to_border:
+	return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+    case TextureSampler::address_mode::clamp_to_edge:
+	return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    default:
+	LOG_ERROR("Unrecognised address mode for texture sampler");
+	return VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    }
+}
 
 
 

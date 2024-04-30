@@ -20,7 +20,7 @@ struct BindingVk : public Binding {
     BindingVk(Binding binding) :
 	Binding(binding.bindType, binding.typeSize, binding.arrayCount, binding.dynamicCount) {}
 
-    void clearMemoryOffsets();
+    void clear(VkDevice device);
     
     VkDescriptorType vkBindingType;
     VkShaderStageFlags vkStageFlags;
@@ -41,12 +41,14 @@ struct BindingVk : public Binding {
     size_t dynamicMemSize = 0;
     // Size of the binding for an individual set -> dynamicSize * dynamicCount
     size_t setMemSize = 0;
+
+    VkSampler samplerVk;
 };
 
 class SetVk : public InternalSet {
 public:
-    SetVk(VkDevice device, stageflag flags) : InternalSet(flags) {
-	this->device = device;
+    SetVk(DeviceState state, stageflag flags) : InternalSet(flags) {
+	this->state = state;
 	DestroySetResources();
     }
 
@@ -96,7 +98,7 @@ protected:
 private:
     std::vector<BindingVk> bindings;
     
-    VkDevice device;
+    DeviceState state;
     bool layoutCreated = false;
     VkDescriptorSetLayout layout;
     std::vector<VkDescriptorPoolSize> poolSizes;
@@ -121,7 +123,7 @@ public:
     }
     
     Set* CreateSet(stageflag flags) override {
-	sets.push_back(new SetVk(state.device, flags));
+	sets.push_back(new SetVk(state, flags));
 	return sets[sets.size() - 1];
     }
 
@@ -137,7 +139,7 @@ private:
 
     void createPool();
     void createSets();
-    void createBuffer();
+    void createData();
     
     DeviceState state;
     int setCopies;

@@ -38,12 +38,35 @@ inline stageflag operator| (stageflag a, stageflag b) {
 }
 
 struct TextureSampler {
+    enum class filter {
+	nearest = 0,
+	linear,
+    };
+    enum class address_mode {
+	repeat = 0,
+	mirrored_repeat,
+	clamp_to_edge,
+	clamp_to_border,
+    };
+
+    TextureSampler() {}
     
+    TextureSampler(filter filter, address_mode addressMode, int maxLod) {
+	this->textureFilter = filter;
+	this->addressMode = addressMode;
+	this->maxLod = maxLod;
+    }
+
+    filter textureFilter = filter::linear;
+    address_mode addressMode = address_mode::repeat;
+    int maxLod = 1.0f;
 };
 
 class Set {
 public:
     virtual size_t nextFreeIndex() = 0;
+
+    /// Adding descriptors 
     
     virtual void addUniformBuffer(size_t index, size_t typeSize, size_t arrayCount) = 0;
     void addUniformBuffer(size_t index, size_t typeSize) { addUniformBuffer(index, typeSize, 1); }
@@ -51,9 +74,11 @@ public:
     virtual void addStorageBuffer(size_t index, size_t typeSize, size_t arrayCount) = 0;
     void addStorageBuffer(size_t index, size_t typeSize) { addStorageBuffer(index, typeSize, 1); }
 
-    //  virtual void addTextureSampler(size_t index, size_t arrayCount) = 0;
+    virtual void addTextureSampler(size_t index, TextureSampler sampler) = 0;
 
     //    virtual void addTexture(size_t index, size_t arrayCount) = 0;
+
+    /// Update commands
     
     virtual void setData(size_t index, void* data) = 0;
     virtual void setData(size_t index, void* data, size_t size) = 0;
@@ -71,6 +96,8 @@ public:
 	    size_t destinationOffset,
 	    size_t arrayIndex,
 	    size_t dynamicIndex) = 0;
+
+    virtual void updateSampler(size_t index, TextureSampler sampler) = 0;
 };
 
 /// Holds shader sets

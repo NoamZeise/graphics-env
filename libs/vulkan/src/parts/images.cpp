@@ -54,6 +54,40 @@ namespace part
       returnOnErr(vkCreateImageView(device, &viewInfo, nullptr, imgView));
       return result;
   }
+  
+  VkResult TextureSampler(VkDevice device,
+			  VkPhysicalDevice physicalDevice,
+			  VkSampler* sampler,
+			  float maxLod,
+			  bool enableAnisotrophy,
+			  VkFilter filter,
+			  VkSamplerAddressMode addressMode) {
+      VkPhysicalDeviceProperties deviceProps{};
+      vkGetPhysicalDeviceProperties(physicalDevice, &deviceProps);
+      VkSamplerCreateInfo samplerInfo{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
+      samplerInfo.addressModeU = addressMode;
+      samplerInfo.addressModeV = samplerInfo.addressModeU;
+      samplerInfo.addressModeW = samplerInfo.addressModeU;
+      samplerInfo.magFilter = filter;
+      samplerInfo.minFilter = filter;
+      if(enableAnisotrophy) {
+	  samplerInfo.anisotropyEnable = VK_TRUE;
+	  samplerInfo.maxAnisotropy = deviceProps.limits.maxSamplerAnisotropy;
+      }
+      else {
+	  samplerInfo.maxAnisotropy = 1.0f;
+      }
+      samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+      samplerInfo.unnormalizedCoordinates = VK_FALSE;
+      samplerInfo.compareEnable = VK_FALSE;
+      samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+      samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+      samplerInfo.mipLodBias = 0.0f;
+      samplerInfo.maxLod = maxLod;
+      samplerInfo.minLod = 0.0f;
+      
+      return vkCreateSampler(device, &samplerInfo, nullptr, sampler);
+  }
 
 
 }

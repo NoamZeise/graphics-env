@@ -14,6 +14,14 @@ namespace part {
 
         VkResult ImageView(VkDevice device, VkImageView* imgView, VkImage image,
                               VkFormat format, VkImageAspectFlags aspectFlags);
+
+      VkResult TextureSampler(VkDevice device,
+			      VkPhysicalDevice physicalDevice,
+			      VkSampler* sampler,
+			      float maxLod,
+			      bool enableAnisotrophy,
+			      VkFilter filter,
+			      VkSamplerAddressMode addressMode);
     }
 }
 
