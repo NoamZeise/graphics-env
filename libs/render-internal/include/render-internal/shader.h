@@ -71,8 +71,8 @@ class InternalSet : public Set {
 	setData(index, data, 0, 0, 0, 0);
     }
 
-    void setData(size_t index, void* data, size_t size) override {
-	setData(index, data, size, 0, 0, 0);
+    void setData(size_t index, void* data, size_t bytesToRead) override {
+	setData(index, data, bytesToRead, 0, 0, 0);
     }
 
     void setData(
@@ -110,8 +110,7 @@ class InternalSet : public Set {
 	   getBinding(index)->bindType != Binding::type::None)
 	    throw std::invalid_argument(
 		    "Update Sampler Error: Tried to update sampler for non sampler index");
-	if(!gpuResourcesCreated)
-	    setBinding(index, Binding(sampler));
+	getBinding(index)->samplerDesc = sampler;
     }
 
     size_t nextFreeIndex() override {

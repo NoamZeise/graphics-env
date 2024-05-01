@@ -252,6 +252,11 @@ void App::draw() {
 #endif
   if (submitDraw.joinable())
     submitDraw.join();
+  
+  if(current==Scene::Test1)
+      drawTestScene1();
+  if(current==Scene::Test2)
+      drawTestScene2();
 
 #ifdef TIME_APP_DRAW_UPDATE
   Resource::Font font;
@@ -264,11 +269,6 @@ void App::draw() {
   manager->render->DrawString(font, monitored_draw_stats,
 		      glm::vec2(10.0, 40.0), 15, 5.0f, glm::vec4(1.0f));
 #endif
-  
-  if(current==Scene::Test1)
-      drawTestScene1();
-  if(current==Scene::Test2)
-      drawTestScene2();
 
   if(manager->backend() == RenderFramework::Vulkan)
       submitDraw = std::thread([=]{manager->render->EndDraw(finishedDrawSubmit);});

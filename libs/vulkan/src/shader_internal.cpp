@@ -32,14 +32,26 @@ void SetVk::setData(size_t index,
     }
     if(bytesToRead == 0)
 	bytesToRead = bindings[index].typeSize - destinationOffset;
-    
-    std::memcpy((unsigned char*)bindings[index].pData
-		+ handleIndex * bindings[index].setMemSize
-		+ dynamicIndex * bindings[index].dynamicMemSize
-		+ arrayIndex * bindings[index].dataMemSize
-		+ destinationOffset,
-		data,
-		bindings[index].typeSize);
+    bindings[index].setBuffer(
+	    data, bytesToRead, destinationOffset, currentSetIndex, arrayIndex, dynamicIndex);
+}
+
+void SetVk::updateSampler(size_t index, TextureSampler sampler) {
+    try{
+	InternalSet::updateSampler(index, sampler);
+    } catch(std::invalid_argument &e) {
+	LOG_ERROR(e.what());
+	return;
+    }
+    if(!gpuResourcesCreated)
+	return;
+    LOG("write sampler");
+    bindings[index].clear(state.device);
+    bindings[index].createSampler(state);
+    std::vector<VkWriteDescriptorSet> writes;
+    std::vector<std::vector<VkDescriptorImageInfo>> imageVecs;
+    bindings[index].writeSampler(writes, imageVecs, setHandles);
+    vkUpdateDescriptorSets(state.device, (uint32_t)writes.size(), writes.data(), 0, nullptr);
 }
 
 
@@ -51,6 +63,7 @@ VkDescriptorSetLayout SetVk::CreateSetLayout() {
 	    continue;
 	VkDescriptorSetLayoutBinding b;
 	b.binding = i;
+	bindings[i].index = i;
 	b.descriptorCount = bindings[i].arrayCount;
 	bindings[i].vkBindingType = bindingTypeVk(bindings[i].bindType);
 	b.descriptorType = bindings[i].vkBindingType;
@@ -87,131 +100,48 @@ VkSamplerAddressMode toVKAddressMode(TextureSampler::address_mode addressMode);
 void SetVk::getMemoryRequirements(size_t* pMemSize, VkPhysicalDeviceProperties deviceProps) {
     if(setHandles.size() <= 0)
 	throw std::invalid_argument(
-		"No descriptor sets were assinged to the set handles array");
-    
-    for(auto &binding: bindings) {
-	if(binding.bindType == Binding::type::None)
-	    continue;
-	
-	// ------ memory layout ------------------------
-	// | all sets data = | set1 | set 2 | ... |      |  num: set count (ie one per set handle)
-	// | set = | dynamic data | dynamic data | ... | |  num: dynamic count
-	// | dynamic data = | data | data | ... |        |  num: array count
-	// ---------------------------------------------
-	
-	VkDeviceSize alignment;
-	switch(binding.bindType) {
+		"No descriptor sets were assinged to the set handles array");    
+    for(auto &b: bindings) {
+	switch(b.bindType) {
 	case Binding::type::UniformBuffer:
 	case Binding::type::UniformBufferDynamic:
-	    alignment = deviceProps.limits.minUniformBufferOffsetAlignment;
+	    b.calcBuffer(pMemSize,
+			 deviceProps.limits.minUniformBufferOffsetAlignment,
+			 setHandles.size());
 	    break;
 	case Binding::type::StorageBuffer:
 	case Binding::type::StorageBufferDynamic:
-	    alignment = deviceProps.limits.minStorageBufferOffsetAlignment;
+	    b.calcBuffer(pMemSize,
+			 deviceProps.limits.minStorageBufferOffsetAlignment,
+			 setHandles.size());
 	    break;
 	case Binding::type::TextureSampler:
-	    LOG("creating tex sampler");
-	    checkResultAndThrow(
-		    part::create::TextureSampler(
-			    state.device, state.physicalDevice,
-			    &binding.samplerVk,
-			    binding.samplerDesc.maxLod,
-			    state.features.samplerAnisotropy,
-			    toVkFilter(binding.samplerDesc.textureFilter),
-			    toVKAddressMode(binding.samplerDesc.addressMode)),
-		    "failed to create texture sampler!");
+	    b.createSampler(state);
 	    continue;
 	case Binding::type::Texture:
 	    // todo
 	default:
-	    continue;
+	    break;
 	}
-	*pMemSize = vkhelper::correctMemoryAlignment(*pMemSize, alignment);
-	binding.baseOffset = *pMemSize;
-	binding.dataMemSize = vkhelper::correctMemoryAlignment(binding.typeSize, alignment);
-	binding.dynamicMemSize = binding.dataMemSize * binding.arrayCount;
-	binding.setMemSize = binding.dynamicMemSize * binding.dynamicCount;
-	
-	*pMemSize += binding.setMemSize * setHandles.size();
     }
 }
 
-
-void addBufferInfos(std::vector<VkWriteDescriptorSet> &writes,
-		    std::vector<VkDescriptorBufferInfo> &buffInfos,
-		    size_t setCount,
-		    BindingVk* b,
-		    VkBuffer buffer) {
-    b->buffer = buffer;
-    buffInfos.resize(setCount * b->arrayCount);
-    for(int setIndex = 0; setIndex < setCount; setIndex++) {
-	// buff info points to the first dynamic data slot in memory
-	// then we offset into it when we bind the descriptor set
-	//                    <----here---->
-	// set memory = | dynamic data 1 memory | dynamic data 2 memory | ... |
-	for(int arrayIndex = 0; arrayIndex < b->arrayCount; arrayIndex++) {
-	    VkDescriptorBufferInfo binfo;
-	    binfo.buffer = buffer;
-	    binfo.offset = b->baseOffset
-		+ b->setMemSize * setIndex
-		+ b->dataMemSize * arrayIndex;
-	    binfo.range = b->dataMemSize;
-	    buffInfos[setIndex * b->arrayCount + arrayIndex] = binfo;
-	}
-	// assumes writes has >= setCount writes in vector
-	writes[writes.size() - setCount + setIndex]
-	    .pBufferInfo =  buffInfos.data() + setIndex * b->arrayCount;
-    }
-}
-
-void genImageSamplerWrite(std::vector<VkWriteDescriptorSet> &writes,
-			  std::vector<VkDescriptorImageInfo> &images,
-			  BindingVk *b,
-			  size_t setCount) {    
-    images.resize(setCount * b->arrayCount);
-    for(int setIndex = 0; setIndex < setCount; setIndex++) {
-	for(int arrayIndex = 0; arrayIndex < b->arrayCount; arrayIndex++) {
-	    VkDescriptorImageInfo info;
-	    info.sampler = b->samplerVk;
-	}
-	writes[writes.size() - setCount + setIndex]
-	    .pImageInfo = images.data() + setIndex * b->arrayCount;
-    }
-}
 
 void SetVk::writeDescriptorSets(void* p,
-			     VkBuffer buffer,
-			     std::vector<VkWriteDescriptorSet> &writes,
-			     std::vector<std::vector<VkDescriptorBufferInfo>> &buffers,
-			     std::vector<std::vector<VkDescriptorImageInfo>> &images) {
-    for(int bindingIndex = 0; bindingIndex < bindings.size(); bindingIndex++) {
-	BindingVk* b = &bindings[bindingIndex];
-	if(b->bindType == Binding::type::None)
-	    continue;
-	
-	for(int setIndex = 0; setIndex < setHandles.size(); setIndex++) {
-	    VkWriteDescriptorSet write { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
-	    write.dstBinding = (uint32_t)bindingIndex;
-	    write.dstArrayElement = 0; // updating whole array of bindings
-	    write.descriptorCount = (uint32_t)b->arrayCount;
-	    write.descriptorType = b->vkBindingType;
-	    write.dstSet = setHandles[setIndex];
-	    writes.push_back(write);
-	}
-
-	switch(b->bindType) {
+				VkBuffer buffer,
+				std::vector<VkWriteDescriptorSet> &writes,
+				std::vector<std::vector<VkDescriptorBufferInfo>> &buffers,
+				std::vector<std::vector<VkDescriptorImageInfo>> &images) {
+    for(auto &b: bindings){
+	switch(b.bindType) {
 	case Binding::type::UniformBuffer:
 	case Binding::type::UniformBufferDynamic:
 	case Binding::type::StorageBuffer:
 	case Binding::type::StorageBufferDynamic:
-	    b->pData = (unsigned char*)p + b->baseOffset;
-	    buffers.push_back(std::vector<VkDescriptorBufferInfo>());
-	    addBufferInfos(writes, buffers.back(), setHandles.size(), b, buffer);
+	    b.writeBuffer(p, buffer, writes, buffers, setHandles);
 	    break;
 	case Binding::type::TextureSampler:
-	    // do texture sampler + let it be updated
-	    images.push_back(std::vector<VkDescriptorImageInfo>());
-	    genImageSamplerWrite(writes, images.back(), b, setHandles.size());
+	    b.writeSampler(writes, images, setHandles);
 	    break;
 	case Binding::type::Texture:
 	    throw std::runtime_error("image resources not implemented in sets");
@@ -247,7 +177,7 @@ void ShaderPoolVk::createPool() {
     std::vector<VkDescriptorPoolSize> poolSizes;
     for(auto &set: sets) {
 	set->CreateSetLayout();
-	for(auto& ps: set->getPoolSizes()) {
+	for(auto ps: set->getPoolSizes()) {
 	    poolSizes.push_back(ps);
 	    poolSizes.back().descriptorCount *= setCopies;
 	}
@@ -307,21 +237,127 @@ void ShaderPoolVk::createData() {
     vkUpdateDescriptorSets(state.device, (uint32_t)writes.size(), writes.data(), 0, nullptr);
 }
 
+
 /// ---- Binding ----
 
+
 void BindingVk::clear(VkDevice device) {
+    // buffers
     pData = nullptr;
     buffer = VK_NULL_HANDLE;
     baseOffset = 0;
     dataMemSize = 0;
     dynamicMemSize = 0;
     setMemSize = 0;
+    // sampler
     if(this->bindType == Binding::type::TextureSampler)
 	vkDestroySampler(device, samplerVk, nullptr);
     samplerVk = VK_NULL_HANDLE;
+    // texture
+}
+
+// ---- Binding Buffer ----
+
+void BindingVk::calcBuffer(size_t* pMemSize, size_t alignment, size_t setCount) {
+    // ------ memory layout ------------------------
+    // | all sets data = | set1 | set 2 | ... |      |  num: set count (ie one per set handle)
+    // | set = | dynamic data | dynamic data | ... | |  num: dynamic count
+    // | dynamic data = | data | data | ... |        |  num: array count
+    // ---------------------------------------------	
+    *pMemSize = vkhelper::correctMemoryAlignment(*pMemSize, alignment);
+    baseOffset = *pMemSize;
+    dataMemSize = vkhelper::correctMemoryAlignment(typeSize, alignment);
+    dynamicMemSize = dataMemSize * arrayCount;
+    setMemSize = dynamicMemSize * dynamicCount;
+    *pMemSize += setMemSize * setCount;
+}
+
+void BindingVk::writeBuffer(
+	void *p, VkBuffer buff,
+	std::vector<VkWriteDescriptorSet> &writes,
+	std::vector<std::vector<VkDescriptorBufferInfo>> &buffers,
+	std::vector<VkDescriptorSet> &sets) {
+    this->pData = p;
+    this->buffer = buff;
+    size_t base = buffers.size();
+    buffers.resize(base + sets.size());
+    for(int setIndex = 0; setIndex < sets.size(); setIndex++) {
+	// buff info points to the first dynamic data slot in memory
+	//        <-point here->
+	// set = | dynamic data | dynamic data | ... |
+	std::vector<VkDescriptorBufferInfo>* buffs = &buffers[base + setIndex];
+	for(int arrayIndex = 0; arrayIndex < arrayCount; arrayIndex++) {
+	    VkDescriptorBufferInfo binfo;
+	    binfo.buffer = buffer;
+	    binfo.offset = baseOffset
+		+ setMemSize * setIndex
+		+ dataMemSize * arrayIndex;
+	    binfo.range = dataMemSize;
+	    buffs->push_back(binfo);
+	}
+	VkWriteDescriptorSet write = dsWrite(sets[setIndex]);
+	write.pBufferInfo = buffs->data();
+	writes.push_back(write);
+    }
+}
+
+void BindingVk::setBuffer(void* data, size_t bytesToRead, size_t dstOffset,
+			  size_t handleIndex, size_t arrayIndex, size_t dynamicIndex) {
+    if(this->pData == nullptr)
+	throw std::runtime_error("tried to write to buffer that has no memory assigned!");
+    std::memcpy((unsigned char*)pData
+		+ baseOffset
+		+ handleIndex * setMemSize
+		+ dynamicIndex * dynamicMemSize
+		+ arrayIndex * dataMemSize
+		+ dstOffset,
+		data,
+		bytesToRead);
+}
+
+/// --- Binding Sampler ----
+
+void BindingVk::createSampler(DeviceState &state) {
+    checkResultAndThrow(
+	    part::create::TextureSampler(
+		    state.device, state.physicalDevice,
+		    &samplerVk,
+		    samplerDesc.maxLod,
+		    state.features.samplerAnisotropy,
+		    toVkFilter(samplerDesc.textureFilter),
+		    toVKAddressMode(samplerDesc.addressMode)),
+	    "failed to create texture sampler!");
+}
+
+void BindingVk::writeSampler(
+	std::vector<VkWriteDescriptorSet> &writes,
+	std::vector<std::vector<VkDescriptorImageInfo>> &images,
+	std::vector<VkDescriptorSet> &sets) {
+    size_t base = images.size();
+    images.resize(base + sets.size());
+    for(int i = 0; i < sets.size(); i++) {
+	auto ims = &images[base + i];
+	for(int arrayIndex = 0; arrayIndex < arrayCount; arrayIndex++) {
+	    VkDescriptorImageInfo info;
+	    info.sampler = samplerVk;
+	    ims->push_back(info);
+	}
+	VkWriteDescriptorSet write = dsWrite(sets[i]);
+	write.pImageInfo = ims->data();
+	writes.push_back(write);
+    }   
 }
 
 
+VkWriteDescriptorSet BindingVk::dsWrite(VkDescriptorSet set) {
+    VkWriteDescriptorSet write { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
+    write.dstBinding = (uint32_t)index;
+    write.dstArrayElement = 0; // updating whole array of bindings
+    write.descriptorCount = (uint32_t)arrayCount;
+    write.descriptorType = vkBindingType;
+    write.dstSet = set;
+    return write;
+}
 
 /// ----- Helpers -----
 

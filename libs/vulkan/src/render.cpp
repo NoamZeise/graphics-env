@@ -369,7 +369,9 @@ bool swapchainRecreationRequired(VkResult result) {
       */
 
       shaderPool1->CreateGpuResources();
-      shaderPool1->CreateGpuResources();
+
+      // can recreate sampler without remaking memory
+      //textureSet->updateSampler(0, TextureSampler{});
 
       
       /// vertex descripor sets

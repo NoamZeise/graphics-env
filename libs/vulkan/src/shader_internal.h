@@ -22,17 +22,33 @@ struct BindingVk : public Binding {
     }
 
     void clear(VkDevice device);
+
+    void createSampler(DeviceState &state);
+    void writeSampler(
+	    std::vector<VkWriteDescriptorSet> &writes,
+	    std::vector<std::vector<VkDescriptorImageInfo>> &images,
+	    std::vector<VkDescriptorSet> &sets);
+
+    void calcBuffer(size_t* pMemSize, size_t alignment, size_t setCount);
+    void writeBuffer(
+	    void *p, VkBuffer b,
+	    std::vector<VkWriteDescriptorSet> &writes,
+	    std::vector<std::vector<VkDescriptorBufferInfo>> &buffers,
+	    std::vector<VkDescriptorSet> &sets);
+    void setBuffer(void* data, size_t bytesToRead, size_t dstOffset,
+		   size_t setIndex, size_t arrayIndex, size_t dynamicIndex);
+
+    size_t index;
     
     VkDescriptorType vkBindingType;
     VkShaderStageFlags vkStageFlags;
 
     /// Storage And Uniform Buffer Data
     
-    VkBuffer buffer;
+    VkBuffer buffer = VK_NULL_HANDLE;
     // pointer to start of buffer for this binding
     // if it is host coherent (ie cpu visible)
-    void* pData;
-    
+    void* pData = nullptr;    
     // offset of this binding from start of bound memory
     // pData already has this added to it
     size_t baseOffset = 0;
@@ -43,7 +59,14 @@ struct BindingVk : public Binding {
     // Size of the binding for an individual set -> dynamicSize * dynamicCount
     size_t setMemSize = 0;
 
-    VkSampler samplerVk;
+    // Sampler Data
+
+    VkSampler samplerVk = VK_NULL_HANDLE;
+
+    // Texture Data
+
+private:
+    VkWriteDescriptorSet dsWrite(VkDescriptorSet set);
 };
 
 class SetVk : public InternalSet {
@@ -61,6 +84,8 @@ public:
 		 size_t destinationOffset,
 		 size_t arrayIndex,
 		 size_t dynamicIndex) override;
+
+    void updateSampler(size_t index, TextureSampler sampler) override;
     
     // for temp pipeline changes
     VkDescriptorSetLayout getLayout() { return layout; }
@@ -73,7 +98,7 @@ public:
     void setHandleIndex(size_t handleIndex) {
 	if(handleIndex >= setHandles.size())
 	    throw std::runtime_error("out of range descriptor set index");
-	this->handleIndex = handleIndex;
+	this->currentSetIndex = handleIndex;
     }
     
     VkDescriptorSetLayout CreateSetLayout();    
@@ -81,11 +106,10 @@ public:
     std::vector<VkDescriptorPoolSize> getPoolSizes() { return poolSizes; }
     void setDescSetHandles(std::vector<VkDescriptorSet> handles) { this->setHandles = handles; }
     void getMemoryRequirements(size_t* pMemSize, VkPhysicalDeviceProperties deviceProps);
-    void writeDescriptorSets(void* p,
-			  VkBuffer buffer,
-			  std::vector<VkWriteDescriptorSet> &writes,
-			  std::vector<std::vector<VkDescriptorBufferInfo>> &buffers,
-			  std::vector<std::vector<VkDescriptorImageInfo>> &images);
+    void writeDescriptorSets(void* p, VkBuffer buffer,
+			     std::vector<VkWriteDescriptorSet> &writes,
+			     std::vector<std::vector<VkDescriptorBufferInfo>> &buffers,
+			     std::vector<std::vector<VkDescriptorImageInfo>> &images);
 
 protected:
     
@@ -106,7 +130,7 @@ private:
     std::vector<VkDescriptorSet> setHandles;
 
     //for temp pipeline change
-    size_t handleIndex;
+    size_t currentSetIndex;
 };
 
 
