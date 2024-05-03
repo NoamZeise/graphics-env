@@ -23,11 +23,17 @@ public:
 				  int height,
 				  int nrChannels) override;
 
-    virtual void loadGPU() = 0;
+    virtual void loadGPU() {
+	loadedTextures = stagedTextures;
+    }
     void clearStaged();
-    virtual void clearGPU() = 0;
+    virtual void clearGPU() {
+	loadedTextures.clear();
+    }
 
     virtual unsigned int getViewIndex(Resource::Texture tex) { return tex.ID; }
+
+    std::vector<Resource::Texture> getTextures() override { return loadedTextures; }
 
  protected:
     bool srgb, mipmapping, filterNearest;
@@ -35,6 +41,8 @@ public:
     int desiredChannels = 4;
 
     std::vector<StagedTex> staged;
+    std::vector<Resource::Texture> stagedTextures;
+    std::vector<Resource::Texture> loadedTextures;
 };
 
 

@@ -33,12 +33,18 @@ struct Binding {
 	this->bindType = type::TextureSampler;
 	this->samplerDesc = sampler;
     }
+
+    Binding(std::vector<Resource::Texture> textures) {
+	this->bindType = type::Texture;
+	this->textures = textures;
+    }
     
     type bindType = type::None;
     size_t typeSize = 0;
     size_t arrayCount = 1;
     size_t dynamicCount = 1;
     TextureSampler samplerDesc;
+    std::vector<Resource::Texture> textures;
 };
 
 class InternalSet : public Set {
@@ -67,12 +73,8 @@ class InternalSet : public Set {
 	addBinding(index, Binding(sampler));
     }
 
-    void setData(size_t index, void* data) override {
-	setData(index, data, 0, 0, 0, 0);
-    }
-
-    void setData(size_t index, void* data, size_t bytesToRead) override {
-	setData(index, data, bytesToRead, 0, 0, 0);
+    void addTextures(size_t index, std::vector<Resource::Texture> textures) override {
+	addBinding(index, Binding(textures));
     }
 
     void setData(
@@ -153,7 +155,7 @@ private:
 class InternalShaderPool : public ShaderPool {
 public:
     virtual ~InternalShaderPool() {};
-    void CreateGpuResources() override {
+    virtual void CreateGpuResources() {
 	if(resourcesCreated)
 	    DestroyGpuResources();
 	resourcesCreated = true;

@@ -309,22 +309,31 @@ bool swapchainRecreationRequired(VkResult result) {
 
       int descriptorSizes = MAX_CONCURRENT_FRAMES;
 
-      ShaderPool* shaderPool1 = CreateShaderPool();
+      mainShaderPool = CreateShaderPool();
       
-      lightingSet = shaderPool1->CreateSet(stageflag::frag);
+      lightingSet = mainShaderPool->CreateSet(stageflag::frag);
       lightingSet->addUniformBuffer(0, sizeof(BPLighting));
 
-      perFrame2DSet = shaderPool1->CreateSet(stageflag::frag);
+      perFrame2DSet = mainShaderPool->CreateSet(stageflag::frag);
       perFrame2DSet->addStorageBuffer(
 	      0, sizeof(shaderStructs::Frag2DData) * Resource::MAX_2D_BATCH);
       
 
-      textureSet = shaderPool1->CreateSet(stageflag::frag);
+      textureSet = mainShaderPool->CreateSet(stageflag::frag);
       textureSet->addTextureSampler(
 	      0, TextureSampler(renderConf.texture_filter_nearest ?
 				TextureSampler::filter::nearest : TextureSampler::filter::linear,
 				TextureSampler::address_mode::repeat,
 				minMipmapLevel));
+
+      std::vector<Resource::Texture> allTextures;
+      for(int i = 0; i < pools->PoolCount(); i++) {
+	  std::vector<Resource::Texture> texs = pools->get(i)->texLoader->getTextures();
+	  allTextures.insert(allTextures.end(), texs.begin(), texs.end());
+	  // add to texture loader index mapping -> do in shader internal?
+	  //textureViews[i] = pool->texLoader->getImageViewSetIndex(texI++, i);
+      }
+      //textureSet->addTextures(1, allTextures);
       
       /*		
 	descriptor::Set texture_Set("textures", descriptor::ShaderStage::Fragment);
@@ -368,7 +377,7 @@ bool swapchainRecreationRequired(VkResult result) {
       
       */
 
-      shaderPool1->CreateGpuResources();
+      LoadResourcesToGPU(mainShaderPool);
 
       // can recreate sampler without remaking memory
       //textureSet->updateSampler(0, TextureSampler{});
@@ -574,9 +583,7 @@ bool swapchainRecreationRequired(VkResult result) {
       LOG("    destroying descriptors");
 
       // move to destructor after desc sets not remade each frame
-      for(ShaderPoolVk* sp: shaderPools)
-	  delete sp;
-      shaderPools.clear();
+      DestroyShaderPool(mainShaderPool);
       
       for(int i = 0; i < descriptorSets.size(); i++)
 	  delete descriptorSets[i];
@@ -1021,6 +1028,22 @@ ShaderPool* RenderVk::CreateShaderPool() {
 			     MAX_CONCURRENT_FRAMES));
     return shaderPools[shaderPools.size() - 1];
 }
+
+void RenderVk::DestroyShaderPool(ShaderPool* pool) {
+    for(int i = 0; i < shaderPools.size(); i++)
+	if(shaderPools[i] == pool) {
+	    delete shaderPools[i];
+	    shaderPools.erase(shaderPools.begin() + i);
+	    return;
+	}
+    LOG_ERROR("Tried to destory shader pool but it was not "
+	      "found in the list of created shader pools");
+}
+
+void RenderVk::LoadResourcesToGPU(ShaderPool* pool) {
+    ((ShaderPoolVk*)pool)->CreateGpuResources();
+}
+  
 
 void RenderVk::set3DViewMat(glm::mat4 view, glm::vec4 camPos) {
     VP3DData.view = view;

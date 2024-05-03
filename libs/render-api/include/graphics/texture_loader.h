@@ -3,6 +3,7 @@
 
 #include "resources.h"
 #include <string>
+#include <vector>
 
 class TextureLoader {
  public:
@@ -12,6 +13,8 @@ class TextureLoader {
 					  int width,
 					  int height,
 					  int nrChannels) = 0;
+    // returns textures resident in GPU
+    virtual std::vector<Resource::Texture> getTextures() = 0;
 };
 
 #endif /* OUTFACING_TEXTURE_LOADER */

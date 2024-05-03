@@ -11,6 +11,9 @@ TextureLoaderGL::~TextureLoaderGL() {
 }
 
 void TextureLoaderGL::loadGPU() {
+    if(staged.size() <= 0)
+	return;
+    InternalTexLoader::loadGPU();
     clearGPU();
     inGpu.resize(staged.size());
     for(int i = 0; i < staged.size(); i++) {
@@ -43,6 +46,9 @@ void TextureLoaderGL::loadGPU() {
 }
 
 void TextureLoaderGL::clearGPU() {
+    if (inGpu.size() <= 0)
+	return;
+    InternalTexLoader::clearGPU();
     glDeleteTextures(inGpu.size(), inGpu.data());
     inGpu.clear(); 
 }

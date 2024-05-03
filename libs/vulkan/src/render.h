@@ -40,12 +40,18 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
       RenderVk(GLFWwindow *window, RenderConfig renderConf, shader::PipelineSetup pipelineSetup);
       ~RenderVk();
 
+      // Resource Pools
       ResourcePool* CreateResourcePool() override;
       void DestroyResourcePool(Resource::Pool pool) override;
       void setResourcePoolInUse(Resource::Pool pool, bool usePool) override;
       ResourcePool* pool(Resource::Pool pool) override;
-
       void LoadResourcesToGPU(Resource::Pool pool) override;
+
+      // Shader Pools
+      ShaderPool* CreateShaderPool();
+      void DestroyShaderPool(ShaderPool* pool);
+      void LoadResourcesToGPU(ShaderPool* pool);
+      
       void UseLoadedResources() override;
 
       // warning: switching between models that are in different pools often is slow
@@ -59,8 +65,6 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
       void EndDraw(std::atomic<bool> &submit) override;
 
       void FramebufferResize() override;
-
-      ShaderPool* CreateShaderPool();
       
       void set3DViewMat(glm::mat4 view, glm::vec4 camPos) override;
       void set2DViewMat(glm::mat4 view) override;
@@ -143,6 +147,8 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
       DescSet *emptyDS;
       DescSet *offscreenTex;
 
+      ShaderPool* mainShaderPool;
+      
       Set* perFrame2DSet;
       shaderStructs::Frag2DData perFrame2DFragData[Resource::MAX_2D_BATCH];
       

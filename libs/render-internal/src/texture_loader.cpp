@@ -37,11 +37,14 @@ Resource::Texture InternalTexLoader::load(std::string path) {
 	" - pool: " << pool.ID <<
 	" - id: "   << staged.size() - 1 <<
 	" - path: " << tex.path);
-    return Resource::Texture((unsigned int)(staged.size() - 1),
-			     glm::vec2(tex.width, tex.height), pool);
+    Resource::Texture texture((unsigned int)(staged.size() - 1),
+			      glm::vec2(tex.width, tex.height), pool);
+    stagedTextures.push_back(texture);
+    return texture;
 }
 
-Resource::Texture InternalTexLoader::load(unsigned char* data, int width, int height, int nrChannels) {
+Resource::Texture InternalTexLoader::load(
+	unsigned char* data, int width, int height, int nrChannels) {
     StagedTex tex;
     tex.data = data;
     tex.width = width;
@@ -58,7 +61,9 @@ Resource::Texture InternalTexLoader::load(unsigned char* data, int width, int he
 	" - pool: " << pool.ID <<
 	" - id: "   << staged.size() - 1 <<
 	" - loaded from raw data");
-    return Resource::Texture(staged.size() - 1, glm::vec2(tex.width, tex.height), pool);
+    Resource::Texture texture(staged.size() - 1, glm::vec2(tex.width, tex.height), pool);
+    stagedTextures.push_back(texture);
+    return texture;
 }
 
 void StagedTex::deleteData() {
@@ -72,4 +77,5 @@ void InternalTexLoader::clearStaged() {
     for(auto& s: staged)
 	s.deleteData();
     staged.clear();
+    stagedTextures.clear();
 }

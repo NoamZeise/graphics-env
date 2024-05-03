@@ -58,6 +58,7 @@ TexLoaderVk::~TexLoaderVk() {
 void TexLoaderVk::clearGPU() {
     if (textures.size() <= 0)
 	return;
+    InternalTexLoader::clearGPU();
     for (auto& tex : textures)
 	delete tex;
     vkFreeMemory(base.device, memory, nullptr);
@@ -71,7 +72,7 @@ float TexLoaderVk::getMinMipmapLevel() {
 void TexLoaderVk::loadGPU() {
     if(staged.size() <= 0)
 	return;
-    
+    InternalTexLoader::loadGPU();
     clearGPU();
     textures.resize(staged.size());
     LOG("end texture load, loading " << staged.size() << " textures to GPU");

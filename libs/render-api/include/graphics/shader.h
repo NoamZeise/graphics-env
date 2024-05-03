@@ -1,7 +1,7 @@
 #ifndef GRAPHICS_ENV_RENDER_SHADER_H
 #define GRAPHICS_ENV_RENDER_SHADER_H
 
-#include <glm/glm.hpp>
+#include "resources.h"
 #include <string>
 #include <vector>
 
@@ -69,26 +69,32 @@ public:
     /// Adding descriptors 
     
     virtual void addUniformBuffer(size_t index, size_t typeSize, size_t arrayCount) = 0;
-    void addUniformBuffer(size_t index, size_t typeSize) { addUniformBuffer(index, typeSize, 1); }
+            void addUniformBuffer(size_t index, size_t typeSize) {
+		addUniformBuffer(index, typeSize, 1); }
 
     virtual void addStorageBuffer(size_t index, size_t typeSize, size_t arrayCount) = 0;
-    void addStorageBuffer(size_t index, size_t typeSize) { addStorageBuffer(index, typeSize, 1); }
-
+            void addStorageBuffer(size_t index, size_t typeSize) {
+		addStorageBuffer(index, typeSize, 1); }
+    
     virtual void addTextureSampler(size_t index, TextureSampler sampler) = 0;
 
-    //    virtual void addTexture(size_t index, size_t arrayCount) = 0;
+    virtual void addTextures(size_t index, std::vector<Resource::Texture> textures) = 0;
 
-    /// Update commands
+    /// Update Buffers
     
-    virtual void setData(size_t index, void* data) = 0;
-    virtual void setData(size_t index, void* data, size_t size) = 0;
+    void setData(size_t index, void* data) {
+	setData(index, data, 0, 0, 0, 0);
+    }
+    void setData(size_t index, void* data, size_t bytesToRead) {
+	setData(index, data, bytesToRead, 0, 0, 0);
+    }
     /// Lowest level shader buffer writing function
     ///
     /// Set up to `typeSize - destinationOffset` number of bytes
     /// arrays and dynamics are not stored with C++ mem alignment.
-    /// -> passing 0 for bytes to read will read typeSize - destinationOffset bytes
+    /// -> passing 0 for bytes to read will read (typeSize - destinationOffset) bytes
     /// -> Prints error if memory to write is out of range, or any indicies are out of range
-    ///    And returns without writing the data
+    ///    returns without writing the data
     virtual void setData(
 	    size_t index,
 	    void* data,
@@ -96,7 +102,8 @@ public:
 	    size_t destinationOffset,
 	    size_t arrayIndex,
 	    size_t dynamicIndex) = 0;
-
+    
+    // Update Texture Sampler - does not require any recreation
     virtual void updateSampler(size_t index, TextureSampler sampler) = 0;
 };
 
@@ -105,7 +112,6 @@ class ShaderPool {
 public:
     virtual Set* CreateSet(stageflag flags) = 0;
     // automatically destroys created resources if already created
-    virtual void CreateGpuResources() = 0;
     virtual void DestroyGpuResources() = 0;
 };
 
