@@ -383,6 +383,8 @@ void BindingVk::writeSampler(size_t updateIndex, size_t updateCount,
 	updateIndex = 0;
 	updateCount = samplersVk.size();
     }
+    if(updateCount == 0)
+	return;
     size_t base = images.size();
     images.resize(base + sets.size());
     for(int i = 0; i < sets.size(); i++) {
@@ -420,19 +422,21 @@ void BindingVk::getImageViews(PoolManagerVk *pools) {
     getImageViews(0, textures.size(), pools);
 }
 
-void BindingVk::writeTextures(size_t updateIndex, size_t updateSize,
+void BindingVk::writeTextures(size_t updateIndex, size_t updateCount,
 			      std::vector<VkWriteDescriptorSet> &writes,
 			      std::vector<std::vector<VkDescriptorImageInfo>> &images,
 			      std::vector<VkDescriptorSet> &sets) {
     if(updateIndex == SIZE_MAX) {
 	updateIndex = 0;
-	updateSize = textureViews.size();
+	updateCount = textureViews.size();
     }
+    if(updateCount == 0)
+	return;
     size_t base = images.size();
     images.resize(base + sets.size());
     for(int i = 0; i < sets.size(); i++) {
 	auto ims = &images[base + i];
-	for(int arrayIndex = updateIndex; arrayIndex < updateIndex + updateSize; arrayIndex++) {
+	for(int arrayIndex = updateIndex; arrayIndex < updateIndex + updateCount; arrayIndex++) {
 	    if(textureViews[arrayIndex] == VK_NULL_HANDLE) {
 		throw std::runtime_error(
 			"TODO: skip null textures - need to update writes here properly");
@@ -442,7 +446,7 @@ void BindingVk::writeTextures(size_t updateIndex, size_t updateSize,
 	    info.imageLayout = textureLayouts[arrayIndex];
 	    ims->push_back(info);
 	}
-	VkWriteDescriptorSet write = dsWrite(updateIndex, updateSize, sets[i]);
+	VkWriteDescriptorSet write = dsWrite(updateIndex, updateCount, sets[i]);
 	write.pImageInfo = ims->data();
 	writes.push_back(write);
     }
