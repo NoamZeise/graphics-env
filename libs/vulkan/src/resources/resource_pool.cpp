@@ -21,7 +21,6 @@ void ResourcePoolVk::loadGpu() {
     texLoader->loadGPU();
     fontLoader->loadGPU();
     modelLoader->loadGPU();
-    UseGPUResources = true;
     usingGPUResources = false;
 }
 
@@ -35,6 +34,5 @@ void ResourcePoolVk::unloadGPU() {
     texLoader->clearGPU();
     modelLoader->clearGPU();
     fontLoader->clearGPU();
-    UseGPUResources = false;
     usingGPUResources = false;
 }

@@ -50,7 +50,26 @@ void SetVk::updateSampler(size_t index, size_t arrayIndex, TextureSampler sample
     bindings[index].createSampler(state, arrayIndex);
     std::vector<VkWriteDescriptorSet> writes;
     std::vector<std::vector<VkDescriptorImageInfo>> imageVecs;
-    bindings[index].writeSampler(arrayIndex, writes, imageVecs, setHandles);
+    bindings[index].writeSampler(arrayIndex, 1, writes, imageVecs, setHandles);
+    LOG("Updating Sampler Descriptor");
+    vkUpdateDescriptorSets(state.device, (uint32_t)writes.size(), writes.data(), 0, nullptr);
+}
+
+void SetVk::updateTextures(size_t index, size_t arrayIndex,
+			  std::vector<Resource::Texture> textures) {
+    try{
+	InternalSet::updateTextures(index, arrayIndex, textures);
+    } catch(std::invalid_argument &e) {
+	LOG_ERROR(e.what());
+	return;
+    }
+    if(!gpuResourcesCreated)
+	return;
+    bindings[index].getImageViews(arrayIndex, textures.size(), poolManager);
+    std::vector<VkWriteDescriptorSet> writes;
+    std::vector<std::vector<VkDescriptorImageInfo>> imageVecs;
+    LOG("Updating Texture Descriptor");
+    bindings[index].writeTextures(arrayIndex, textures.size(), writes, imageVecs, setHandles);
     vkUpdateDescriptorSets(state.device, (uint32_t)writes.size(), writes.data(), 0, nullptr);
 }
 
@@ -98,7 +117,7 @@ VkFilter toVkFilter(TextureSampler::filter filter);
 VkSamplerAddressMode toVKAddressMode(TextureSampler::address_mode addressMode);
 
 void SetVk::setupDescriptorSets(
-	size_t* pMemSize, VkPhysicalDeviceProperties deviceProps, PoolManagerVk* pools) {
+	size_t* pMemSize, VkPhysicalDeviceProperties deviceProps) {
     if(setHandles.size() <= 0)
 	throw std::invalid_argument(
 		"No descriptor sets were assinged to the set handles array");    
@@ -120,7 +139,7 @@ void SetVk::setupDescriptorSets(
 	    b.createSampler(state);
 	    break;
 	case Binding::type::Texture:
-	    b.getImageViews(pools);
+	    b.getImageViews(poolManager);
 	default:
 	    break;
 	}
@@ -142,10 +161,10 @@ void SetVk::writeDescriptorSets(void* p,
 	    b.writeBuffer(p, buffer, writes, buffers, setHandles);
 	    break;
 	case Binding::type::TextureSampler:
-	    b.writeSampler(SIZE_MAX, writes, images, setHandles);
+	    b.writeSampler(SIZE_MAX, 0, writes, images, setHandles);
 	    break;
 	case Binding::type::Texture:
-	    throw std::runtime_error("image resources not implemented in sets");
+	    b.writeTextures(SIZE_MAX, 0, writes, images, setHandles);
 	    break;
 	default:
 	    continue;
@@ -155,14 +174,29 @@ void SetVk::writeDescriptorSets(void* p,
 }
 
 
+void SetVk::setHandleIndex(size_t handleIndex) {
+    if(handleIndex >= setHandles.size())
+	throw std::runtime_error("out of range descriptor set index");
+    this->currentSetIndex = handleIndex;
+    if(samplersToDestroy.size() > 0) {
+	samplersTimeToLive--;
+	if(samplersTimeToLive <= 0) {
+	    for(auto &s: samplersToDestroy)
+		vkDestroySampler(state.device, s, nullptr);
+	    samplersToDestroy.clear();
+	}		
+    }
+}
+
+
 /// ---  Shader Pool ---
 
 
-void ShaderPoolVk::CreateGpuResources(PoolManagerVk* pools) {
+void ShaderPoolVk::CreateGpuResources() {
     InternalShaderPool::CreateGpuResources();
     createPool();
     createSets();
-    createData(pools);
+    createData();
 }
 
 void ShaderPoolVk::DestroyGpuResources() {
@@ -210,13 +244,13 @@ void ShaderPoolVk::createSets() {
     }
 }
 
-void ShaderPoolVk::createData(PoolManagerVk* pools) {
+void ShaderPoolVk::createData() {
     VkPhysicalDeviceProperties deviceProps;
     vkGetPhysicalDeviceProperties(state.physicalDevice, &deviceProps);
     
     VkDeviceSize memorySize = 0;
     for(auto set: sets)
-	set->setupDescriptorSets(&memorySize, deviceProps, pools);
+	set->setupDescriptorSets(&memorySize, deviceProps);
 
     // only support host coherent for now
     checkResultAndThrow(
@@ -239,7 +273,8 @@ void ShaderPoolVk::createData(PoolManagerVk* pools) {
 }
 
 
-/// ---- Binding ----
+
+/// ----------- Bindings -----------
 
 
 void BindingVk::clear(VkDevice device) {
@@ -255,8 +290,9 @@ void BindingVk::clear(VkDevice device) {
 	for(auto &sampler: samplersVk)
 	    vkDestroySampler(device, sampler, nullptr);
 	samplersVk.clear();
-    }    
-    // texture
+    }
+    textureViews.clear();
+    textureLayouts.clear();
 }
 
 // ---- Binding Buffer ----
@@ -339,57 +375,93 @@ void BindingVk::createSampler(DeviceState &state, size_t index) {
 	    "failed to create texture sampler!");    
 }
 
-void BindingVk::writeSampler(size_t updateIndex,
+void BindingVk::writeSampler(size_t updateIndex, size_t updateCount,
 	std::vector<VkWriteDescriptorSet> &writes,
 	std::vector<std::vector<VkDescriptorImageInfo>> &images,
 	std::vector<VkDescriptorSet> &sets) {
-    bool updateAll = updateIndex == SIZE_MAX;
+    if(updateIndex == SIZE_MAX) {
+	updateIndex = 0;
+	updateCount = samplersVk.size();
+    }
     size_t base = images.size();
     images.resize(base + sets.size());
     for(int i = 0; i < sets.size(); i++) {
 	auto ims = &images[base + i];
-	if(updateAll) {
-	    for(int arrayIndex = 0; arrayIndex < samplersVk.size(); arrayIndex++) {
-		VkDescriptorImageInfo info;
-		info.sampler = samplersVk[arrayIndex];
-		ims->push_back(info);
-	    }
-	} else {
+	for(int arrayIndex = updateIndex; arrayIndex < updateIndex + updateCount; arrayIndex++) {
 	    VkDescriptorImageInfo info;
-	    info.sampler = samplersVk[updateIndex];
+	    info.sampler = samplersVk[arrayIndex];
 	    ims->push_back(info);
 	}
-	VkWriteDescriptorSet write = dsWrite(sets[i]);
+	VkWriteDescriptorSet write = dsWrite(updateIndex, updateCount, sets[i]);
 	write.pImageInfo = ims->data();
 	writes.push_back(write);
     }
 }
 
-void BindingVk::getImageViews(PoolManagerVk *pools) {
+/// ----- Binding Texture -----
+
+void BindingVk::getImageViews(size_t updateIndex, size_t updateCount, PoolManagerVk *pools) {
     textureViews.resize(textures.size());
-    for(int i = 0; i < textures.size(); i++) {
+    textureLayouts.resize(textures.size());
+    for(int i = updateIndex; i < updateCount && i < textures.size(); i++) {
 	Resource::Texture t = textures[i];
+	if(t.ID == Resource::NULL_ID) {
+	    textureViews[i] = VK_NULL_HANDLE;
+	    continue;
+	}
 	if(!pools->ValidPool(t.pool))
 	    throw std::runtime_error("Shader Binding Vk: Passed pool was invalid");
 	textureViews[i] = pools->get(t.pool)->texLoader->getImageView(t);
+	textureLayouts[i] = pools->get(t.pool)->texLoader->getImageLayout(t);
     }
 }
 
-void BindingVk::writeTextures(std::vector<VkWriteDescriptorSet> &writes,
+void BindingVk::getImageViews(PoolManagerVk *pools) {
+    getImageViews(0, textures.size(), pools);
+}
+
+void BindingVk::writeTextures(size_t updateIndex, size_t updateSize,
+			      std::vector<VkWriteDescriptorSet> &writes,
 			      std::vector<std::vector<VkDescriptorImageInfo>> &images,
 			      std::vector<VkDescriptorSet> &sets) {
-    
+    if(updateIndex == SIZE_MAX) {
+	updateIndex = 0;
+	updateSize = textureViews.size();
+    }
+    size_t base = images.size();
+    images.resize(base + sets.size());
+    for(int i = 0; i < sets.size(); i++) {
+	auto ims = &images[base + i];
+	for(int arrayIndex = updateIndex; arrayIndex < updateIndex + updateSize; arrayIndex++) {
+	    if(textureViews[arrayIndex] == VK_NULL_HANDLE) {
+		throw std::runtime_error(
+			"TODO: skip null textures - need to update writes here properly");
+	    }
+	    VkDescriptorImageInfo info;
+	    info.imageView = textureViews[arrayIndex];
+	    info.imageLayout = textureLayouts[arrayIndex];
+	    ims->push_back(info);
+	}
+	VkWriteDescriptorSet write = dsWrite(updateIndex, updateSize, sets[i]);
+	write.pImageInfo = ims->data();
+	writes.push_back(write);
+    }
 }
 
 
-VkWriteDescriptorSet BindingVk::dsWrite(VkDescriptorSet set) {
+VkWriteDescriptorSet BindingVk::dsWrite(
+	size_t updateIndex, size_t updateCount, VkDescriptorSet set) {
     VkWriteDescriptorSet write { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
     write.dstBinding = (uint32_t)index;
-    write.dstArrayElement = 0; // updating whole array of bindings
-    write.descriptorCount = (uint32_t)arrayCount;
+    write.dstArrayElement = (uint32_t)updateIndex;
+    write.descriptorCount = (uint32_t)updateCount;
     write.descriptorType = vkBindingType;
     write.dstSet = set;
     return write;
+}
+
+VkWriteDescriptorSet BindingVk::dsWrite(VkDescriptorSet set) {
+    return dsWrite(0, arrayCount, set);
 }
 
 /// ----- Helpers -----

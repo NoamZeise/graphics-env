@@ -111,18 +111,27 @@ public:
 				    TextureSampler sampler) {
 		addTextureSamplers(index, 1, {sampler});}
     
-    // Update Texture Sampler - does not require any recreation
+    /// Update Texture Sampler - does not require any recreation
     virtual void updateSampler(size_t index, size_t arrayIndex, TextureSampler sampler) = 0;
             void updateSampler(size_t index, TextureSampler sampler)  {
 		updateSampler(index, 0, sampler);}
+    /// Get sampler descriptor stored at that binding index and array index
+    virtual TextureSampler getSampler(size_t index, size_t arrayIndex) = 0;
+            TextureSampler getSampler(size_t index) {
+		return getSampler(index, 0); }
 
     /// ------ Textures -------
 
     virtual void addTextures(size_t index, size_t arrayCount,
 			     std::vector<Resource::Texture> textures) = 0;
             void addTextures(size_t index, std::vector<Resource::Texture> textures) {
-		addTextures(index, textures.size(), textures);
-    }
+		addTextures(index, textures.size(), textures);}
+
+    virtual void updateTextures(size_t index, size_t arrayIndex,
+			       std::vector<Resource::Texture> textures) = 0;
+            void updateTextures(size_t index, size_t arrayIndex,
+			       Resource::Texture texture) {
+		updateTextures(index, arrayIndex, {texture});}
 };
 
 /// Holds shader sets
@@ -130,6 +139,7 @@ class ShaderPool {
 public:
     virtual Set* CreateSet(stageflag flags) = 0;
     // automatically destroys created resources if already created
+    virtual void CreateGpuResources() = 0;
     virtual void DestroyGpuResources() = 0;
 };
 

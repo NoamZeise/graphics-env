@@ -5,6 +5,8 @@
 #include <graphics/render_config.h>
 #include <vector>
 
+#include <graphics/logger.h>
+
 struct StagedTex {
     unsigned char* data;
     int width, height, nrChannels, filesize;
@@ -25,6 +27,7 @@ public:
 
     virtual void loadGPU() {
 	loadedTextures = stagedTextures;
+	stagedTextures.clear();
     }
     void clearStaged();
     virtual void clearGPU() {

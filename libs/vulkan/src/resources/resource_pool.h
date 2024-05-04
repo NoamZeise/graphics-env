@@ -30,7 +30,7 @@ class ResourcePoolVk : public ResourcePool {
     ModelLoaderVk* modelLoader;
     InternalFontLoader* fontLoader;
 
-    bool UseGPUResources = false;
+    bool UseGPUResources = true;
     bool usingGPUResources = false;
 };
 

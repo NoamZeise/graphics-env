@@ -37,10 +37,7 @@ namespace Resource {
   static size_t NULL_ID = SIZE_MAX;
   
   struct Texture {
-      Texture() {
-	  ID = 0;
-	  dim = glm::vec2(1, 1);
-      }
+      Texture() {}
       Texture(size_t ID) {
 	  this->ID = ID;
       }

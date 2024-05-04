@@ -56,10 +56,7 @@ int main(int argc, char** argv) {
     manager.render->setLightingProps(l);
     
     ResourcePool* pool = manager.render->pool();
-    Resource::Texture tex = pool->tex()->load("textures/tile.png");
-    Resource::Model monkey = pool->model()->load("models/bunny.obj");
-    glm::mat4 model = glm::mat4(1.0f);
-    glm::mat4 normMat = glm::inverseTranspose(model);
+    Resource::Model bunny = pool->model()->load("models/bunny.obj");
 
     manager.render->LoadResourcesToGPU(pool);
     manager.render->UseLoadedResources();
@@ -88,11 +85,11 @@ int main(int argc, char** argv) {
 	    glfwSetWindowShouldClose(manager.window, GLFW_TRUE);
 	if(manager.input.kb.press(GLFW_KEY_F))
 	    manager.toggleFullscreen();
-	   
+	
 	manager.render->set3DViewMat(cam.getView(), cam.getPos());
-
+	
 	if(manager.winActive()) {
-	    manager.render->DrawModel(monkey, model, normMat);	    
+	    manager.render->DrawModel(bunny, glm::mat4(1.0f), glm::mat4(1.0f));	    
 	    manager.render->EndDraw();
 	}
     }

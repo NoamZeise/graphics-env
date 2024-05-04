@@ -21,6 +21,7 @@ struct TextureInGPU {
 	    format = VK_FORMAT_R8G8B8A8_SRGB;
 	else
 	    format = VK_FORMAT_R8G8B8A8_UNORM;
+	layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
     }
     ~TextureInGPU() {
 	vkDestroyImageView(device, view, nullptr);
@@ -36,6 +37,7 @@ struct TextureInGPU {
     VkFormat format;
     VkDeviceSize imageMemSize;
     VkDeviceSize imageMemOffset;
+    VkImageLayout layout;
     VkResult createImage(VkDevice device, VkMemoryRequirements *pMemreq);
     void createMipMaps(VkCommandBuffer &cmdBuff);
     VkResult createImageView(VkDevice device);
@@ -72,8 +74,8 @@ float TexLoaderVk::getMinMipmapLevel() {
 void TexLoaderVk::loadGPU() {
     if(staged.size() <= 0)
 	return;
-    InternalTexLoader::loadGPU();
     clearGPU();
+    InternalTexLoader::loadGPU();
     textures.resize(staged.size());
     LOG("end texture load, loading " << staged.size() << " textures to GPU");
 
@@ -157,26 +159,22 @@ void TexLoaderVk::loadGPU() {
 
 uint32_t TexLoaderVk::getImageCount() { return textures.size(); }
 
-VkImageView TexLoaderVk::getImageViewSetIndex(uint32_t texID, uint32_t imageViewIndex) {
-    if (texID < textures.size()) {
-	textures[texID]->imageViewIndex = imageViewIndex;
-	return textures[texID]->view;
-    }
-    else if (textures.size() > 0) {
-	LOG_ERROR("Requested texture ID was out of range");
-	return textures[0]->view;
-    }
-    else
-	throw std::runtime_error("no textures to replace error id with");
-}
-
 VkImageView TexLoaderVk::getImageView(Resource::Texture tex) {
     if(tex.pool != this->pool)
 	throw std::invalid_argument(
-		"tex loader - getViewIndex: Texture does not belong to this resource pool");
+		"tex loader - getViewIndex Vk: Texture does not belong to this resource pool");
     if(tex.ID >= textures.size())
-	throw std::runtime_error("no textures to replace error id with");
+	throw std::runtime_error("getImageView Vk: texture ID was out of range");
     return textures[tex.ID]->view;
+}
+
+VkImageLayout TexLoaderVk::getImageLayout(Resource::Texture tex) {
+    if(tex.pool != this->pool)
+	throw std::invalid_argument(
+		"tex loader - getViewLayout Vk: Texture does not belong to this resource pool");
+    if(tex.ID >= textures.size())
+	throw std::runtime_error("getImageLayout Vk: texture ID was out of range");
+    return textures[tex.ID]->layout;
 }
 
 void TexLoaderVk::setIndex(Resource::Texture texture, uint32_t index) {
@@ -334,7 +332,7 @@ void TexLoaderVk::textureDataStagingToFinal(VkBuffer stagingBuffer,
   
 void dstToSrcBarrier(VkImageMemoryBarrier *barrier);
   
-void srcToReadOnlyBarrier(VkImageMemoryBarrier *barrier);
+void dstSrcToLayoutBarrier(VkImageMemoryBarrier *barrier, VkImageLayout layout);
   
 VkImageBlit getMipmapBlit(int32_t currentW, int32_t currentH, int destMipLevel);
 
@@ -356,7 +354,7 @@ void TextureInGPU::createMipMaps(VkCommandBuffer &cmdBuff) {
 		       this->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit,
 		       MIPMAP_FILTER);
 	  
-	srcToReadOnlyBarrier(&barrier);
+	dstSrcToLayoutBarrier(&barrier, layout);
 	addImagePipelineBarrier(cmdBuff, barrier,
 				VK_PIPELINE_STAGE_TRANSFER_BIT,
 				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
@@ -364,7 +362,7 @@ void TextureInGPU::createMipMaps(VkCommandBuffer &cmdBuff) {
 	if(mipH > 1) mipH /= 2;
     }
     //transition last mipmap lvl from dst to shader read only
-    srcToReadOnlyBarrier(&barrier);
+    dstSrcToLayoutBarrier(&barrier, layout);
     barrier.subresourceRange.baseMipLevel = this->mipLevels - 1;
     barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
     barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -431,9 +429,9 @@ void dstToSrcBarrier(VkImageMemoryBarrier *barrier) {
       barrier->dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
   }
 
-void srcToReadOnlyBarrier(VkImageMemoryBarrier *barrier) {
+void dstSrcToLayoutBarrier(VkImageMemoryBarrier *barrier, VkImageLayout layout) {
     barrier->oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-    barrier->newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    barrier->newLayout = layout;
     barrier->srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
     barrier->dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 }

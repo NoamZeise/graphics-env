@@ -66,7 +66,6 @@ VkFormat getDepthBufferFormat(VkPhysicalDevice physicalDevice) {
   
 RenderVk::~RenderVk() {
     vkDeviceWaitIdle(manager->deviceState.device);
-
     _destroyFrameResources();
     delete pools;
     if(offscreenRenderPass != nullptr || finalRenderPass != nullptr) {
@@ -77,8 +76,6 @@ RenderVk::~RenderVk() {
     }
     if(offscreenSamplerCreated)
 	vkDestroySampler(manager->deviceState.device, _offscreenTextureSampler, nullptr);
-    if(textureSamplerCreated)
-	vkDestroySampler(manager->deviceState.device, textureSampler, nullptr);
     if(swapchain != nullptr)
 	delete swapchain;
     for(int i = 0; i < MAX_CONCURRENT_FRAMES; i++)
@@ -92,51 +89,24 @@ bool swapchainRecreationRequired(VkResult result) {
 	result == VK_ERROR_OUT_OF_DATE_KHR;
 }
 
-  void RenderVk::_loadActiveTextures() {
-      // Load textures across all active resource pools
-      // into the textureViews descriptor set data
-      if(pools->PoolCount() < 1)
-	  throw std::runtime_error("Must have at least 1 pool.");
-      ResourcePoolVk *pool = pools->get(0);
-      VkImageView validView;
-      bool foundValidView = false;
-      bool checkedAllPools = false;
-      for(int i = 0, pI = 0, texI = 0; i < Resource::MAX_TEXTURES_SUPPORTED; i++) {
-	  if(pool == nullptr)
-	      goto next_pool;
-	  if(!pool->UseGPUResources) {
-	      pool->usingGPUResources = false;
-	      goto next_pool;
-	  }
-	  pool->usingGPUResources = true;
-	  if(texI < pool->texLoader->getImageCount()) {
-	      textureViews[i] = pool->texLoader->getImageViewSetIndex(texI++, i);
-	      if (!foundValidView) {
-		  foundValidView = true;
-		  validView = textureViews[i];
-	      }              
-	  } else {
-	      goto next_pool;
-	  }
-	  continue;
-      next_pool:
-	  if(pools->PoolCount() > pI + 1) {
-	      pool = pools->get(++pI);
-	      texI = 0;
-	      i--;
-	  } else {
-	      checkedAllPools = true;
-	      if(foundValidView)
-		  textureViews[i] = validView;
-	      else //TODO: change so we dont require a texture
-		  throw std::runtime_error("No textures were loaded. "
-					   "At least 1 Texture must be loaded");
+  std::vector<Resource::Texture> RenderVk::getActiveTextures(float* getMinMipmap) {
+      *getMinMipmap = 100000.0f;
+      std::vector<Resource::Texture> allTextures;
+      for(int i = 0; i < pools->PoolCount(); i++) {
+	  pools->get(i)->usingGPUResources = false;
+	  if(!pools->get(i)->UseGPUResources)
+	      continue;
+	  pools->get(i)->usingGPUResources = true;
+	  float n = pools->get(i)->texLoader->getMinMipmapLevel();
+	  if(n < *getMinMipmap)
+	      *getMinMipmap = n;
+	  std::vector<Resource::Texture> texs = pools->get(i)->texLoader->getTextures();
+	  for(int j = 0; j < texs.size(); j++) {
+	      pools->get(i)->texLoader->setIndex(texs[j], allTextures.size());
+	      allTextures.push_back(texs[j]);
 	  }
       }
-      if(!checkedAllPools) {
-	  LOG_ERROR("Ran out of texture slots in shader! current limit: "
-		    << Resource::MAX_TEXTURES_SUPPORTED);
-      }
+      return allTextures;
   }
 
   
@@ -261,49 +231,9 @@ bool swapchainRecreationRequired(VkResult result) {
 	  finalRenderPass->createFramebuffers(framebufferMemory);
 
       LOG("Swapchain Image Count: " << swapchainImages->size());
-            
-      
-      LOG("Creating Texture Sampler");
-
+                  
       // Add textures from resource pools into texture indexes
-      _loadActiveTextures();
-      
-      float minMipmapLevel = 100000.0f;
-      for(int i = 0; i < pools->PoolCount(); i++) {
-	  ResourcePoolVk* p = pools->get(i);
-	  if(p == nullptr)
-	      continue;
-	  if(p->usingGPUResources) {
-	      float n = p->texLoader->getMinMipmapLevel();
-	      if(n < minMipmapLevel)
-		  minMipmapLevel = n;
-	  }
-      }
-    
-      if(textureSamplerCreated) {
-	  if(prevRenderConf.texture_filter_nearest != renderConf.texture_filter_nearest ||
-	     prevTexSamplerMinMipmap != minMipmapLevel) {
-	      textureSamplerCreated = false;
-	      vkDestroySampler(manager->deviceState.device, textureSampler, nullptr);
-	  }
-      }
-    
-      if(!textureSamplerCreated) {	  
-	  checkResultAndThrow(
-		  part::create::TextureSampler(
-			  manager->deviceState.device,
-			  manager->deviceState.physicalDevice,
-			  &textureSampler,
-			  minMipmapLevel,
-			  manager->deviceState.features.samplerAnisotropy,
-			  renderConf.texture_filter_nearest ?
-			  VK_FILTER_NEAREST : VK_FILTER_LINEAR,
-			  VK_SAMPLER_ADDRESS_MODE_REPEAT),
-		  "Failed to create texture sampler");
-	  prevTexSamplerMinMipmap = minMipmapLevel;
-	  textureSamplerCreated = true;
-      }
-
+      //_loadActiveTextures();
 
       LOG("Creating Descriptor Sets");
 
@@ -317,68 +247,20 @@ bool swapchainRecreationRequired(VkResult result) {
       perFrame2DSet = mainShaderPool->CreateSet(stageflag::frag);
       perFrame2DSet->addStorageBuffer(
 	      0, sizeof(shaderStructs::Frag2DData) * Resource::MAX_2D_BATCH);
-      
 
+      float minmipmap;
+      auto activeTextures = getActiveTextures(&minmipmap);
       textureSet = mainShaderPool->CreateSet(stageflag::frag);
       textureSet->addTextureSamplers(
 	      0, TextureSampler(renderConf.texture_filter_nearest ?
 				TextureSampler::filter::nearest : TextureSampler::filter::linear,
 				TextureSampler::address_mode::repeat,
-				minMipmapLevel));
+				minmipmap));
+      textureSet->addTextures(1, Resource::MAX_TEXTURES_SUPPORTED, activeTextures);
 
-      std::vector<Resource::Texture> allTextures;      
-      for(int i = 0; i < pools->PoolCount(); i++) {
-	  std::vector<Resource::Texture> texs = pools->get(i)->texLoader->getTextures();
-	  for(int j = 0; j < texs.size(); j++) {
-	      //      pools->get(i)->texLoader->setIndex(texs[j], allTextures.size());
-	      allTextures.push_back(texs[j]);
-	  }	  
-      }
-      //      textureSet->addTextures(1, allTextures);
       
-      /*		
-	descriptor::Set texture_Set("textures", descriptor::ShaderStage::Fragment);
-	texture_Set.AddSamplerDescriptor("sampler", 1, &textureSampler);
-	texture_Set.AddImageViewDescriptor("views", descriptor::Type::SampledImage,
-					   Resource::MAX_TEXTURES_SUPPORTED,
-					   textureViews);
-	textures = new DescSet(texture_Set, descriptorSizes, manager->deviceState.device);
+      mainShaderPool->CreateGpuResources();
 
-	std::vector<VkImageView> offscreenViews;
-	if(useFinalRenderpass) {
-	
-	  if(!offscreenSamplerCreated) {
-	      _offscreenTextureSampler = vkhelper::createTextureSampler(
-		      manager->deviceState.device,
-		      manager->deviceState.physicalDevice, 1.0f,
-		      false,
-		      true,
-		      VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
-	      offscreenSamplerCreated = true;
-	  }
-	  
-	  offscreenViews = offscreenRenderPass->getAttachmentViews(0);
-	  
-	  if(offscreenViews.size() == 0)
-	      throw std::runtime_error(
-		      "Nothing returned for offscreen texture views");
-		      
-	  descriptor::Set offscreen_Set("offscreen texture", descriptor::ShaderStage::Fragment);
-	  
-	  offscreen_Set.AddSamplerDescriptor("sampler", 1, &_offscreenTextureSampler);
-	  
-	  offscreen_Set.AddImageViewDescriptor("frame", descriptor::Type::SampledImage,
-					       1, &offscreenViews[0]);
-					       
-	  offscreenTex = new DescSet(offscreen_Set, descriptorSizes,
-				     manager->deviceState.device);
-				     
-	  descriptorSets.push_back(offscreenTex);
-      }
-      
-      */
-
-      LoadResourcesToGPU(mainShaderPool);
 
       // can recreate sampler without remaking memory
       //textureSet->updateSampler(0, TextureSampler{});
@@ -434,15 +316,7 @@ bool swapchainRecreationRequired(VkResult result) {
 	  descriptorSets.push_back(offscreenTransform);
       }
 
-      // fragment descriptor sets
-      
-      descriptor::Set texture_Set("textures", descriptor::ShaderStage::Fragment);
-      texture_Set.AddSamplerDescriptor("sampler", 1, &textureSampler);
-      texture_Set.AddImageViewDescriptor("views", descriptor::Type::SampledImage,
-					 Resource::MAX_TEXTURES_SUPPORTED,
-					 textureViews);
-      textures = new DescSet(texture_Set, descriptorSizes, manager->deviceState.device);
-      descriptorSets.push_back(textures);
+      // fragment descriptor sets      
       
       emptyDS = new DescSet(
 	      descriptor::Set("Empty", descriptor::ShaderStage::Vertex),
@@ -509,8 +383,8 @@ bool swapchainRecreationRequired(VkResult result) {
       part::create::GraphicsPipeline(
 	      manager->deviceState.device, &_pipeline3D,
 	      offscreenRenderPass->getRenderPass(),
-	      {&VP3D->set, &perFrame3D->set, &emptyDS->set, &textures->set},
-	      {(SetVk*)lightingSet},
+	      {&VP3D->set, &perFrame3D->set, &emptyDS->set},
+	      {(SetVk*)textureSet, (SetVk*)lightingSet},
 	      {{VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(fragPushConstants)}},
 	      pipelineSetup.getPath(shader::pipeline::_3D, shader::stage::vert),
 	      pipelineSetup.getPath(shader::pipeline::_3D, shader::stage::frag),
@@ -522,8 +396,8 @@ bool swapchainRecreationRequired(VkResult result) {
       part::create::GraphicsPipeline(
 	      manager->deviceState.device, &_pipelineAnim3D,
 	      offscreenRenderPass->getRenderPass(),
-	      {&VP3D->set, &perFrame3D->set, &bones->set, &textures->set},
-	      {(SetVk*)lightingSet},
+	      {&VP3D->set, &perFrame3D->set, &bones->set},
+	      {(SetVk*)textureSet, (SetVk*)lightingSet},
 	      {{VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(fragPushConstants)}},
 	      pipelineSetup.getPath(shader::pipeline::anim3D, shader::stage::vert),
 	      pipelineSetup.getPath(shader::pipeline::anim3D, shader::stage::frag),
@@ -535,8 +409,8 @@ bool swapchainRecreationRequired(VkResult result) {
       part::create::GraphicsPipeline(
 	      manager->deviceState.device, &_pipeline2D,
 	      offscreenRenderPass->getRenderPass(),
-	      {&VP2D->set, &perFrame2DVert->set, &textures->set},
-	      {(SetVk*)perFrame2DSet},
+	      {&VP2D->set, &perFrame2DVert->set},
+	      {(SetVk*)textureSet, (SetVk*)perFrame2DSet},
 	      {},
 	      pipelineSetup.getPath(shader::pipeline::_2D, shader::stage::vert),
 	      pipelineSetup.getPath(shader::pipeline::_2D, shader::stage::frag),
@@ -661,12 +535,12 @@ void RenderVk::LoadResourcesToGPU(Resource::Pool pool) {
     _throwIfPoolInvaid(pool);
     bool remakeFrameRes = false;
     if(pools->get(pool)->usingGPUResources) {
-      LOG("Loading resources for pool that is currently in use, "
-          "so recreating frame resources.");
-      vkDeviceWaitIdle(manager->deviceState.device);
-      remakeFrameRes = true;
+	LOG("Loading resources for pool that is currently in use, "
+	    "so have to wait for current frames to finish.");
+	vkDeviceWaitIdle(manager->deviceState.device);
+	remakeFrameRes = true;
     }
-    pools->get(pool)->loadGpu(); 
+    pools->get(pool)->loadGpu();
     if(remakeFrameRes) //remake if pool currently in use was reloaded
 	UseLoadedResources();
 }
@@ -677,22 +551,13 @@ void RenderVk::UseLoadedResources() {
 	_initFrameResources();
 	return;
     } else {
-	_loadActiveTextures();    
-	textures->bindings[1].storeImageViews(manager->deviceState.device);
+	float minmipmap;
+	std::vector<Resource::Texture> allTextures = getActiveTextures(&minmipmap);
+	TextureSampler s = textureSet->getSampler(0);
+	s.maxLod = minmipmap;
+	textureSet->updateSampler(0, s);
+	textureSet->updateTextures(1, 0, allTextures);
     }
-    //TODO : consider mimap levels
-    
-    // diff pools ->
-    
-    // check mipmaps?
-    // if diff -> recreate sampler.
-    //            if sampler recreated -> recreate texture desc set
-    
-    // diff textures ->
-    // recreates textureViews array
-    // diff tex views -> diff texture desc set
-
-    //try without caring about mipmaps
 }
 
 void RenderVk::_resize() {
@@ -952,8 +817,10 @@ void RenderVk::_drawBatch() {
   }
 
 void RenderVk::EndDraw(std::atomic<bool> &submit) {
-  if (!_begunDraw)
-    throw std::runtime_error("Tried to end draw before starting it");
+    if (!_begunDraw) {
+	LOG_ERROR("Ended draw without drawing anything");
+	return;
+    }
   
   _begunDraw = false;
   _drawBatch();
@@ -1026,7 +893,8 @@ void RenderVk::FramebufferResize() {
 ShaderPool* RenderVk::CreateShaderPool() {
     shaderPools.push_back(
 	    new ShaderPoolVk(manager->deviceState,
-			     MAX_CONCURRENT_FRAMES));
+			     MAX_CONCURRENT_FRAMES,
+			     pools));
     return shaderPools[shaderPools.size() - 1];
 }
 
@@ -1039,12 +907,7 @@ void RenderVk::DestroyShaderPool(ShaderPool* pool) {
 	}
     LOG_ERROR("Tried to destory shader pool but it was not "
 	      "found in the list of created shader pools");
-}
-
-void RenderVk::LoadResourcesToGPU(ShaderPool* pool) {
-    ((ShaderPoolVk*)pool)->CreateGpuResources(pools);
-}
-  
+} 
 
 void RenderVk::set3DViewMat(glm::mat4 view, glm::vec4 camPos) {
     VP3DData.view = view;

@@ -25,13 +25,15 @@ struct BindingVk : public Binding {
 
     void createSampler(DeviceState &state);
     void createSampler(DeviceState &state, size_t index);
-    void writeSampler(size_t updateIndex,
+    void writeSampler(size_t updateIndex, size_t updateCount,
 		      std::vector<VkWriteDescriptorSet> &writes,
 		      std::vector<std::vector<VkDescriptorImageInfo>> &images,
 		      std::vector<VkDescriptorSet> &sets);
 
     void getImageViews(PoolManagerVk* pools);
-    void writeTextures(std::vector<VkWriteDescriptorSet> &writes,
+    void getImageViews(size_t updateIndex, size_t updateSize, PoolManagerVk* pools);
+    void writeTextures(size_t updateIndex, size_t updateSize,
+		       std::vector<VkWriteDescriptorSet> &writes,
 		       std::vector<std::vector<VkDescriptorImageInfo>> &images,
 		       std::vector<VkDescriptorSet> &sets);
 
@@ -74,15 +76,18 @@ struct BindingVk : public Binding {
 
     // Texture Data
     std::vector<VkImageView> textureViews;
+    std::vector<VkImageLayout> textureLayouts;
     
 private:
     VkWriteDescriptorSet dsWrite(VkDescriptorSet set);
+    VkWriteDescriptorSet dsWrite(size_t updateIndex, size_t updateCount, VkDescriptorSet set);
 };
 
 class SetVk : public InternalSet {
 public:
-    SetVk(DeviceState state, stageflag flags) : InternalSet(flags) {
+    SetVk(DeviceState state, stageflag flags, PoolManagerVk* poolManager) : InternalSet(flags) {
 	this->state = state;
+	this->poolManager = poolManager;
 	DestroySetResources();
     }
 
@@ -96,6 +101,9 @@ public:
 		 size_t dynamicIndex) override;
 
     void updateSampler(size_t index, size_t arrayIndex, TextureSampler sampler) override;
+
+    void updateTextures(size_t index, size_t arrayIndex,
+			std::vector<Resource::Texture> textures) override;
     
     // for temp pipeline changes
     VkDescriptorSetLayout getLayout() { return layout; }
@@ -105,27 +113,13 @@ public:
 	return &setHandles[index];
     }
 
-    void setHandleIndex(size_t handleIndex) {
-	if(handleIndex >= setHandles.size())
-	    throw std::runtime_error("out of range descriptor set index");
-	this->currentSetIndex = handleIndex;
-	if(samplersToDestroy.size() > 0) {
-	    samplersTimeToLive--;
-	    if(samplersTimeToLive <= 0) {
-		for(auto &s: samplersToDestroy)
-		    vkDestroySampler(state.device, s, nullptr);
-		samplersToDestroy.clear();
-	    }
-		
-	}
-    }
+    void setHandleIndex(size_t handleIndex);
     
     VkDescriptorSetLayout CreateSetLayout();    
     void DestroySetResources();
     std::vector<VkDescriptorPoolSize> getPoolSizes() { return poolSizes; }
     void setDescSetHandles(std::vector<VkDescriptorSet> handles) { this->setHandles = handles; }
-    void setupDescriptorSets(
-	    size_t* pMemSize, VkPhysicalDeviceProperties deviceProps, PoolManagerVk* pools);
+    void setupDescriptorSets(size_t* pMemSize, VkPhysicalDeviceProperties deviceProps);
     void writeDescriptorSets(void* p, VkBuffer buffer,
 			     std::vector<VkWriteDescriptorSet> &writes,
 			     std::vector<std::vector<VkDescriptorBufferInfo>> &buffers,
@@ -144,6 +138,7 @@ private:
     std::vector<BindingVk> bindings;
     
     DeviceState state;
+    PoolManagerVk* poolManager;
     bool layoutCreated = false;
     VkDescriptorSetLayout layout;
     std::vector<VkDescriptorPoolSize> poolSizes;
@@ -159,8 +154,9 @@ private:
 
 class ShaderPoolVk : public InternalShaderPool {
 public:
-    ShaderPoolVk(DeviceState deviceState, int setCopies) {
+    ShaderPoolVk(DeviceState deviceState, int setCopies, PoolManagerVk* poolManager) {
 	this->state = deviceState;
+	this->poolManager = poolManager;
 	this->setCopies = setCopies;
     }
 
@@ -171,14 +167,12 @@ public:
     }
     
     Set* CreateSet(stageflag flags) override {
-	sets.push_back(new SetVk(state, flags));
+	sets.push_back(new SetVk(state, flags, poolManager));
 	return sets[sets.size() - 1];
     }
 
-    void CreateGpuResources(PoolManagerVk* pools);
-    void CreateGpuResources() override {
-	throw std::runtime_error("shader pool wrong CreateGpuResources called");
-    }
+    void CreateGpuResources() override;
+
     void DestroyGpuResources() override;
 
     void setFrameIndex(size_t handleIndex) {
@@ -190,9 +184,10 @@ private:
 
     void createPool();
     void createSets();
-    void createData(PoolManagerVk* pools);
+    void createData();
     
     DeviceState state;
+    PoolManagerVk* poolManager;
     int setCopies;
     std::vector<SetVk*> sets;
     VkDescriptorPool pool;

@@ -153,7 +153,6 @@ void App::update() {
 	  assetLoadThread.join();
       if(submitDraw.joinable()) 
 	  submitDraw.join();
-      LOG("loading done");
       manager->render->LoadResourcesToGPU(Resource::Pool(0));
       manager->render->UseLoadedResources();
       sceneChangeInProgress = false;

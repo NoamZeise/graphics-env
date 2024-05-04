@@ -115,23 +115,17 @@ class InternalSet : public Set {
 	addBinding(index, Binding(arrayCount, samplers));
     }
    
-    void updateSampler(size_t index, size_t arrayIndex, TextureSampler sampler) override {
-	throwOnBadIndexRange(index, numBindings(), "binding index");
-	if(getBinding(index)->bindType != Binding::type::TextureSampler &&
-	   getBinding(index)->bindType != Binding::type::None)
-	    throw std::invalid_argument(
-		    "Update Sampler Error: Tried to update sampler for non sampler index");
-	if(arrayIndex >= getBinding(index)->arrayCount)
-	    throw std::invalid_argument(
-		    "Update Sampler Error: Sampler array index greater than sampler array size. "
-		    " Given index " + std::to_string(arrayIndex) +
-		    " But the array size of the descriptor was " +
-		    std::to_string(getBinding(index)->arrayCount));
-	
+    void updateSampler(size_t index, size_t arrayIndex, TextureSampler sampler) override {	
+	checkSampler(index, arrayIndex);
 	if(arrayIndex >= getBinding(index)->samplerDescs.size()) {
 	    getBinding(index)->samplerDescs.resize(arrayIndex + 1);
 	}
 	getBinding(index)->samplerDescs[arrayIndex] = sampler;
+    }
+    
+    TextureSampler getSampler(size_t index, size_t arrayIndex) override {
+	checkSampler(index, arrayIndex);
+	return getBinding(index)->samplerDescs[arrayIndex];
     }
 
 
@@ -141,6 +135,25 @@ class InternalSet : public Set {
 		     std::vector<Resource::Texture> textures) override {
 	addBinding(index, Binding(arrayCount, textures));
     }
+
+    void updateTextures(size_t index, size_t arrayIndex,
+			std::vector<Resource::Texture> textures) override {
+	throwOnBadIndexRange(index, numBindings(), "binding index");
+	if(getBinding(index)->bindType != Binding::type::Texture)
+	    throw std::invalid_argument(
+		    "Update Texture Error: Tried to update texture for non texture index");
+	throwOnBadIndexRange(arrayIndex,
+			     getBinding(index)->arrayCount, "arrayIndex out of range");
+	throwOnBadIndexRange(arrayIndex + textures.size(),
+			     getBinding(index)->arrayCount + 1, "too many textures");
+	
+	if(arrayIndex + textures.size() > getBinding(index)->textures.size())
+	    getBinding(index)->textures.resize(arrayIndex + textures.size());
+	for(int i = 0; i < textures.size(); i++)
+	    getBinding(index)->textures[arrayIndex + i] = textures[i];
+    }
+
+    
 
     size_t nextFreeIndex() override {
 	for(int i = 0; i < numBindings(); i++)
@@ -176,13 +189,21 @@ private:
 		    "Shader Set Error - in update data: "
 		    + message + " out of range - given index: " + std::to_string(given)
 		    + "   max index: " + std::to_string(max));
-    }    
+    }
+
+    void checkSampler(size_t index, size_t arrayIndex) {
+    	throwOnBadIndexRange(index, numBindings(), "binding index");
+	if(getBinding(index)->bindType != Binding::type::TextureSampler)
+	    throw std::invalid_argument(
+		    "Update Sampler Error: Tried to update sampler for non sampler index");
+	throwOnBadIndexRange(arrayIndex, getBinding(index)->arrayCount, "array index");
+    }
 };
 
 class InternalShaderPool : public ShaderPool {
 public:
     virtual ~InternalShaderPool() {};
-    virtual void CreateGpuResources() {
+    void CreateGpuResources() override {
 	if(resourcesCreated)
 	    DestroyGpuResources();
 	resourcesCreated = true;

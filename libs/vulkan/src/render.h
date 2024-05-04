@@ -50,7 +50,6 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
       // Shader Pools
       ShaderPool* CreateShaderPool();
       void DestroyShaderPool(ShaderPool* pool);
-      void LoadResourcesToGPU(ShaderPool* pool);
       
       void UseLoadedResources() override;
 
@@ -95,7 +94,7 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
       bool _validPool(Resource::Pool pool);
       bool _poolInUse(Resource::Pool pool);
       void _throwIfPoolInvaid(Resource::Pool pool);
-      void _loadActiveTextures();
+      std::vector<Resource::Texture> getActiveTextures(float* getMinMipmap);
       
       
       bool _framebufferResized = false;
@@ -143,26 +142,19 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
       glm::mat4 perFrame2DVertData[Resource::MAX_2D_BATCH];      
       DescSet *offscreenTransform;
       glm::mat4 offscreenTransformData;
-      DescSet *textures;
       DescSet *emptyDS;
       DescSet *offscreenTex;
 
-      ShaderPool* mainShaderPool;
-      
+      // new shader pools
+      ShaderPool* mainShaderPool;      
       Set* perFrame2DSet;
       shaderStructs::Frag2DData perFrame2DFragData[Resource::MAX_2D_BATCH];
-      
       Set* lightingSet;
       BPLighting lightingData;
-
       Set* textureSet;
       
       bool offscreenSamplerCreated = false;
       VkSampler _offscreenTextureSampler;
-      bool textureSamplerCreated = false;
-      float prevTexSamplerMinMipmap = 1.0f;
-      VkSampler textureSampler;
-      VkImageView textureViews[Resource::MAX_TEXTURES_SUPPORTED];
 
       std::vector<DescSet*> descriptorSets;
 
