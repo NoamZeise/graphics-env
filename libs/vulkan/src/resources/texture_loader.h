@@ -16,6 +16,8 @@ public:
     float getMinMipmapLevel();
     uint32_t getImageCount();
     VkImageView getImageViewSetIndex(uint32_t texID, uint32_t imageViewIndex);
+    VkImageView getImageView(Resource::Texture tex);
+    void setIndex(Resource::Texture texture, uint32_t index);
     unsigned int getViewIndex(Resource::Texture tex) override;
       
 private:

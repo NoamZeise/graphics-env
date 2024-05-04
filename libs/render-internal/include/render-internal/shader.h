@@ -29,21 +29,23 @@ struct Binding {
 	this->dynamicCount = dynamicCount;
     }
 
-    Binding(TextureSampler sampler) {
+    Binding(size_t arrayCount, std::vector<TextureSampler> samplers) {
 	this->bindType = type::TextureSampler;
-	this->samplerDesc = sampler;
+	this->samplerDescs = samplers;
+	this->arrayCount = arrayCount;
     }
 
-    Binding(std::vector<Resource::Texture> textures) {
+    Binding(size_t arrayCount, std::vector<Resource::Texture> textures) {
 	this->bindType = type::Texture;
 	this->textures = textures;
+	this->arrayCount = arrayCount;
     }
     
     type bindType = type::None;
     size_t typeSize = 0;
     size_t arrayCount = 1;
     size_t dynamicCount = 1;
-    TextureSampler samplerDesc;
+    std::vector<TextureSampler> samplerDescs;
     std::vector<Resource::Texture> textures;
 };
 
@@ -54,6 +56,9 @@ class InternalSet : public Set {
     }
 
     virtual ~InternalSet() {}
+
+
+    /// ----------- Shader Buffers -----------
 
     void addUniformBuffer(size_t index, size_t typeSize, size_t arrayCount) override {
 	if(arrayCount == 0 || typeSize == 0)
@@ -67,14 +72,6 @@ class InternalSet : public Set {
 	    throw std::invalid_argument("array count or type size of uniform buffer equaled 0");
 	    
 	addBinding(index, Binding(Binding::type::StorageBuffer, typeSize, arrayCount, 1));
-    }
-
-    void addTextureSampler(size_t index, TextureSampler sampler) override {
-	addBinding(index, Binding(sampler));
-    }
-
-    void addTextures(size_t index, std::vector<Resource::Texture> textures) override {
-	addBinding(index, Binding(textures));
     }
 
     void setData(
@@ -106,13 +103,43 @@ class InternalSet : public Set {
 			     "(bytes to read >= type size * destination offset),");
     }
 
-    void updateSampler(size_t index, TextureSampler sampler) override {
+
+    /// ----------- Samplers -----------
+
+    void addTextureSamplers(size_t index, size_t arrayCount, std::vector<TextureSampler> samplers) override {
+	if(arrayCount < samplers.size()) {
+	    LOG_ERROR("Set::addTextureSamplers : Passed a vector of samplers "
+		      "With more elements than arrayCount. Truncating to fit arrayCount");
+	    samplers.resize(arrayCount);
+	}
+	addBinding(index, Binding(arrayCount, samplers));
+    }
+   
+    void updateSampler(size_t index, size_t arrayIndex, TextureSampler sampler) override {
 	throwOnBadIndexRange(index, numBindings(), "binding index");
 	if(getBinding(index)->bindType != Binding::type::TextureSampler &&
 	   getBinding(index)->bindType != Binding::type::None)
 	    throw std::invalid_argument(
 		    "Update Sampler Error: Tried to update sampler for non sampler index");
-	getBinding(index)->samplerDesc = sampler;
+	if(arrayIndex >= getBinding(index)->arrayCount)
+	    throw std::invalid_argument(
+		    "Update Sampler Error: Sampler array index greater than sampler array size. "
+		    " Given index " + std::to_string(arrayIndex) +
+		    " But the array size of the descriptor was " +
+		    std::to_string(getBinding(index)->arrayCount));
+	
+	if(arrayIndex >= getBinding(index)->samplerDescs.size()) {
+	    getBinding(index)->samplerDescs.resize(arrayIndex + 1);
+	}
+	getBinding(index)->samplerDescs[arrayIndex] = sampler;
+    }
+
+
+    /// ----------- Textures -----------
+
+    void addTextures(size_t index, size_t arrayCount,
+		     std::vector<Resource::Texture> textures) override {
+	addBinding(index, Binding(arrayCount, textures));
     }
 
     size_t nextFreeIndex() override {

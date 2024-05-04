@@ -66,7 +66,7 @@ class Set {
 public:
     virtual size_t nextFreeIndex() = 0;
 
-    /// Adding descriptors 
+    /// ------ Shader Buffers -------
     
     virtual void addUniformBuffer(size_t index, size_t typeSize, size_t arrayCount) = 0;
             void addUniformBuffer(size_t index, size_t typeSize) {
@@ -75,12 +75,6 @@ public:
     virtual void addStorageBuffer(size_t index, size_t typeSize, size_t arrayCount) = 0;
             void addStorageBuffer(size_t index, size_t typeSize) {
 		addStorageBuffer(index, typeSize, 1); }
-    
-    virtual void addTextureSampler(size_t index, TextureSampler sampler) = 0;
-
-    virtual void addTextures(size_t index, std::vector<Resource::Texture> textures) = 0;
-
-    /// Update Buffers
     
     void setData(size_t index, void* data) {
 	setData(index, data, 0, 0, 0, 0);
@@ -102,9 +96,33 @@ public:
 	    size_t destinationOffset,
 	    size_t arrayIndex,
 	    size_t dynamicIndex) = 0;
+
+    
+    /// ------ Texture Samplers -------
+    
+    virtual void addTextureSamplers(size_t index,
+				    size_t arrayCount,
+				    std::vector<TextureSampler> samplers) = 0;
+    
+            void addTextureSamplers(size_t index,
+				    std::vector<TextureSampler> samplers) {
+		addTextureSamplers(index, samplers.size(), samplers);}
+            void addTextureSamplers(size_t index,
+				    TextureSampler sampler) {
+		addTextureSamplers(index, 1, {sampler});}
     
     // Update Texture Sampler - does not require any recreation
-    virtual void updateSampler(size_t index, TextureSampler sampler) = 0;
+    virtual void updateSampler(size_t index, size_t arrayIndex, TextureSampler sampler) = 0;
+            void updateSampler(size_t index, TextureSampler sampler)  {
+		updateSampler(index, 0, sampler);}
+
+    /// ------ Textures -------
+
+    virtual void addTextures(size_t index, size_t arrayCount,
+			     std::vector<Resource::Texture> textures) = 0;
+            void addTextures(size_t index, std::vector<Resource::Texture> textures) {
+		addTextures(index, textures.size(), textures);
+    }
 };
 
 /// Holds shader sets

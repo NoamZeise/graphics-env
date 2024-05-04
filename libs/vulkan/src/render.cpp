@@ -320,20 +320,21 @@ bool swapchainRecreationRequired(VkResult result) {
       
 
       textureSet = mainShaderPool->CreateSet(stageflag::frag);
-      textureSet->addTextureSampler(
+      textureSet->addTextureSamplers(
 	      0, TextureSampler(renderConf.texture_filter_nearest ?
 				TextureSampler::filter::nearest : TextureSampler::filter::linear,
 				TextureSampler::address_mode::repeat,
 				minMipmapLevel));
 
-      std::vector<Resource::Texture> allTextures;
+      std::vector<Resource::Texture> allTextures;      
       for(int i = 0; i < pools->PoolCount(); i++) {
 	  std::vector<Resource::Texture> texs = pools->get(i)->texLoader->getTextures();
-	  allTextures.insert(allTextures.end(), texs.begin(), texs.end());
-	  // add to texture loader index mapping -> do in shader internal?
-	  //textureViews[i] = pool->texLoader->getImageViewSetIndex(texI++, i);
+	  for(int j = 0; j < texs.size(); j++) {
+	      //      pools->get(i)->texLoader->setIndex(texs[j], allTextures.size());
+	      allTextures.push_back(texs[j]);
+	  }	  
       }
-      //textureSet->addTextures(1, allTextures);
+      //      textureSet->addTextures(1, allTextures);
       
       /*		
 	descriptor::Set texture_Set("textures", descriptor::ShaderStage::Fragment);
@@ -1041,7 +1042,7 @@ void RenderVk::DestroyShaderPool(ShaderPool* pool) {
 }
 
 void RenderVk::LoadResourcesToGPU(ShaderPool* pool) {
-    ((ShaderPoolVk*)pool)->CreateGpuResources();
+    ((ShaderPoolVk*)pool)->CreateGpuResources(pools);
 }
   
 

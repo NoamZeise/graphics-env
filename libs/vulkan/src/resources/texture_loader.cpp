@@ -170,6 +170,24 @@ VkImageView TexLoaderVk::getImageViewSetIndex(uint32_t texID, uint32_t imageView
 	throw std::runtime_error("no textures to replace error id with");
 }
 
+VkImageView TexLoaderVk::getImageView(Resource::Texture tex) {
+    if(tex.pool != this->pool)
+	throw std::invalid_argument(
+		"tex loader - getViewIndex: Texture does not belong to this resource pool");
+    if(tex.ID >= textures.size())
+	throw std::runtime_error("no textures to replace error id with");
+    return textures[tex.ID]->view;
+}
+
+void TexLoaderVk::setIndex(Resource::Texture texture, uint32_t index) {
+    if(texture.pool != this->pool)
+	throw std::invalid_argument(
+		"tex loader - getViewIndex: Texture does not belong to this resource pool");
+    if (texture.ID >= textures.size())
+	throw std::runtime_error("no textures to replace error id with");
+    textures[texture.ID]->imageViewIndex = index;
+}
+
 unsigned int TexLoaderVk::getViewIndex(Resource::Texture tex) {
     if(tex.pool != this->pool) {
 	LOG_ERROR("tex loader - getViewIndex: Texture does not belong to this resource pool");

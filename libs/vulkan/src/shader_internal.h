@@ -11,7 +11,7 @@
 #include <cstring>
 
 #include <render-internal/shader.h>
-
+#include "resources/resource_pool.h"
 #include "shader.h"
 #include "device_state.h"
 
@@ -24,19 +24,29 @@ struct BindingVk : public Binding {
     void clear(VkDevice device);
 
     void createSampler(DeviceState &state);
-    void writeSampler(
-	    std::vector<VkWriteDescriptorSet> &writes,
-	    std::vector<std::vector<VkDescriptorImageInfo>> &images,
-	    std::vector<VkDescriptorSet> &sets);
+    void createSampler(DeviceState &state, size_t index);
+    void writeSampler(size_t updateIndex,
+		      std::vector<VkWriteDescriptorSet> &writes,
+		      std::vector<std::vector<VkDescriptorImageInfo>> &images,
+		      std::vector<VkDescriptorSet> &sets);
+
+    void getImageViews(PoolManagerVk* pools);
+    void writeTextures(std::vector<VkWriteDescriptorSet> &writes,
+		       std::vector<std::vector<VkDescriptorImageInfo>> &images,
+		       std::vector<VkDescriptorSet> &sets);
 
     void calcBuffer(size_t* pMemSize, size_t alignment, size_t setCount);
-    void writeBuffer(
-	    void *p, VkBuffer b,
-	    std::vector<VkWriteDescriptorSet> &writes,
-	    std::vector<std::vector<VkDescriptorBufferInfo>> &buffers,
-	    std::vector<VkDescriptorSet> &sets);
-    void setBuffer(void* data, size_t bytesToRead, size_t dstOffset,
-		   size_t setIndex, size_t arrayIndex, size_t dynamicIndex);
+    void writeBuffer(void *p,
+		     VkBuffer b,
+		     std::vector<VkWriteDescriptorSet> &writes,
+		     std::vector<std::vector<VkDescriptorBufferInfo>> &buffers,
+		     std::vector<VkDescriptorSet> &sets);
+    void setBuffer(void* data,
+		   size_t bytesToRead,
+		   size_t dstOffset,
+		   size_t setIndex,
+		   size_t arrayIndex,
+		   size_t dynamicIndex);
 
     size_t index;
     
@@ -60,11 +70,11 @@ struct BindingVk : public Binding {
     size_t setMemSize = 0;
 
     // Sampler Data
-
-    VkSampler samplerVk = VK_NULL_HANDLE;
+    std::vector<VkSampler> samplersVk;
 
     // Texture Data
-
+    std::vector<VkImageView> textureViews;
+    
 private:
     VkWriteDescriptorSet dsWrite(VkDescriptorSet set);
 };
@@ -85,7 +95,7 @@ public:
 		 size_t arrayIndex,
 		 size_t dynamicIndex) override;
 
-    void updateSampler(size_t index, TextureSampler sampler) override;
+    void updateSampler(size_t index, size_t arrayIndex, TextureSampler sampler) override;
     
     // for temp pipeline changes
     VkDescriptorSetLayout getLayout() { return layout; }
@@ -99,13 +109,23 @@ public:
 	if(handleIndex >= setHandles.size())
 	    throw std::runtime_error("out of range descriptor set index");
 	this->currentSetIndex = handleIndex;
+	if(samplersToDestroy.size() > 0) {
+	    samplersTimeToLive--;
+	    if(samplersTimeToLive <= 0) {
+		for(auto &s: samplersToDestroy)
+		    vkDestroySampler(state.device, s, nullptr);
+		samplersToDestroy.clear();
+	    }
+		
+	}
     }
     
     VkDescriptorSetLayout CreateSetLayout();    
     void DestroySetResources();
     std::vector<VkDescriptorPoolSize> getPoolSizes() { return poolSizes; }
     void setDescSetHandles(std::vector<VkDescriptorSet> handles) { this->setHandles = handles; }
-    void getMemoryRequirements(size_t* pMemSize, VkPhysicalDeviceProperties deviceProps);
+    void setupDescriptorSets(
+	    size_t* pMemSize, VkPhysicalDeviceProperties deviceProps, PoolManagerVk* pools);
     void writeDescriptorSets(void* p, VkBuffer buffer,
 			     std::vector<VkWriteDescriptorSet> &writes,
 			     std::vector<std::vector<VkDescriptorBufferInfo>> &buffers,
@@ -128,6 +148,9 @@ private:
     VkDescriptorSetLayout layout;
     std::vector<VkDescriptorPoolSize> poolSizes;
     std::vector<VkDescriptorSet> setHandles;
+
+    size_t samplersTimeToLive;
+    std::vector<VkSampler> samplersToDestroy;
 
     //for temp pipeline change
     size_t currentSetIndex;
@@ -152,7 +175,10 @@ public:
 	return sets[sets.size() - 1];
     }
 
-    void CreateGpuResources() override;
+    void CreateGpuResources(PoolManagerVk* pools);
+    void CreateGpuResources() override {
+	throw std::runtime_error("shader pool wrong CreateGpuResources called");
+    }
     void DestroyGpuResources() override;
 
     void setFrameIndex(size_t handleIndex) {
@@ -164,7 +190,7 @@ private:
 
     void createPool();
     void createSets();
-    void createData();
+    void createData(PoolManagerVk* pools);
     
     DeviceState state;
     int setCopies;
