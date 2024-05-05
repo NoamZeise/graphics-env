@@ -129,18 +129,9 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
 
       VkDescriptorPool _descPool;
 
-      shaderStructs::timeUbo timeData;
-      DescSet *VP3D;
-      shaderStructs::viewProjection VP3DData;
-      DescSet *VP2D;
-      shaderStructs::viewProjection VP2DData;
-      DescSet *perFrame3D;
-      shaderStructs::PerFrame3D perFrame3DData[Resource::MAX_3D_BATCH];
-      DescSet *perFrame2DVert;
-      glm::mat4 perFrame2DVertData[Resource::MAX_2D_BATCH];      
+      bool createdOffscreenData = false;
       DescSet *offscreenTransform;
       glm::mat4 offscreenTransformData;
-      DescSet *emptyDS;
       DescSet *offscreenTex;
 
       // new shader pools
@@ -152,6 +143,16 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
       Set* textureSet;
       Set* boneSet;
       size_t currentBonesDynamicIndex;
+      Set* emptySet;
+      Set* vp3dSet;
+      shaderStructs::timeUbo timeData;
+      shaderStructs::viewProjection VP3DData;
+      Set* vp2dSet;
+      shaderStructs::viewProjection VP2DData;
+      Set* perFrame3dSet;
+      shaderStructs::PerFrame3D perFrame3DData[Resource::MAX_3D_BATCH];
+      Set* perFrame2dVertSet;
+      glm::mat4 perFrame2DVertData[Resource::MAX_2D_BATCH];
       
       bool offscreenSamplerCreated = false;
       VkSampler _offscreenTextureSampler;
