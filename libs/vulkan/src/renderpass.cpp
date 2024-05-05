@@ -92,7 +92,8 @@ RenderPass::RenderPass(VkDevice device,
 	    hasShaderReadAttachment = true;
 
 	attachmentClears[attachIndex] = getClearValueAndSetRef(
-		attachments[i], clearColour, colourRefs, depthRef, hasDepth, resolveRef, hasResolve);
+		attachments[i], clearColour, colourRefs,
+		depthRef, hasDepth, resolveRef, hasResolve);
     }
 
     VkSubpassDescription subpass{};
@@ -277,8 +278,8 @@ void AttachmentImage::AddImage(VkImage image) {
     state = state::image;
 }
 
-VkResult AttachmentImage::CreateImageView(VkDevice device,
-			 VkDeviceMemory attachmentMemory) {
+VkResult AttachmentImage::CreateImageView(
+	VkDevice device, VkDeviceMemory attachmentMemory) {
     if(state != state::image)
 	throw std::runtime_error("Attachment Image Error: "
 				 "invalid attachment image state, tried to "
@@ -289,7 +290,7 @@ VkResult AttachmentImage::CreateImageView(VkDevice device,
 			  attachmentMemory, memoryOffset);
     
     VkResult result = part::create::ImageView(
-	    device, &view, image, imageFormat, imageAspect);
+	    device, &view, image, imageFormat, imageAspect, 1);
     if(result == VK_SUCCESS)
 	state = state::imageview;
     return result;
@@ -469,12 +470,12 @@ void AttachmentDesc::getImageProps(VkFormat *imageFormat,
 
 
 VkClearValue getClearValueAndSetRef(AttachmentDesc &attachment,
-			   float clearColour[3],
-			   std::vector<VkAttachmentReference> &colourRefs,
-			   VkAttachmentReference &depthRef,
-			   bool &hasDepth,
-			   VkAttachmentReference &resolveRef,
-			   bool &hasResolve) {
+				    float clearColour[3],
+				    std::vector<VkAttachmentReference> &colourRefs,
+				    VkAttachmentReference &depthRef,
+				    bool &hasDepth,
+				    VkAttachmentReference &resolveRef,
+				    bool &hasResolve) {
     VkClearValue clear;
     VkAttachmentReference attachRef = attachment.getAttachmentReference();
     switch(attachment.getType()) {

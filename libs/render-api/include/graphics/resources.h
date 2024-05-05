@@ -21,7 +21,7 @@ namespace Resource {
   static size_t NULL_POOL_ID = SIZE_MAX;
 
   struct Pool {
-      Pool() { }
+      Pool() {}
       Pool(size_t ID) {
 	  this->ID = ID;
       }

@@ -277,6 +277,16 @@ bool swapchainRecreationRequired(VkResult result) {
 
       perFrame2dVertSet = mainShaderPool->CreateSet(shaderstage::vert);
       perFrame2dVertSet->addStorageBuffer(0, sizeof(glm::mat4)*Resource::MAX_2D_BATCH);
+
+      offscreenTransformSet = mainShaderPool->CreateSet(shaderstage::vert);
+      offscreenTransformSet->addUniformBuffer(0, sizeof(glm::mat4));
+
+      offscreenTexSet = mainShaderPool->CreateSet(shaderstage::frag);
+      offscreenTexSet->addTextureSamplers(
+	      0, TextureSampler(TextureSampler::filter::nearest,
+				TextureSampler::address_mode::clamp_to_border));
+      //offscreenTexSet->addTextures(
+      //      1, offscreenRenderPass->getAttachmentTextures(0));
       
       mainShaderPool->CreateGpuResources();      
       
@@ -512,7 +522,7 @@ void RenderVk::LoadResourcesToGPU(Resource::Pool pool) {
     bool remakeFrameRes = false;
     if(pools->get(pool)->usingGPUResources) {
 	LOG("Loading resources for pool that is currently in use, "
-	    "so have to wait for current frames to finish.");
+	    "so waiting for frames to finish before staging to gpu.");
 	vkDeviceWaitIdle(manager->deviceState.device);
 	remakeFrameRes = true;
     }

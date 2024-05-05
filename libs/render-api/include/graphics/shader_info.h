@@ -37,6 +37,12 @@ struct TextureSampler {
 	this->maxLod = maxLod;
     }
 
+    TextureSampler(filter filter, address_mode addressMode) {
+	this->textureFilter = filter;
+	this->addressMode = addressMode;
+	this->maxLod = 1.0f;
+    }
+
     filter textureFilter = filter::linear;
     address_mode addressMode = address_mode::repeat;
     int maxLod = 1.0f;

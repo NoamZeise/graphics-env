@@ -2,7 +2,6 @@
 #define PARTS_IMAGES_H
 
 #include <volk.h>
-#include <stdexcept>
 
 namespace part {
     namespace create {
@@ -13,7 +12,7 @@ namespace part {
 		       VkSampleCountFlagBits sampleFlags, uint32_t mipLevels);
 
         VkResult ImageView(VkDevice device, VkImageView* imgView, VkImage image,
-                              VkFormat format, VkImageAspectFlags aspectFlags);
+			   VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
 
       VkResult TextureSampler(VkDevice device,
 			      VkPhysicalDevice physicalDevice,

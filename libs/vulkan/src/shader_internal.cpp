@@ -224,8 +224,11 @@ void ShaderPoolVk::CreateGpuResources() {
 void ShaderPoolVk::DestroyGpuResources() {
     for(auto &set: sets)
 	set->DestroySetResources();
-    vkDestroyBuffer(state.device, buffer, nullptr);
-    vkFreeMemory(state.device, memory, nullptr);
+    if(memoryCreated) {
+	vkDestroyBuffer(state.device, buffer, nullptr);
+	vkFreeMemory(state.device, memory, nullptr);
+	memoryCreated = false;
+    }
     vkDestroyDescriptorPool(state.device, pool, nullptr); // also frees sets
     InternalShaderPool::DestroyGpuResources();
 }
@@ -274,17 +277,20 @@ void ShaderPoolVk::createData() {
     for(auto set: sets)
 	set->setupDescriptorSets(&memorySize, deviceProps);
 
-    // only support host coherent for now
-    checkResultAndThrow(
-	    vkhelper::createBufferAndMemory(
-		    state, memorySize, &buffer, &memory,
-		    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-		    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT),
-	    "Failed to allocate memory and buffer for shader pool");
+    void *p = nullptr;
+    if(memorySize > 0) {
+	// only support host coherent for now
+	checkResultAndThrow(
+		vkhelper::createBufferAndMemory(
+			state, memorySize, &buffer, &memory,
+			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+			VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT),
+		"Failed to allocate memory and buffer for shader pool");
     
-    vkBindBufferMemory(state.device, buffer, memory, 0);
-    void *p;
-    vkMapMemory(state.device, memory, 0, memorySize, 0, &p);
+	vkBindBufferMemory(state.device, buffer, memory, 0);
+	vkMapMemory(state.device, memory, 0, memorySize, 0, &p);
+	memoryCreated = true;
+    }
     
     std::vector<VkWriteDescriptorSet> writes;
     std::vector<std::vector<VkDescriptorBufferInfo>> buffers;

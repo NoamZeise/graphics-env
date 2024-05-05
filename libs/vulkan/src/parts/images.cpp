@@ -1,5 +1,4 @@
 #include "images.h"
-
 #include "../logger.h"
 
 namespace part
@@ -34,7 +33,7 @@ namespace part
   }
 
   VkResult ImageView(VkDevice device, VkImageView* imgView, VkImage image,
-		 VkFormat format, VkImageAspectFlags aspectFlags)
+		     VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels)
   {
       VkResult result = VK_SUCCESS;
       VkImageViewCreateInfo viewInfo { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
@@ -42,7 +41,7 @@ namespace part
       viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
       viewInfo.format = format;
       viewInfo.subresourceRange.baseMipLevel = 0;
-      viewInfo.subresourceRange.levelCount = 1;
+      viewInfo.subresourceRange.levelCount = mipLevels;
       viewInfo.subresourceRange.baseArrayLayer = 0;
       viewInfo.subresourceRange.layerCount = 1;
       viewInfo.subresourceRange.aspectMask = aspectFlags;

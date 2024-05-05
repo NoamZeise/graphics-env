@@ -153,6 +153,8 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
       shaderStructs::PerFrame3D perFrame3DData[Resource::MAX_3D_BATCH];
       Set* perFrame2dVertSet;
       glm::mat4 perFrame2DVertData[Resource::MAX_2D_BATCH];
+      Set* offscreenTransformSet;
+      Set* offscreenTexSet;
       
       bool offscreenSamplerCreated = false;
       VkSampler _offscreenTextureSampler;

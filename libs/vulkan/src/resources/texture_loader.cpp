@@ -22,6 +22,7 @@ struct TextureInGPU {
 	else
 	    format = VK_FORMAT_R8G8B8A8_UNORM;
 	layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	aspect = VK_IMAGE_ASPECT_COLOR_BIT;
     }
     ~TextureInGPU() {
 	vkDestroyImageView(device, view, nullptr);
@@ -38,6 +39,7 @@ struct TextureInGPU {
     VkDeviceSize imageMemSize;
     VkDeviceSize imageMemOffset;
     VkImageLayout layout;
+    VkImageAspectFlags aspect;
     VkResult createImage(VkDevice device, VkMemoryRequirements *pMemreq);
     void createMipMaps(VkCommandBuffer &cmdBuff);
     VkResult createImageView(VkDevice device);
@@ -116,12 +118,12 @@ void TexLoaderVk::loadGPU() {
 				base.device,
 				base.queue.graphicsPresentQueue, &tempCmdBuffer, loadedFence,
 				&graphicsPresentMutex),
-			"failed to move tex datat to gpu");
+			"failed to move texture data to gpu");
     
     LOG("finished moving textures to final memory location");
 
     checkResultAndThrow(vkResetCommandPool(base.device, cmdpool, 0),
-			"Failed to reset command pool in end tex loading");
+			"Failed to reset command pool in end texture loading");
 
     // free staging buffer/memory 
     vkUnmapMemory(base.device, stagingMemory);
@@ -304,7 +306,6 @@ void TexLoaderVk::textureDataStagingToFinal(VkBuffer stagingBuffer,
     VkBufferImageCopy region{};
     region.bufferRowLength = 0;
     region.bufferImageHeight = 0;
-    region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     region.imageSubresource.mipLevel = 0;
     region.imageSubresource.baseArrayLayer = 0;
     region.imageSubresource.layerCount = 1;
@@ -315,11 +316,13 @@ void TexLoaderVk::textureDataStagingToFinal(VkBuffer stagingBuffer,
 	vkBindImageMemory(base.device, textures[i]->image, memory, textures[i]->imageMemOffset);
 	barrier.image = textures[i]->image;
 	barrier.subresourceRange.levelCount = textures[i]->mipLevels;
+	barrier.subresourceRange.aspectMask = textures[i]->aspect;
 	addImagePipelineBarrier(cmdbuff, barrier,
 				VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
 				VK_PIPELINE_STAGE_TRANSFER_BIT);
 	region.imageExtent = { textures[i]->width, textures[i]->height, 1 };
 	region.bufferOffset = bufferOffset;
+	region.imageSubresource.aspectMask = textures[i]->aspect;
 	bufferOffset += staged[i].filesize;
 
 	vkCmdCopyBufferToImage(cmdbuff, stagingBuffer, textures[i]->image,
@@ -334,11 +337,13 @@ void dstToSrcBarrier(VkImageMemoryBarrier *barrier);
   
 void dstSrcToLayoutBarrier(VkImageMemoryBarrier *barrier, VkImageLayout layout);
   
-VkImageBlit getMipmapBlit(int32_t currentW, int32_t currentH, int destMipLevel);
+VkImageBlit getMipmapBlit(int32_t currentW, int32_t currentH, int destMipLevel,
+			  VkImageAspectFlags aspect);
 
 void TextureInGPU::createMipMaps(VkCommandBuffer &cmdBuff) {
     VkImageMemoryBarrier barrier = initialBarrierSettings();
     barrier.image = this->image;
+    barrier.subresourceRange.aspectMask = aspect;
     int mipW = this->width;
     int mipH = this->height;
     for(int i = 1; i < this->mipLevels; i++) { //start at 1 (0 would be full size)
@@ -349,7 +354,7 @@ void TextureInGPU::createMipMaps(VkCommandBuffer &cmdBuff) {
 				VK_PIPELINE_STAGE_TRANSFER_BIT,
 				VK_PIPELINE_STAGE_TRANSFER_BIT);
 
-	VkImageBlit blit = getMipmapBlit(mipW, mipH, i);
+	VkImageBlit blit = getMipmapBlit(mipW, mipH, i, this->aspect);
 	vkCmdBlitImage(cmdBuff, this->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 		       this->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit,
 		       MIPMAP_FILTER);
@@ -371,11 +376,12 @@ void TextureInGPU::createMipMaps(VkCommandBuffer &cmdBuff) {
 			    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 }
 
-VkImageBlit getMipmapBlit(int32_t currentW, int32_t currentH, int destMipLevel) {
+VkImageBlit getMipmapBlit(int32_t currentW, int32_t currentH, int destMipLevel,
+			  VkImageAspectFlags aspect) {
     VkImageBlit blit{};
     blit.srcOffsets[0] = {0, 0, 0};
     blit.srcOffsets[1] = { currentW, currentH, 1 };
-    blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    blit.srcSubresource.aspectMask = aspect;
     blit.srcSubresource.mipLevel = destMipLevel - 1;
     blit.srcSubresource.baseArrayLayer = 0;
     blit.srcSubresource.layerCount = 1;
@@ -384,7 +390,7 @@ VkImageBlit getMipmapBlit(int32_t currentW, int32_t currentH, int destMipLevel) 
 	currentW > 1 ? currentW / 2 : 1,
 	currentH > 1 ? currentH / 2 : 1,
 	1 };
-    blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    blit.dstSubresource.aspectMask = aspect;
     blit.dstSubresource.mipLevel = destMipLevel;
     blit.dstSubresource.baseArrayLayer = 0;
     blit.dstSubresource.layerCount = 1;
@@ -395,17 +401,8 @@ VkImageBlit getMipmapBlit(int32_t currentW, int32_t currentH, int destMipLevel) 
 /// --- image view creation ---
 
 VkResult TextureInGPU::createImageView(VkDevice device) {
-    VkImageViewCreateInfo viewInfo{ VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
-    viewInfo.image = this->image;
-    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    viewInfo.format = this->format;
-    viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    viewInfo.subresourceRange.baseMipLevel = 0;
-    viewInfo.subresourceRange.levelCount = this->mipLevels;
-    viewInfo.subresourceRange.baseArrayLayer = 0;
-    viewInfo.subresourceRange.layerCount = 1;
-	
-    return vkCreateImageView(device, &viewInfo, nullptr, &this->view);
+    return part::create::ImageView(
+	    device, &this->view, this->image, this->format, this->aspect, this->mipLevels);
 }
 
 /// --- memory barriers ---
@@ -414,7 +411,6 @@ VkImageMemoryBarrier initialBarrierSettings() {
     VkImageMemoryBarrier barrier { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
     barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     barrier.subresourceRange.baseMipLevel = 0;
     barrier.subresourceRange.baseArrayLayer = 0;
     barrier.subresourceRange.layerCount = 1;

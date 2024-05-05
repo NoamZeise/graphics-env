@@ -18,8 +18,8 @@ public:
     VkImageView getImageView(Resource::Texture tex);
     VkImageLayout getImageLayout(Resource::Texture tex);
     void setIndex(Resource::Texture texture, uint32_t index);
-    unsigned int getViewIndex(Resource::Texture tex) override;
-      
+    unsigned int getViewIndex(Resource::Texture tex) override;    
+    
 private:
     VkDeviceSize stageTexDataCreateImages(VkBuffer &stagingBuffer,
 					  VkDeviceMemory &stagingMemory,

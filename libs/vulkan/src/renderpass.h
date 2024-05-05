@@ -3,6 +3,7 @@
 
 #include <volk.h>
 #include <vector>
+#include <graphics/resources.h>
 
 enum class AttachmentType {
   Colour,
@@ -104,6 +105,8 @@ class RenderPass {
     void beginRenderPass(VkCommandBuffer cmdBuff, uint32_t frameIndex);
     
     std::vector<VkImageView> getAttachmentViews(uint32_t attachmentIndex);
+    //std::vector<Resource::Texture> getAttachmentTextures(uint32_t attachmentIndex);
+    
     VkExtent2D getExtent() { return this->framebufferExtent; }
     VkRenderPass getRenderPass() { return this->renderpass; }
 

@@ -196,6 +196,7 @@ private:
     int setCopies;
     std::vector<SetVk*> sets;
     VkDescriptorPool pool;
+    bool memoryCreated = false;
     VkBuffer buffer;
     VkDeviceMemory memory;
 };
