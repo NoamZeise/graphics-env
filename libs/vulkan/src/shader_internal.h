@@ -10,7 +10,7 @@
 #include <vector>
 #include <cstring>
 
-#include <render-internal/shader.h>
+#include <render-internal/shader_buffers.h>
 #include "resources/resource_pool.h"
 #include "shader.h"
 #include "device_state.h"
@@ -85,7 +85,7 @@ private:
 
 class SetVk : public InternalSet {
 public:
-    SetVk(DeviceState state, stageflag flags, PoolManagerVk* poolManager) : InternalSet(flags) {
+    SetVk(DeviceState state, shaderstage flags, PoolManagerVk* poolManager) : InternalSet(flags) {
 	this->state = state;
 	this->poolManager = poolManager;
 	DestroySetResources();
@@ -124,6 +124,11 @@ public:
 			     std::vector<VkWriteDescriptorSet> &writes,
 			     std::vector<std::vector<VkDescriptorBufferInfo>> &buffers,
 			     std::vector<std::vector<VkDescriptorImageInfo>> &images);
+    size_t getDynamicOffset(size_t index, size_t dynIndex);
+    bool dynamicBuffer(size_t index);
+    // has any dynamic buffers?
+    bool dynamicBuffer();
+    size_t bindingCount() { return bindings.size(); }
 
 protected:
     
@@ -166,7 +171,7 @@ public:
 	    delete set;
     }
     
-    Set* CreateSet(stageflag flags) override {
+    Set* CreateSet(shaderstage flags) override {
 	sets.push_back(new SetVk(state, flags, poolManager));
 	return sets[sets.size() - 1];
     }

@@ -10,7 +10,7 @@
 
 
 VkDescriptorType bindingTypeVk(Binding::type type);
-VkShaderStageFlags shaderFlagsVk(stageflag flags);
+VkShaderStageFlags shaderFlagsVk(shaderstage flags);
 
 
 /// --- Shader Set ---
@@ -173,6 +173,28 @@ void SetVk::writeDescriptorSets(void* p,
     gpuResourcesCreated = true;
 }
 
+size_t SetVk::getDynamicOffset(size_t index, size_t dynamicIndex) {
+    if(!dynamicBuffer(index))
+	throw std::invalid_argument("Called getDynamicOffset on non dynamic buffer");
+    if(dynamicIndex >= bindings[index].dynamicCount)
+	throw std::invalid_argument("Called getDynamicOffset with out of range dynamic index");
+
+    return bindings[index].dynamicMemSize * dynamicIndex;
+}
+
+bool SetVk::dynamicBuffer(size_t index) {
+    if(index >= this->bindings.size())
+	throw std::invalid_argument("Index to getDynamicOffset was greater than num bindings");
+    return bindings[index].bindType == Binding::type::UniformBufferDynamic
+	|| bindings[index].bindType == Binding::type::StorageBufferDynamic;
+}
+
+bool SetVk::dynamicBuffer() {
+    for(int i = 0; i < bindings.size(); i++)
+	if(dynamicBuffer(i))
+	    return true;
+    return false;
+}
 
 void SetVk::setHandleIndex(size_t handleIndex) {
     if(handleIndex >= setHandles.size())
@@ -486,13 +508,13 @@ VkDescriptorType bindingTypeVk(Binding::type type) {
     }
 }
 
-VkShaderStageFlags shaderFlagsVk(stageflag flags) {
+VkShaderStageFlags shaderFlagsVk(shaderstage flags) {
     VkShaderStageFlags f = 0;
 
-    if((unsigned int)flags & (unsigned int)stageflag::vert)
+    if((unsigned int)flags & (unsigned int)shaderstage::vert)
 	f |= VK_SHADER_STAGE_VERTEX_BIT;
     
-    if((unsigned int)flags & (unsigned int)stageflag::frag)
+    if((unsigned int)flags & (unsigned int)shaderstage::frag)
 	f |= VK_SHADER_STAGE_FRAGMENT_BIT;
     
     return f;

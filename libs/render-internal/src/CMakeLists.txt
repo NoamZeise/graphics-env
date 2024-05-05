@@ -4,6 +4,7 @@ add_library(render-internal
     texture_loader.cpp
     model_loader.cpp
     assimp_loader.cpp
+    shader_buffers.cpp
 )
 
 target_sources(render-internal PRIVATE font_loader.cpp)

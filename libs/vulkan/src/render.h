@@ -136,8 +136,6 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
       shaderStructs::viewProjection VP2DData;
       DescSet *perFrame3D;
       shaderStructs::PerFrame3D perFrame3DData[Resource::MAX_3D_BATCH];
-      DescSet *bones;
-      size_t currentBonesDynamicOffset;
       DescSet *perFrame2DVert;
       glm::mat4 perFrame2DVertData[Resource::MAX_2D_BATCH];      
       DescSet *offscreenTransform;
@@ -152,6 +150,8 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
       Set* lightingSet;
       BPLighting lightingData;
       Set* textureSet;
+      Set* boneSet;
+      size_t currentBonesDynamicIndex;
       
       bool offscreenSamplerCreated = false;
       VkSampler _offscreenTextureSampler;

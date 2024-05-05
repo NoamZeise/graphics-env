@@ -12,6 +12,7 @@
 
 namespace Resource {
 
+  //todo: move outside internal api
   const uint32_t MAX_TEXTURES_SUPPORTED = 20;//match in shader
   const uint32_t MAX_2D_BATCH = 10000;
   const uint32_t MAX_3D_BATCH = 1000;
@@ -57,6 +58,7 @@ namespace Resource {
 	      ID == other.ID &&
 	      dim == other.dim;
       }
+      
       bool operator!=(Texture other) {
 	  return !(*this == other);
       }
@@ -76,10 +78,12 @@ namespace Resource {
   
   struct Model {
       Model() {}
+
       Model(size_t ID) {
 	  this->ID = ID;
 	  this->type = ModelType::m3D;
       }
+      
       Model(size_t ID, ModelType type, Pool pool) {
 	  this->ID = ID;
 	  this->type = type;

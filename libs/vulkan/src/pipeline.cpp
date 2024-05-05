@@ -10,6 +10,13 @@ Pipeline::Pipeline(
     this->pipeline = pipeline;
     this->descriptorSetsActive = std::vector<bool>(descriptorSets.size(), true);
     this->newSets = newSets;
+    this->dynOffs.resize(newSets.size());
+    for(int i = 0; i < newSets.size(); i++) {
+	for(int j = 0; j < newSets[i]->bindingCount(); j++) {
+	    if(newSets[i]->dynamicBuffer(j))
+		dynOffs[i].push_back(0);
+	}
+    }
 }
 
 void Pipeline::setDescSetState(DS::DescriptorSet *set, bool isActive) {
@@ -37,12 +44,12 @@ void Pipeline::begin(VkCommandBuffer cmdBuff, size_t frameIndex) {
 	}
     }
     
-    for (size_t i = 0; i < newSets.size(); i++) {       
+    for (size_t i = 0; i < newSets.size(); i++) {
 	vkCmdBindDescriptorSets(
 		cmdBuff, VK_PIPELINE_BIND_POINT_GRAPHICS, layout,
 		(uint32_t)(descriptorSets.size() + i), 1,
 		newSets[i]->getSet(frameIndex),
-		0, nullptr); // no dynamic yet
+		dynOffs[i].size(), dynOffs[i].data()); // no dynamic yet
 	bindOffset++;
     }
     
@@ -58,6 +65,24 @@ void Pipeline::bindDynamicDS(
 					static_cast<uint32_t>(i), 1,
 					&descriptorSets[i]->sets[frameIndex],
 					1, &dynOffset);
+}
+
+void Pipeline::bindDynamicDSNew(
+	VkCommandBuffer cmdBuff, size_t frameIndex, size_t offsetIndex, size_t setIndex,
+				size_t bindingIndex) {
+    if(setIndex >= this->newSets.size() + this->descriptorSets.size())
+	throw std::invalid_argument("bind new ds set index out of range");
+    int newindex = (int)setIndex - (int)this->descriptorSets.size();
+    if(newindex >= newSets.size() || newindex < 0)
+	throw std::invalid_argument("bind new ds set index out of range");
+    // assume first descriptor is dynamic for now, until pipeline rewrite
+    dynOffs[newindex][bindingIndex]
+	= newSets[newindex]->getDynamicOffset(bindingIndex, offsetIndex);
+    vkCmdBindDescriptorSets(cmdBuff, VK_PIPELINE_BIND_POINT_GRAPHICS, layout,
+			    (uint32_t)(setIndex),
+			    1, newSets[newindex]->getSet(frameIndex),
+			    dynOffs[newindex].size(), dynOffs[newindex].data());
+			    
 }
 
 void Pipeline::destroy(VkDevice device) {

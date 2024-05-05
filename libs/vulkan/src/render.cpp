@@ -241,16 +241,16 @@ bool swapchainRecreationRequired(VkResult result) {
 
       mainShaderPool = CreateShaderPool();
       
-      lightingSet = mainShaderPool->CreateSet(stageflag::frag);
+      lightingSet = mainShaderPool->CreateSet(shaderstage::frag);
       lightingSet->addUniformBuffer(0, sizeof(BPLighting));
 
-      perFrame2DSet = mainShaderPool->CreateSet(stageflag::frag);
+      perFrame2DSet = mainShaderPool->CreateSet(shaderstage::frag);
       perFrame2DSet->addStorageBuffer(
 	      0, sizeof(shaderStructs::Frag2DData) * Resource::MAX_2D_BATCH);
 
       float minmipmap;
       auto activeTextures = getActiveTextures(&minmipmap);
-      textureSet = mainShaderPool->CreateSet(stageflag::frag);
+      textureSet = mainShaderPool->CreateSet(shaderstage::frag);
       textureSet->addTextureSamplers(
 	      0, TextureSampler(renderConf.texture_filter_nearest ?
 				TextureSampler::filter::nearest : TextureSampler::filter::linear,
@@ -258,6 +258,10 @@ bool swapchainRecreationRequired(VkResult result) {
 				minmipmap));
       textureSet->addTextures(1, Resource::MAX_TEXTURES_SUPPORTED, activeTextures);
 
+
+      boneSet = mainShaderPool->CreateSet(shaderstage::vert);
+      boneSet->addUniformBuffer(0, sizeof(shaderStructs::Bones), 1, MAX_ANIMATIONS_PER_FRAME);
+      
       
       mainShaderPool->CreateGpuResources();
 
@@ -293,12 +297,6 @@ bool swapchainRecreationRequired(VkResult result) {
 	      Resource::MAX_3D_BATCH);
       perFrame3D = new DescSet(PerFrame3D_Set, descriptorSizes, manager->deviceState.device);
       descriptorSets.push_back(perFrame3D);
-
-      descriptor::Set bones_Set("Bones Animation", descriptor::ShaderStage::Vertex);
-      bones_Set.AddDescriptor("bones", descriptor::Type::UniformBufferDynamic,
-			      sizeof(shaderStructs::Bones), MAX_ANIMATIONS_PER_FRAME);
-      bones = new DescSet(bones_Set, descriptorSizes, manager->deviceState.device);
-      descriptorSets.push_back(bones);
 
       descriptor::Set vert2D_Set("Per Frame 2D Vert", descriptor::ShaderStage::Vertex);
       vert2D_Set.AddSingleArrayStructDescriptor(
@@ -396,8 +394,8 @@ bool swapchainRecreationRequired(VkResult result) {
       part::create::GraphicsPipeline(
 	      manager->deviceState.device, &_pipelineAnim3D,
 	      offscreenRenderPass->getRenderPass(),
-	      {&VP3D->set, &perFrame3D->set, &bones->set},
-	      {(SetVk*)textureSet, (SetVk*)lightingSet},
+	      {&VP3D->set, &perFrame3D->set},
+	      {(SetVk*)boneSet, (SetVk*)textureSet, (SetVk*)lightingSet},
 	      {{VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(fragPushConstants)}},
 	      pipelineSetup.getPath(shader::pipeline::anim3D, shader::stage::vert),
 	      pipelineSetup.getPath(shader::pipeline::anim3D, shader::stage::frag),
@@ -593,7 +591,7 @@ void RenderVk::_startDraw() {
     for(auto pool: this->shaderPools)
 	pool->setFrameIndex(frameIndex);
     
-    currentBonesDynamicOffset = 0;
+    currentBonesDynamicIndex = 0;
     currentModelPool = Resource::Pool();
     _begunDraw = true;
 }	
@@ -687,18 +685,16 @@ void RenderVk::DrawAnimModel(Resource::Model model, glm::mat4 modelMatrix,
     for(int i = 0; i < animBones->size() && i < Resource::MAX_BONES; i++) {
 	bonesData.mat[i] = animBones->at(i);
     }
-    if(currentBonesDynamicOffset >= MAX_ANIMATIONS_PER_FRAME) {
+    if(currentBonesDynamicIndex >= MAX_ANIMATIONS_PER_FRAME) {
 	LOG("warning, too many animation calls!\n");
 	return;
     }
-    bones->bindings[0].storeSetData(frameIndex,
-				    &bonesData, 0, 0, currentBonesDynamicOffset);
-    uint32_t offset = static_cast<uint32_t>((currentBonesDynamicOffset) *
-					    bones->bindings[0].bufferSize *
-					    bones->bindings[0].setCount);
-    _pipelineAnim3D.bindDynamicDS(currentCommandBuffer, &bones->set, frameIndex,  offset);
+    boneSet->setData(0, &bonesData, 0, 0, 0, currentBonesDynamicIndex);
+    _pipelineAnim3D.bindDynamicDSNew(
+	    currentCommandBuffer, frameIndex, currentBonesDynamicIndex, 2, 0);
+    
     _drawBatch();
-    currentBonesDynamicOffset++;
+    currentBonesDynamicIndex++;
 }
 
 void RenderVk::DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix, glm::vec4 colour, glm::vec4 texOffset) {

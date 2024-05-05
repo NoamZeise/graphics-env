@@ -22,6 +22,9 @@ public:
     void begin(VkCommandBuffer cmdBuff, size_t frameIndex);
     void bindDynamicDS(
 	    VkCommandBuffer cmdBuff, DS::DescriptorSet *ds, size_t frameIndex, uint32_t dynOffset);
+    void bindDynamicDSNew(
+	    VkCommandBuffer cmdBuff, size_t frameIndex, size_t offsetIndex, size_t setIndex,
+			  size_t bindingIndex);
     void destroy(VkDevice device);
     VkPipelineLayout getLayout() { return layout; }
 
@@ -31,6 +34,7 @@ private:
     std::vector<DS::DescriptorSet*> descriptorSets;
     std::vector<bool> descriptorSetsActive;
     std::vector<SetVk*> newSets;
+    std::vector<std::vector<uint32_t>> dynOffs;
 };
 
 
