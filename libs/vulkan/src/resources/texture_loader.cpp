@@ -10,6 +10,7 @@
 const VkFilter MIPMAP_FILTER = VK_FILTER_LINEAR;
 
 struct TextureInGPU {
+    /// for loaded textures
     TextureInGPU(VkDevice device, StagedTex tex, bool srgb) {
 	this->device = device;
 	width = tex.width;
@@ -23,11 +24,35 @@ struct TextureInGPU {
 	    format = VK_FORMAT_R8G8B8A8_UNORM;
 	layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	aspect = VK_IMAGE_ASPECT_COLOR_BIT;
+	accessMask = VK_ACCESS_SHADER_READ_BIT;
+	usage = VK_IMAGE_USAGE_SAMPLED_BIT |
+	    VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+	    VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+	sampleCount = VK_SAMPLE_COUNT_1_BIT;
     }
+
+    /// for GPU only textures
+    TextureInGPU(VkDevice device, VkExtent2D extent, VkFormat format,
+		 VkImageUsageFlags usage, VkSampleCountFlagBits sampleCount,
+		 VkImageLayout layout, VkImageAspectFlags aspect, VkAccessFlagBits access) {
+	this->device = device;
+	this->width = extent.width;
+	this->height = extent.height;
+	// only support 1 mip level for now
+	this->mipLevels = 1;
+	this->format = format;
+	this->layout = layout;
+	this->aspect = aspect;
+	this->accessMask = access;
+	this->usage = usage;
+	this->sampleCount = sampleCount;
+    }
+    
     ~TextureInGPU() {
 	vkDestroyImageView(device, view, nullptr);
 	vkDestroyImage(device, image, nullptr);	  
     }
+    
     VkDevice device;
     uint32_t imageViewIndex = 0;
     uint32_t width;
@@ -39,7 +64,10 @@ struct TextureInGPU {
     VkDeviceSize imageMemSize;
     VkDeviceSize imageMemOffset;
     VkImageLayout layout;
+    VkSampleCountFlagBits sampleCount;
+    VkImageUsageFlags usage;
     VkImageAspectFlags aspect;
+    VkAccessFlags accessMask;
     VkResult createImage(VkDevice device, VkMemoryRequirements *pMemreq);
     void createMipMaps(VkCommandBuffer &cmdBuff);
     VkResult createImageView(VkDevice device);
@@ -227,12 +255,10 @@ bool formatSupportsMipmapping(VkPhysicalDevice physicalDevice, VkFormat format) 
 
 VkResult TextureInGPU::createImage(VkDevice device, VkMemoryRequirements *pMemreq) {
     return part::create::Image(device, &this->image, pMemreq,
-			       VK_IMAGE_USAGE_SAMPLED_BIT |
-			       VK_IMAGE_USAGE_TRANSFER_DST_BIT |
-			       VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+			       usage,
 			       VkExtent2D { this->width, this->height },
 			       this->format,
-			       VK_SAMPLE_COUNT_1_BIT, this->mipLevels);
+			       sampleCount, this->mipLevels);
 }
 
 VkDeviceSize TexLoaderVk::stageTexDataCreateImages(VkBuffer &stagingBuffer,
@@ -335,7 +361,7 @@ void TexLoaderVk::textureDataStagingToFinal(VkBuffer stagingBuffer,
   
 void dstToSrcBarrier(VkImageMemoryBarrier *barrier);
   
-void dstSrcToLayoutBarrier(VkImageMemoryBarrier *barrier, VkImageLayout layout);
+void dstSrcToLayoutBarrier(VkImageMemoryBarrier *barrier, VkImageLayout layout, VkAccessFlags accessMask);
   
 VkImageBlit getMipmapBlit(int32_t currentW, int32_t currentH, int destMipLevel,
 			  VkImageAspectFlags aspect);
@@ -359,7 +385,7 @@ void TextureInGPU::createMipMaps(VkCommandBuffer &cmdBuff) {
 		       this->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit,
 		       MIPMAP_FILTER);
 	  
-	dstSrcToLayoutBarrier(&barrier, layout);
+	dstSrcToLayoutBarrier(&barrier, layout, accessMask);
 	addImagePipelineBarrier(cmdBuff, barrier,
 				VK_PIPELINE_STAGE_TRANSFER_BIT,
 				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
@@ -367,7 +393,7 @@ void TextureInGPU::createMipMaps(VkCommandBuffer &cmdBuff) {
 	if(mipH > 1) mipH /= 2;
     }
     //transition last mipmap lvl from dst to shader read only
-    dstSrcToLayoutBarrier(&barrier, layout);
+    dstSrcToLayoutBarrier(&barrier, layout, accessMask);
     barrier.subresourceRange.baseMipLevel = this->mipLevels - 1;
     barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
     barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -425,9 +451,10 @@ void dstToSrcBarrier(VkImageMemoryBarrier *barrier) {
       barrier->dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
   }
 
-void dstSrcToLayoutBarrier(VkImageMemoryBarrier *barrier, VkImageLayout layout) {
+void dstSrcToLayoutBarrier(VkImageMemoryBarrier *barrier, VkImageLayout layout,
+			   VkAccessFlags accessMask) {
     barrier->oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
     barrier->newLayout = layout;
     barrier->srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-    barrier->dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    barrier->dstAccessMask = accessMask;
 }
