@@ -13,7 +13,7 @@ VkDescriptorType bindingTypeVk(Binding::type type);
 VkShaderStageFlags shaderFlagsVk(shaderstage flags);
 
 
-/// --- Shader Set ---
+/// ----------- Shader Set -----------
 
 
 void SetVk::setData(size_t index,
@@ -211,7 +211,7 @@ void SetVk::setHandleIndex(size_t handleIndex) {
 }
 
 
-/// ---  Shader Pool ---
+/// ----------- Shader Pool -----------
 
 
 void ShaderPoolVk::CreateGpuResources() {
@@ -319,6 +319,7 @@ void BindingVk::clear(VkDevice device) {
 	    vkDestroySampler(device, sampler, nullptr);
 	samplersVk.clear();
     }
+    // textures
     textureViews.clear();
     textureLayouts.clear();
 }
