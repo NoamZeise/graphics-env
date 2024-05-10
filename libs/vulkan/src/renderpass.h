@@ -4,6 +4,7 @@
 #include <volk.h>
 #include <vector>
 #include <graphics/resources.h>
+#include "resources/texture_loader.h"
 
 enum class AttachmentType {
   Colour,
@@ -26,24 +27,17 @@ class AttachmentDesc {
 		   VkSampleCountFlagBits sampleCount, VkFormat format);
     VkAttachmentReference getAttachmentReference();
     VkAttachmentDescription getAttachmentDescription();
-    AttachmentType getType();
-    AttachmentUse getUse();
+    AttachmentType getType() { return type; }
+    AttachmentUse getUse() { return use; }
     uint32_t getIndex() { return index; }
     bool wasCreated() { return created; }
-    void getImageProps(VkFormat *imageFormat,
-		       VkImageUsageFlags *imageUsage,
-		       VkImageAspectFlags *imageAspect,
-		       VkSampleCountFlagBits *sampleCount);
+    TextureInfoVk getImageInfo() { return tex; }
 private:
     bool created = true;
     uint32_t index;
     AttachmentType type;
     AttachmentUse use;
-    VkImageUsageFlags imageUsageFlags;
-    VkImageAspectFlags imageAspectFlags;
-    VkFormat format;
-    VkSampleCountFlagBits samples;
-    VkImageLayout imageLayout;
+    TextureInfoVk tex;
     VkImageLayout finalImageLayout;
     VkAttachmentLoadOp loadOp;
     VkAttachmentStoreOp storeOp;

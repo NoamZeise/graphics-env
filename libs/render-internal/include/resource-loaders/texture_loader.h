@@ -12,7 +12,8 @@ struct StagedTex {
     int width, height, nrChannels, filesize;
     std::string path;
     bool pathedTex;
-    void deleteData();
+    bool internalTex = false;
+    virtual void deleteData();
 };
 
 class InternalTexLoader : public TextureLoader {
@@ -24,6 +25,8 @@ public:
 				  int width,
 				  int height,
 				  int nrChannels) override;
+
+    Resource::Texture addStagedTexture(StagedTex tex);
 
     virtual void loadGPU() {
 	loadedTextures = stagedTextures;
@@ -44,6 +47,7 @@ public:
     int desiredChannels = 4;
 
     std::vector<StagedTex> staged;
+    
     std::vector<Resource::Texture> stagedTextures;
     std::vector<Resource::Texture> loadedTextures;
 };

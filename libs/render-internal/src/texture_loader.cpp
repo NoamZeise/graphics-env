@@ -32,15 +32,7 @@ Resource::Texture InternalTexLoader::load(std::string path) {
     }
     tex.nrChannels = desiredChannels;
     tex.filesize = tex.width * tex.height * tex.nrChannels;
-    staged.push_back(tex);
-    LOG("Texture Load"
-	" - pool: " << pool.ID <<
-	" - id: "   << staged.size() - 1 <<
-	" - path: " << tex.path);
-    Resource::Texture texture((unsigned int)(staged.size() - 1),
-			      glm::vec2(tex.width, tex.height), pool);
-    stagedTextures.push_back(texture);
-    return texture;
+    return addStagedTexture(tex);
 }
 
 Resource::Texture InternalTexLoader::load(
@@ -56,12 +48,17 @@ Resource::Texture InternalTexLoader::load(
     }
     tex.nrChannels = desiredChannels;
     tex.filesize = tex.width * tex.height * tex.nrChannels;
+    return addStagedTexture(tex);
+}
+
+Resource::Texture InternalTexLoader::addStagedTexture(StagedTex tex) {
     staged.push_back(tex);
     LOG("Texture Load"
 	" - pool: " << pool.ID <<
 	" - id: "   << staged.size() - 1 <<
-	" - loaded from raw data");
-    Resource::Texture texture(staged.size() - 1, glm::vec2(tex.width, tex.height), pool);
+	" - path: " << tex.path);
+    Resource::Texture texture(
+	    staged.size() - 1, glm::vec2(tex.width, tex.height), pool);
     stagedTextures.push_back(texture);
     return texture;
 }

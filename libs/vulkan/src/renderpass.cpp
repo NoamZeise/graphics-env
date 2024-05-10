@@ -41,10 +41,7 @@ private:
     VkImageView view;
     size_t memoryOffset;
 
-    VkFormat imageFormat;
-    VkImageUsageFlags imageUsage;
-    VkImageAspectFlags imageAspect;
-    VkSampleCountFlagBits sampleCount;
+    TextureInfoVk tex;
 };
 
 
@@ -215,7 +212,7 @@ std::vector<VkImageView> RenderPass::getAttachmentViews(uint32_t attachmentIndex
 
 
 AttachmentImage::AttachmentImage(AttachmentDesc &attachmentDesc) {
-    attachmentDesc.getImageProps(&imageFormat, &imageUsage, &imageAspect, &sampleCount);
+    this->tex = attachmentDesc.getImageInfo();
     switch(attachmentDesc.getUse()) {
     case AttachmentUse::PresentSrc:
 	usingExternalImage = true;
@@ -254,7 +251,7 @@ VkResult AttachmentImage::CreateImage(VkDevice device,
     VkResult result = VK_SUCCESS;
     VkMemoryRequirements memReq;
     returnOnErr(part::create::Image(
-        device, &image, &memReq, imageUsage, extent, imageFormat, sampleCount, 1));
+        device, &image, &memReq, tex.usage, extent, tex.format, tex.samples, 1));
     *pMemoryRequirements = vkhelper::correctMemoryAlignment(*pMemoryRequirements, memReq.alignment);
     this->memoryOffset = *pMemoryRequirements;
     *pMemoryRequirements += vkhelper::correctMemoryAlignment(memReq.size, memReq.alignment);
@@ -290,7 +287,7 @@ VkResult AttachmentImage::CreateImageView(
 			  attachmentMemory, memoryOffset);
     
     VkResult result = part::create::ImageView(
-	    device, &view, image, imageFormat, imageAspect, 1);
+	    device, &view, image, tex.format, tex.aspect, 1);
     if(result == VK_SUCCESS)
 	state = state::imageview;
     return result;
@@ -392,35 +389,35 @@ AttachmentDesc::AttachmentDesc(uint32_t index, AttachmentType type, AttachmentUs
     this->type = type;
     this->use = use;
 
-    this->format = format;
-    this->samples = sampleCount;
+    this->tex.format = format;
+    this->tex.samples = sampleCount;
     this->loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     switch(type) {
     case AttachmentType::Resolve:
 	this->loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     case AttachmentType::Colour:
-	imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	imageUsageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-	imageAspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
+	this->tex.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	this->tex.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+	this->tex.aspect = VK_IMAGE_ASPECT_COLOR_BIT;
 	break;
     case AttachmentType::Depth:
 	//must be depth_stencil, unless seperate depth stencil layout feature is enabled.
-	imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-	imageUsageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-	imageAspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT;
+	this->tex.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+	this->tex.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+	this->tex.aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
 	break;
     }
     switch(use) {
     case AttachmentUse::TransientAttachment:
-	imageUsageFlags |= VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
+	this->tex.usage |= VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
     case AttachmentUse::Attachment:
-	finalImageLayout = imageLayout;
+	finalImageLayout = tex.layout;
 	storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	break;
     case AttachmentUse::ShaderRead:
 	storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 	finalImageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	imageUsageFlags |= VK_IMAGE_USAGE_SAMPLED_BIT;
+	this->tex.usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
 	break;
     case AttachmentUse::PresentSrc:
 	storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -432,15 +429,15 @@ AttachmentDesc::AttachmentDesc(uint32_t index, AttachmentType type, AttachmentUs
 VkAttachmentReference AttachmentDesc::getAttachmentReference() {
     VkAttachmentReference attachRef;
     attachRef.attachment = index;
-    attachRef.layout = imageLayout;
+    attachRef.layout = tex.layout;
     return attachRef;
 }
 
 VkAttachmentDescription AttachmentDesc::getAttachmentDescription() {
     VkAttachmentDescription desc;
     desc.flags = 0;
-    desc.format = format;
-    desc.samples = samples;
+    desc.format = tex.format;
+    desc.samples = tex.samples;
     desc.loadOp = loadOp;
     desc.storeOp = storeOp;
     desc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -449,21 +446,6 @@ VkAttachmentDescription AttachmentDesc::getAttachmentDescription() {
     desc.finalLayout = finalImageLayout;
     return desc;
 }
-
-AttachmentType AttachmentDesc::getType() { return this->type; }
-
-AttachmentUse AttachmentDesc::getUse() { return this->use; }
-
-void AttachmentDesc::getImageProps(VkFormat *imageFormat,
-				   VkImageUsageFlags *imageUsage,
-				   VkImageAspectFlags *imageAspect,
-				   VkSampleCountFlagBits *sampleCount) {
-    *imageFormat = this->format;
-    *imageUsage = this->imageUsageFlags;
-    *imageAspect = this->imageAspectFlags;
-    *sampleCount = this->samples;
-}
-
 
 
 /// ---- Helpers ----
