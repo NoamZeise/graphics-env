@@ -7,16 +7,22 @@
 #include "../parts/command.h"
 #include "../parts/threading.h"
 
+
 const VkFilter MIPMAP_FILTER = VK_FILTER_LINEAR;
 
+struct StagedTexVk : public StagedTex {
+    void deleteData() override {}
+    TextureInfoVk info;
+};
+
 struct TextureInGPU {
-    /// for loaded textures
-    TextureInGPU(VkDevice device, StagedTex tex, bool srgb) {
+    /// for user loaded textures
+    TextureInGPU(VkDevice device, StagedTex *tex, bool srgb) {
 	this->device = device;
-	width = tex.width;
-	height = tex.height;
+	width = tex->width;
+	height = tex->height;
 	this->info.mipLevels = (int)std::floor(std::log2(width > height ? width : height)) + 1;
-	if(tex.nrChannels != 4)
+	if(tex->nrChannels != 4)
 	    throw std::runtime_error("GPU Tex has unsupport no. of channels!");
 	if(srgb)
 	    this->info.format = VK_FORMAT_R8G8B8A8_SRGB;
@@ -31,12 +37,16 @@ struct TextureInGPU {
 	this->info.samples = VK_SAMPLE_COUNT_1_BIT;
     }
 
-    /// for GPU only textures
-    TextureInGPU(VkDevice device, TextureInfoVk info, uint32_t width,  uint32_t height) {
-	this->device = device;
-	this->width = width;
-	this->height = height;
-	this->info = info;
+    /// for internally loaded textures
+    TextureInGPU(VkDevice device, StagedTex *tex) {
+	if(tex->internalTex) {
+	    this->device = device;
+	    this->width = tex->width;
+	    this->height = tex->height;
+	    this->info = ((StagedTexVk*)tex)->info;
+	} else 
+	    throw std::invalid_argument(
+		    "Error: vulkan: Texture In GPU given non-internal texture");
     }
     
     ~TextureInGPU() {
@@ -72,17 +82,13 @@ TexLoaderVk::~TexLoaderVk() {
     clearGPU();
 }
 
-struct StagedTexVk : public StagedTex {
-    void deleteData() override {}
-    TextureInfoVk info;
-};
-
 Resource::Texture TexLoaderVk::addGpuTexture(uint32_t width, uint32_t height, TextureInfoVk info) {
-    StagedTexVk tex;
-    tex.width = width;
-    tex.height = height;
-    tex.internalTex = true;
-    tex.info = info;
+    StagedTexVk* tex = new StagedTexVk();
+    tex->width = width;
+    tex->height = height;
+    tex->internalTex = true;
+    tex->info = info;
+    tex->filesize = 0;
     return addStagedTexture(tex);
 }
 
@@ -182,7 +188,7 @@ void TexLoaderVk::loadGPU() {
 
     LOG("finished creating image views and texture samplers");
     vkFreeCommandBuffers(base.device, cmdpool, 1, &tempCmdBuffer);
-    staged.clear();
+    clearStaged();
     LOG("finished loading textures");
 }
 
@@ -264,8 +270,8 @@ VkDeviceSize TexLoaderVk::stageTexDataCreateImages(VkBuffer &stagingBuffer,
 						   VkDeviceMemory &stagingMemory,
 						   uint32_t *pFinalMemType) {
     VkDeviceSize totalDataSize = 0;
-    for(const auto& tex: staged)
-	totalDataSize += tex.filesize;
+    for(const auto tex: staged)
+	totalDataSize += tex->filesize;
 
     LOG("creating staging buffer for textures. size: " << totalDataSize << " bytes");
     checkResultAndThrow(vkhelper::createBufferAndMemory(
@@ -286,13 +292,17 @@ VkDeviceSize TexLoaderVk::stageTexDataCreateImages(VkBuffer &stagingBuffer,
     *pFinalMemType = 0;
     minimumMipmapLevel = UINT32_MAX;
     for (size_t i = 0; i < staged.size(); i++) {
-	std::memcpy(static_cast<char*>(pMem) + bufferOffset,
-		    staged[i].data,
-		    staged[i].filesize);
-	staged[i].deleteData();
-	bufferOffset += staged[i].filesize;
-	
-	textures[i] = new TextureInGPU(base.device, staged[i], srgb);
+	if(staged[i]->filesize > 0) {
+	    std::memcpy(static_cast<char*>(pMem) + bufferOffset,
+			staged[i]->data,
+			staged[i]->filesize);
+	    staged[i]->deleteData();
+	    bufferOffset += staged[i]->filesize;
+	}
+	if(staged[i]->internalTex) {
+	    textures[i] = new TextureInGPU(base.device, staged[i]);
+	} else 
+	    textures[i] = new TextureInGPU(base.device, staged[i], srgb);
 	if (!mipmapping ||
 	    !formatSupportsMipmapping(base.physicalDevice, textures[i]->info.format))
 	    textures[i]->info.mipLevels = 1;
@@ -301,7 +311,7 @@ VkDeviceSize TexLoaderVk::stageTexDataCreateImages(VkBuffer &stagingBuffer,
 			    "failed to create image in texture loader"
 			    "for texture at index " + std::to_string(i));
 
-	//get smallest mip levels of any texture
+	// update smallest mip levels of any texture
 	if (textures[i]->info.mipLevels < minimumMipmapLevel)
 	    minimumMipmapLevel = textures[i]->info.mipLevels;
 	  
@@ -349,7 +359,7 @@ void TexLoaderVk::textureDataStagingToFinal(VkBuffer stagingBuffer,
 	region.imageExtent = { textures[i]->width, textures[i]->height, 1 };
 	region.bufferOffset = bufferOffset;
 	region.imageSubresource.aspectMask = textures[i]->info.aspect;
-	bufferOffset += staged[i].filesize;
+	bufferOffset += staged[i]->filesize;
 
 	vkCmdCopyBufferToImage(cmdbuff, stagingBuffer, textures[i]->image,
 			       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,

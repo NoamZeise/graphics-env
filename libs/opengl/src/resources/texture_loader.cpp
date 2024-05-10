@@ -18,7 +18,7 @@ void TextureLoaderGL::loadGPU() {
     inGpu.resize(staged.size());
     for(int i = 0; i < staged.size(); i++) {
 	GLuint format = GL_RGBA;
-	switch(staged[i].nrChannels) {
+	switch(staged[i]->nrChannels) {
 	case 1:
 	    format = GL_RED;
 	    break;
@@ -35,9 +35,9 @@ void TextureLoaderGL::loadGPU() {
 	    throw std::runtime_error("Unsupported no. of channels");
 	}  
 	inGpu[i] = ogl_helper::genTexture(format,
-					  staged[i].width,
-					  staged[i].height,
-					  staged[i].data,
+					  staged[i]->width,
+					  staged[i]->height,
+					  staged[i]->data,
 					  mipmapping,
 					  filterNearest ? GL_NEAREST : GL_LINEAR,
 					  GL_REPEAT, 1);

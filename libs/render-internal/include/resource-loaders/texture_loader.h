@@ -26,7 +26,7 @@ public:
 				  int height,
 				  int nrChannels) override;
 
-    Resource::Texture addStagedTexture(StagedTex tex);
+    Resource::Texture addStagedTexture(StagedTex* tex);
 
     virtual void loadGPU() {
 	loadedTextures = stagedTextures;
@@ -46,7 +46,7 @@ public:
     Resource::Pool pool;
     int desiredChannels = 4;
 
-    std::vector<StagedTex> staged;
+    std::vector<StagedTex*> staged;
     
     std::vector<Resource::Texture> stagedTextures;
     std::vector<Resource::Texture> loadedTextures;
