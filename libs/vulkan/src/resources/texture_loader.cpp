@@ -44,6 +44,8 @@ struct TextureInGPU {
 	    this->width = tex->width;
 	    this->height = tex->height;
 	    this->info = ((StagedTexVk*)tex)->info;
+	    if(tex->filesize == 0)
+		internalImage = true;
 	} else 
 	    throw std::invalid_argument(
 		    "Error: vulkan: Texture In GPU given non-internal texture");
@@ -63,6 +65,7 @@ struct TextureInGPU {
     VkImageView view;
     VkDeviceSize imageMemSize;
     VkDeviceSize imageMemOffset;
+    bool internalImage = false;
     VkResult createImage(VkDevice device, VkMemoryRequirements *pMemreq);
     void createMipMaps(VkCommandBuffer &cmdBuff);
     VkResult createImageView(VkDevice device);
@@ -298,7 +301,7 @@ VkDeviceSize TexLoaderVk::stageTexDataCreateImages(VkBuffer &stagingBuffer,
 			staged[i]->filesize);
 	    staged[i]->deleteData();
 	    bufferOffset += staged[i]->filesize;
-	}
+	} 
 	if(staged[i]->internalTex) {
 	    textures[i] = new TextureInGPU(base.device, staged[i]);
 	} else 
@@ -350,6 +353,10 @@ void TexLoaderVk::textureDataStagingToFinal(VkBuffer stagingBuffer,
     VkDeviceSize bufferOffset = 0;
     for (int i = 0; i < textures.size(); i++) {
 	vkBindImageMemory(base.device, textures[i]->image, memory, textures[i]->imageMemOffset);
+
+	if(textures[i]->internalImage) // layout managed by internal 
+	    continue;
+	
 	barrier.image = textures[i]->image;
 	barrier.subresourceRange.levelCount = textures[i]->info.mipLevels;
 	barrier.subresourceRange.aspectMask = textures[i]->info.aspect;
@@ -377,6 +384,9 @@ VkImageBlit getMipmapBlit(int32_t currentW, int32_t currentH, int destMipLevel,
 			  VkImageAspectFlags aspect);
 
 void TextureInGPU::createMipMaps(VkCommandBuffer &cmdBuff) {
+    if(this->internalImage)
+	return;
+    
     VkImageMemoryBarrier barrier = initialBarrierSettings();
     barrier.image = this->image;
     barrier.subresourceRange.aspectMask = info.aspect;
