@@ -85,7 +85,8 @@ private:
 
 class SetVk : public InternalSet {
 public:
-    SetVk(DeviceState state, shaderstage flags, PoolManagerVk* poolManager) : InternalSet(flags) {
+    SetVk(DeviceState state, shader::Stage flags, PoolManagerVk* poolManager)
+	: InternalSet(flags) {
 	this->state = state;
 	this->poolManager = poolManager;
 	DestroySetResources();
@@ -171,7 +172,7 @@ public:
 	    delete set;
     }
     
-    Set* CreateSet(shaderstage flags) override {
+    Set* CreateSet(shader::Stage flags) override {
 	sets.push_back(new SetVk(state, flags, poolManager));
 	return sets[sets.size() - 1];
     }

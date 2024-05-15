@@ -10,7 +10,7 @@
 
 
 VkDescriptorType bindingTypeVk(Binding::type type);
-VkShaderStageFlags shaderFlagsVk(shaderstage flags);
+VkShaderStageFlags shaderFlagsVk(shader::Stage flags);
 
 
 /// ----------- Shader Set -----------
@@ -519,13 +519,13 @@ VkDescriptorType bindingTypeVk(Binding::type type) {
     }
 }
 
-VkShaderStageFlags shaderFlagsVk(shaderstage flags) {
+VkShaderStageFlags shaderFlagsVk(shader::Stage flags) {
     VkShaderStageFlags f = 0;
 
-    if((unsigned int)flags & (unsigned int)shaderstage::vert)
+    if(flags & shader::vert)
 	f |= VK_SHADER_STAGE_VERTEX_BIT;
     
-    if((unsigned int)flags & (unsigned int)shaderstage::frag)
+    if((unsigned int)flags & (unsigned int)shader::frag)
 	f |= VK_SHADER_STAGE_FRAGMENT_BIT;
     
     return f;

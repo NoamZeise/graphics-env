@@ -47,8 +47,17 @@ Binding::Binding(size_t arrayCount, std::vector<Resource::Texture> textures) {
 }
 
 
-/// ----------- Shader Set Buffers -----------
+/// ----------- Internal Set -----------
 
+InternalSet::InternalSet(shader::Stage stageFlags) {    
+    this->stageFlags = stageFlags;
+    if(!this->stageFlags) {
+	throw std::invalid_argument(
+		"Shader Set given no shader stage flags");
+    }
+}
+
+/// ----------- Shader Buffers -----------
 
 void InternalSet::addUniformBuffer(size_t index, size_t typeSize, size_t arrayCount,
 				   size_t dynamicCount)  {

@@ -2,15 +2,14 @@
 #define GRAPHICS_API_SHADER_INFO_H
 
 /// Enum flags for describing shader stages
-/// 
+///
 /// Vertex and Fragment shaders supported
-enum class shaderstage {
-    vert = 1 << 0,
-    frag = 1 << 1,
-};
 
-inline shaderstage operator| (shaderstage a, shaderstage b) {
-    return (shaderstage)((int)a | (int)b);
+namespace shader {
+    enum Stage {
+	vert = 1 << 0,
+	frag = 1 << 1,
+    };
 }
 
 

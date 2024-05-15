@@ -241,16 +241,16 @@ bool swapchainRecreationRequired(VkResult result) {
 
       mainShaderPool = CreateShaderPool();
       
-      lightingSet = mainShaderPool->CreateSet(shaderstage::frag);
+      lightingSet = mainShaderPool->CreateSet(shader::frag);
       lightingSet->addUniformBuffer(0, sizeof(BPLighting));
 
-      perFrame2DSet = mainShaderPool->CreateSet(shaderstage::frag);
+      perFrame2DSet = mainShaderPool->CreateSet(shader::frag);
       perFrame2DSet->addStorageBuffer(
 	      0, sizeof(shaderStructs::Frag2DData) * Resource::MAX_2D_BATCH);
 
       float minmipmap;
       auto activeTextures = getActiveTextures(&minmipmap);
-      textureSet = mainShaderPool->CreateSet(shaderstage::frag);
+      textureSet = mainShaderPool->CreateSet(shader::frag);
       textureSet->addTextureSamplers(
 	      0, TextureSampler(renderConf.texture_filter_nearest ?
 				TextureSampler::filter::nearest : TextureSampler::filter::linear,
@@ -259,29 +259,29 @@ bool swapchainRecreationRequired(VkResult result) {
       textureSet->addTextures(1, Resource::MAX_TEXTURES_SUPPORTED, activeTextures);
 
 
-      boneSet = mainShaderPool->CreateSet(shaderstage::vert);
+      boneSet = mainShaderPool->CreateSet(shader::vert);
       boneSet->addUniformBuffer(0, sizeof(shaderStructs::Bones), 1, MAX_ANIMATIONS_PER_FRAME);
 
       //temp until pipeline rewrite
-      emptySet = mainShaderPool->CreateSet(shaderstage::vert);
+      emptySet = mainShaderPool->CreateSet(shader::vert);
 
-      vp3dSet = mainShaderPool->CreateSet(shaderstage::vert);
+      vp3dSet = mainShaderPool->CreateSet(shader::vert);
       vp3dSet->addUniformBuffer(0, sizeof(shaderStructs::viewProjection));
       vp3dSet->addUniformBuffer(1, sizeof(shaderStructs::timeUbo));
 
-      vp2dSet = mainShaderPool->CreateSet(shaderstage::vert);
+      vp2dSet = mainShaderPool->CreateSet(shader::vert);
       vp2dSet->addUniformBuffer(0, sizeof(shaderStructs::viewProjection));
 
-      perFrame3dSet = mainShaderPool->CreateSet(shaderstage::vert);
+      perFrame3dSet = mainShaderPool->CreateSet(shader::vert);
       perFrame3dSet->addStorageBuffer(0, sizeof(glm::mat4)*Resource::MAX_3D_BATCH);
 
-      perFrame2dVertSet = mainShaderPool->CreateSet(shaderstage::vert);
+      perFrame2dVertSet = mainShaderPool->CreateSet(shader::vert);
       perFrame2dVertSet->addStorageBuffer(0, sizeof(glm::mat4)*Resource::MAX_2D_BATCH);
 
-      offscreenTransformSet = mainShaderPool->CreateSet(shaderstage::vert);
+      offscreenTransformSet = mainShaderPool->CreateSet(shader::vert);
       offscreenTransformSet->addUniformBuffer(0, sizeof(glm::mat4));
 
-      offscreenTexSet = mainShaderPool->CreateSet(shaderstage::frag);
+      offscreenTexSet = mainShaderPool->CreateSet(shader::frag);
       offscreenTexSet->addTextureSamplers(
 	      0, TextureSampler(TextureSampler::filter::nearest,
 				TextureSampler::address_mode::clamp_to_border));

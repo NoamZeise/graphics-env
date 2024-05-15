@@ -7,7 +7,7 @@
 
 class PushConstant {
 private:
-    shaderstage stageFlags;
+    shader::Stage stageFlags;
     //int offset; calc manually?
     //int size;
 };
@@ -17,7 +17,7 @@ class Set;
 /// Holds shader sets
 class ShaderPool {
 public:
-    virtual Set* CreateSet(shaderstage flags) = 0;
+    virtual Set* CreateSet(shader::Stage flags) = 0;
     // automatically destroys created resources if already created
     virtual void CreateGpuResources() = 0;
     virtual void DestroyGpuResources() = 0;
@@ -99,7 +99,7 @@ public:
 			       std::vector<Resource::Texture> textures) = 0;
             void updateTextures(size_t index, size_t arrayIndex,
 			       Resource::Texture texture) {
-		updateTextures(index, arrayIndex, {texture});}
+		updateTextures(index, arrayIndex, std::vector<Resource::Texture>{texture});}
 };
 
 #endif /* GRAPHICS_API_SHADER_BUFFERS_H */

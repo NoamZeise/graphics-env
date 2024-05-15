@@ -46,12 +46,9 @@ struct Binding {
 
 class InternalSet : public Set {
  public:
-    InternalSet(shaderstage stageFlags) {
-	this->stageFlags = stageFlags;
-    }
-
+    InternalSet(shader::Stage stageFlags);
+    
     virtual ~InternalSet() {}
-
 
     /// ----------- Shader Buffers -----------
 
@@ -103,7 +100,7 @@ class InternalSet : public Set {
     
     void addBinding(size_t index, Binding binding);
     
-    shaderstage stageFlags;
+    shader::Stage stageFlags;
     bool gpuResourcesCreated = false;
     
 private:
