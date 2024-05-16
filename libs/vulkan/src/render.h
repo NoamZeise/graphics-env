@@ -113,7 +113,6 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
       uint32_t swapchainFrameCount = 0;
       VkCommandBuffer currentCommandBuffer = VK_NULL_HANDLE;
 
-      VkDeviceMemory framebufferMemory = VK_NULL_HANDLE;
       RenderPass* offscreenRenderPass = nullptr;
       RenderPass* finalRenderPass = nullptr;
       bool usingFinalRenderPass = false;

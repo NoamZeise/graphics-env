@@ -3,7 +3,6 @@
 #include <stdexcept>
 #include "logger.h"
 #include "parts/images.h"
-#include "vkhelper.h"
 
 
 /// ----- Internal Attachment Image -----
@@ -14,14 +13,13 @@ public:
     void Destroy(VkDevice device);
     VkResult CreateImage(VkDevice device,
 			 VkExtent2D extent,
-			 TexLoaderVk* texloader,
-			 VkDeviceSize *pMemoryRequirements,
-			 uint32_t *pMemoryFlagBits);
+			 TexLoaderVk* texloader);
     void AddImage(VkImage);
-    VkResult CreateImageView(VkDevice device,
-			     VkDeviceMemory attachmentMemory);
+    VkResult CreateImageView(TexLoaderVk* texloader,
+			     VkDevice device);
     void AddImageView(VkImageView);
     VkImageView getView();
+    Resource::Texture getTexture() { return texture; }
     bool isUsingExternalImage();
     bool hasImageForEachFrame();
     
@@ -36,11 +34,10 @@ private:
 
     bool usingExternalImage = false;
     bool imageForEachFrame = false;
-
+    
     VkImage image;
     VkImageView view;
-    size_t memoryOffset;
-
+    
     TextureInfoVk texinfo;
     Resource::Texture texture;
 };
@@ -128,11 +125,9 @@ RenderPass::~RenderPass() {
     vkDestroyRenderPass(device, this->renderpass, VK_NULL_HANDLE);
 }
 
-VkResult RenderPass::createFramebufferImages(TexLoaderVk* tex,
+VkResult RenderPass::loadFramebufferImages(TexLoaderVk* tex,
 					     std::vector<VkImage> *swapchainImages,
-					     VkExtent2D extent,
-					     VkDeviceSize *pMemSize,
-					     uint32_t *pMemFlags) {
+					     VkExtent2D extent) {
     VkResult result = VK_SUCCESS;
     std::vector<AttachmentImage> attachImages;
     for(int i = 0; i < attachmentDescription.size(); i++)
@@ -147,17 +142,18 @@ VkResult RenderPass::createFramebufferImages(TexLoaderVk* tex,
 	framebuffers[i].CreateImages(
 		device, tex, attachImages,
 		swapchainImages == nullptr ? nullptr : &(*swapchainImages)[i],
-		extent, pMemSize, pMemFlags, i == 0);
+		extent, i == 0);
     }
     return result;
 }
 
-VkResult RenderPass::createFramebuffers(VkDeviceMemory framebufferImageMemory) {
+VkResult RenderPass::createFramebuffers(TexLoaderVk* tex) {
     VkResult result = VK_SUCCESS;
     for(int i = 0; i < framebuffers.size(); i++) {
 	msgAndReturnOnErr(
 		framebuffers[i].CreateFramebuffer(
-			renderpass, framebufferImageMemory,
+			tex,
+			renderpass,
 			i == 0 ? nullptr : &framebuffers[0]),
 		"RenderPass - Failed to create framebuffer");
     }
@@ -208,6 +204,25 @@ std::vector<VkImageView> RenderPass::getAttachmentViews(uint32_t attachmentIndex
     return views;
 }
 
+std::vector<Resource::Texture> RenderPass::getAttachmentTextures(uint32_t attachmentIndex) {
+    if(framebuffers.empty())
+	throw std::runtime_error("RenderPass Error: Tried to get attachment views but framebuffers"
+				 " haven't been created.");
+    if(attachmentDescription.size() <= attachmentIndex)
+	throw std::runtime_error("RenderPass Error: Tried to get attchment views, but the"
+				 " supplied attachment Index was out of range");
+    if(attachmentDescription[attachmentIndex].getUse() != AttachmentUse::ShaderRead)
+	throw std::runtime_error("RenderPass Error: Tried to get attachment views, but the"
+				 " attachment is not for reading from a shader");
+    std::vector<Resource::Texture> views(framebuffers.size());
+    for(int i = 0; i < framebuffers.size(); i++) {
+	if(framebuffers[0].attachments[attachmentIndex].hasImageForEachFrame())
+	    views[i] = framebuffers[i].attachments[attachmentIndex].getTexture();
+	else
+	    views[i] = framebuffers[0].attachments[attachmentIndex].getTexture();
+    }
+    return views;
+}
 
 
 /// --- Attachment Image Implementation ---
@@ -229,10 +244,9 @@ void AttachmentImage::Destroy(VkDevice device)
 {
     switch(state) {
     case state::imageview:
-	vkDestroyImageView(device, view, nullptr);
+	if(usingExternalImage)
+	    vkDestroyImageView(device, view, nullptr);
     case state::image:
-	if(!usingExternalImage) 
-	    vkDestroyImage(device, image, nullptr);
     case state::unmade:
 	break;
     }
@@ -240,9 +254,7 @@ void AttachmentImage::Destroy(VkDevice device)
 
 VkResult AttachmentImage::CreateImage(VkDevice device,
 				      VkExtent2D extent,
-				      TexLoaderVk* texloader,
-				      VkDeviceSize *pMemoryRequirements,
-				      uint32_t *pMemoryFlagBits)  {
+				      TexLoaderVk* texloader) {
     if(state != state::unmade)
 	throw std::runtime_error("Error: invalid attachment image state, "
 				 "tried to create image but previous "
@@ -251,21 +263,9 @@ VkResult AttachmentImage::CreateImage(VkDevice device,
 	throw std::runtime_error("Attachment Image Error: invalid attachment image op, "
 				 "tried to create image with attachment that "
 				 "uses an external image.");
-
     this->texture = texloader->addGpuTexture(extent.width, extent.height, texinfo);
-    
-    VkResult result = VK_SUCCESS;
-    VkMemoryRequirements memReq;
-    returnOnErr(part::create::Image(
-        device, &image, &memReq, texinfo.usage, extent, texinfo.format, texinfo.samples, 1));
-    *pMemoryRequirements = vkhelper::correctMemoryAlignment(*pMemoryRequirements, memReq.alignment);
-    this->memoryOffset = *pMemoryRequirements;
-    *pMemoryRequirements += vkhelper::correctMemoryAlignment(memReq.size, memReq.alignment);
-    *pMemoryFlagBits |= memReq.memoryTypeBits;
-    
-    if(result==VK_SUCCESS)
-	state = state::image;
-    return result;
+    state = state::image;
+    return VK_SUCCESS;
 }
 
 void AttachmentImage::AddImage(VkImage image) {
@@ -282,18 +282,21 @@ void AttachmentImage::AddImage(VkImage image) {
 }
 
 VkResult AttachmentImage::CreateImageView(
-	VkDevice device, VkDeviceMemory attachmentMemory) {
+	TexLoaderVk* texloader,
+	VkDevice device) {
+    VkResult result = VK_SUCCESS;
     if(state != state::image)
 	throw std::runtime_error("Attachment Image Error: "
 				 "invalid attachment image state, tried to "
 				 "create image view, but previous state "
 				 "wasn't state::image");
-    if(!usingExternalImage)
-	vkBindImageMemory(device, image,
-			  attachmentMemory, memoryOffset);
-    
-    VkResult result = part::create::ImageView(
-	    device, &view, image, texinfo.format, texinfo.aspect, 1);
+    if(!usingExternalImage) {
+	view = texloader->getImageView(texture);
+    } else {    
+	result = part::create::ImageView(
+		device, &view, image, texinfo.format, texinfo.aspect, 1);
+    }
+
     if(result == VK_SUCCESS)
 	state = state::imageview;
     return result;
@@ -326,8 +329,6 @@ VkResult Framebuffer::CreateImages(
 	    std::vector<AttachmentImage> attachmentImages,
 	    VkImage *swapchainImage,
 	    VkExtent2D extent,
-	    VkDeviceSize* pMemSize,
-	    uint32_t* pMemFlags,
 	    bool createImage) {
     VkResult result = VK_SUCCESS;
     
@@ -347,14 +348,14 @@ VkResult Framebuffer::CreateImages(
 	else if(createImage || attachments[i].hasImageForEachFrame())
 	    msgAndReturnOnErr(
 		    attachments[i]
-		    .CreateImage(device, extent, tex, pMemSize, pMemFlags),
+		    .CreateImage(device, extent, tex),
 		    "RenderPass Error: Failed to create framebuffer attachment image");
     }
     return result;
 }
 
-VkResult Framebuffer::CreateFramebuffer(VkRenderPass renderpass,
-					VkDeviceMemory imageMemory,
+VkResult Framebuffer::CreateFramebuffer(TexLoaderVk* tex,
+					VkRenderPass renderpass,
 					Framebuffer* firstFramebuffer) {
     VkResult result = VK_SUCCESS;
 
@@ -370,7 +371,7 @@ VkResult Framebuffer::CreateFramebuffer(VkRenderPass renderpass,
     for(int i = 0; i < attachments.size(); i++) {
 	if(firstFramebuffer == nullptr || attachments[i].hasImageForEachFrame()) {
 	    msgAndReturnOnErr(
-		    attachments[i].CreateImageView(device, imageMemory),
+		    attachments[i].CreateImageView(tex, device),
 		    "RenderPass Error: Failed to create image view for framebuffer");
 	} else {
 	    attachments[i].AddImageView(firstFramebuffer->attachments[i].getView());

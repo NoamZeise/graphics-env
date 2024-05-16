@@ -72,7 +72,6 @@ RenderVk::~RenderVk() {
 	delete offscreenRenderPass;
 	if(usingFinalRenderPass)
 	    delete finalRenderPass;
-	vkFreeMemory(manager->deviceState.device, framebufferMemory, VK_NULL_HANDLE);
     }
     if(offscreenSamplerCreated)
 	vkDestroySampler(manager->deviceState.device, _offscreenTextureSampler, nullptr);
@@ -102,10 +101,8 @@ bool swapchainRecreationRequired(VkResult result) {
 	      *getMinMipmap = n;
 	  std::vector<Resource::Texture> texs = pools->get(i)->texLoader->getTextures();
 	  for(int j = 0; j < texs.size(); j++) {
-	      if(!pools->get(i)->texLoader->sampledImage(texs[j])) {
-		  LOG("skip");
+	      if(!pools->get(i)->texLoader->sampledImage(texs[j]))
 		  continue;
-	      }
 	      pools->get(i)->texLoader->setIndex(texs[j], allTextures.size());
 	      allTextures.push_back(texs[j]);
 	  }
@@ -205,38 +202,22 @@ bool swapchainRecreationRequired(VkResult result) {
       swapchainFrameCount = swapchainImages->size();
 
       LOG("Creating Framebuffers");
-
+      
       //TODO: less unnessecary recreation (ie offscreen extent not changing?)
-      VkDeviceSize attachmentMemorySize = 0;
-      uint32_t attachmentMemoryFlags = 0;
-      offscreenRenderPass->createFramebufferImages(
+      offscreenRenderPass->loadFramebufferImages(
 	      framebufferPool->texLoader,
-	      useFinalRenderpass ? nullptr : swapchainImages, offscreenBufferExtent,
-	      &attachmentMemorySize, &attachmentMemoryFlags);
+	      useFinalRenderpass ? nullptr : swapchainImages, offscreenBufferExtent);
 
       if(useFinalRenderpass)
-	  finalRenderPass->createFramebufferImages(
+	  finalRenderPass->loadFramebufferImages(
 		  framebufferPool->texLoader,
-		  swapchainImages, swapchainExtent,
-		  &attachmentMemorySize, &attachmentMemoryFlags);
-      if(attachmentMemorySize > 0) {
-	  vkFreeMemory(manager->deviceState.device, framebufferMemory, VK_NULL_HANDLE);
-	  checkResultAndThrow(
-		  vkhelper::allocateMemory(
-			  manager->deviceState.device,
-			  manager->deviceState.physicalDevice,
-			  attachmentMemorySize,
-			  &framebufferMemory,
-			  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-			  attachmentMemoryFlags),
-		  "Render Error: Failed to Allocate Memory for Framebuffer Images");
-      }
+		  swapchainImages, swapchainExtent);
 
       framebufferPool->loadGpu();
       
-      offscreenRenderPass->createFramebuffers(framebufferMemory);
+      offscreenRenderPass->createFramebuffers(framebufferPool->texLoader);
       if(useFinalRenderpass)
-	  finalRenderPass->createFramebuffers(framebufferMemory);
+	  finalRenderPass->createFramebuffers(framebufferPool->texLoader);
 
       LOG("Swapchain Image Count: " << swapchainImages->size());
                   

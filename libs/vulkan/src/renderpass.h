@@ -55,13 +55,11 @@ struct Framebuffer {
 	    std::vector<AttachmentImage> attachImages,
 	    VkImage *swapchainImage, // can be null
 	    VkExtent2D extent,
-	    VkDeviceSize* pMemSize,
-	    uint32_t* pMemFlags,
 	    bool createImage);
     
     VkResult CreateFramebuffer(
+	    TexLoaderVk* tex,
 	    VkRenderPass renderpass,
-	    VkDeviceMemory imageMemory,
 	    Framebuffer* firstFramebuffer);
     
     VkDevice device;
@@ -77,24 +75,10 @@ class RenderPass {
 	       float clearColour[3]);
     ~RenderPass();
 
-    /// pMemReq will be added to by the amount of memory required to
-    /// store all the attachment images.
-    /// pMemFlags will have the memory flags required for the images.
-    /// It's up to the caller to create the memory, which is then passed
-    /// to createFramebuffers.
-    ///
-    /// The memory offset of the images is based
-    /// on the size of pMemReq before it was sent to this function.
-    ///
-    /// This will also destroy the previous framebuffers, but the
-    /// caller is responsible for freeing the memory they allocated for the
-    /// previous attachment images
-    VkResult createFramebufferImages(TexLoaderVk* tex,
-				     std::vector<VkImage> *swapchainImages,
-				     VkExtent2D extent,
-				     VkDeviceSize *pMemReq,
-				     uint32_t *pMemFlags);
-    VkResult createFramebuffers(VkDeviceMemory framebufferImageMemory);
+    VkResult loadFramebufferImages(TexLoaderVk* tex,
+				   std::vector<VkImage> *swapchainImages,
+				   VkExtent2D extent);
+    VkResult createFramebuffers(TexLoaderVk* tex);
 
     /// It's up to the caller to end the render pass.
     /// This also sets the viewport and scissor to
@@ -102,7 +86,7 @@ class RenderPass {
     void beginRenderPass(VkCommandBuffer cmdBuff, uint32_t frameIndex);
     
     std::vector<VkImageView> getAttachmentViews(uint32_t attachmentIndex);
-    //std::vector<Resource::Texture> getAttachmentTextures(uint32_t attachmentIndex);
+    std::vector<Resource::Texture> getAttachmentTextures(uint32_t attachmentIndex);
     
     VkExtent2D getExtent() { return this->framebufferExtent; }
     VkRenderPass getRenderPass() { return this->renderpass; }
