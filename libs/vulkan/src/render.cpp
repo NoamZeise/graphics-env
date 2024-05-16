@@ -1,8 +1,6 @@
 #include "render.h"
 
 #include "parts/pipeline.h"
-#include "parts/descriptors.h"
-#include "parts/images.h"
 #include "pipeline.h"
 #include "pipeline_data.h"
 #include "resources/resource_pool.h"
@@ -60,8 +58,8 @@ VkFormat getDepthBufferFormat(VkPhysicalDevice physicalDevice) {
 	frames[i] = new Frame(manager->deviceState.device,
 			      manager->deviceState.queue.graphicsPresentFamilyIndex);
     pools = new PoolManagerVk;
-    defaultPool = CreateResourcePool()->id();
-    framebufferPool = (ResourcePoolVk*)CreateResourcePool();
+    defaultResourcePool = CreateResourcePool()->id();
+    framebufferResourcePool = (ResourcePoolVk*)CreateResourcePool();
 }
   
 RenderVk::~RenderVk() {
@@ -73,8 +71,6 @@ RenderVk::~RenderVk() {
 	if(usingFinalRenderPass)
 	    delete finalRenderPass;
     }
-    if(offscreenSamplerCreated)
-	vkDestroySampler(manager->deviceState.device, _offscreenTextureSampler, nullptr);
     if(swapchain != nullptr)
 	delete swapchain;
     for(int i = 0; i < MAX_CONCURRENT_FRAMES; i++)
@@ -205,19 +201,19 @@ bool swapchainRecreationRequired(VkResult result) {
       
       //TODO: less unnessecary recreation (ie offscreen extent not changing?)
       offscreenRenderPass->loadFramebufferImages(
-	      framebufferPool->texLoader,
+	      framebufferResourcePool->texLoader,
 	      useFinalRenderpass ? nullptr : swapchainImages, offscreenBufferExtent);
 
       if(useFinalRenderpass)
 	  finalRenderPass->loadFramebufferImages(
-		  framebufferPool->texLoader,
+		  framebufferResourcePool->texLoader,
 		  swapchainImages, swapchainExtent);
 
-      framebufferPool->loadGpu();
+      framebufferResourcePool->loadGpu();
       
-      offscreenRenderPass->createFramebuffers(framebufferPool->texLoader);
+      offscreenRenderPass->createFramebuffers(framebufferResourcePool->texLoader);
       if(useFinalRenderpass)
-	  finalRenderPass->createFramebuffers(framebufferPool->texLoader);
+	  finalRenderPass->createFramebuffers(framebufferResourcePool->texLoader);
 
       LOG("Swapchain Image Count: " << swapchainImages->size());
                   
@@ -267,79 +263,19 @@ bool swapchainRecreationRequired(VkResult result) {
       perFrame2dVertSet = mainShaderPool->CreateSet(shader::vert);
       perFrame2dVertSet->addStorageBuffer(0, sizeof(glm::mat4)*Resource::MAX_2D_BATCH);
 
-      offscreenTransformSet = mainShaderPool->CreateSet(shader::vert);
-      offscreenTransformSet->addUniformBuffer(0, sizeof(glm::mat4));
-
-      offscreenTexSet = mainShaderPool->CreateSet(shader::frag);
-      offscreenTexSet->addTextureSamplers(
-	      0, TextureSampler(TextureSampler::filter::nearest,
-				TextureSampler::address_mode::clamp_to_border));
-      //offscreenTexSet->addTextures(
-      //      1, offscreenRenderPass->getAttachmentTextures(0));
-      
-      mainShaderPool->CreateGpuResources();
-      
       if(useFinalRenderpass) {
-	  descriptor::Set offscreenView_Set("Offscreen Transform", descriptor::ShaderStage::Vertex);
-	  offscreenView_Set.AddDescriptor("data", descriptor::Type::UniformBuffer,
-					  sizeof(glm::mat4), 1);
-	  offscreenTransform = new DescSet(
-		  offscreenView_Set, descriptorSizes, manager->deviceState.device);
-	  descriptorSets.push_back(offscreenTransform);
-      }
-
-      // fragment descriptor sets
-
-      std::vector<VkImageView> offscreenViews; // needs to be in scope for prepareShaderbuffersets
-      if(useFinalRenderpass) {
-	  if(!offscreenSamplerCreated) {
-	      checkResultAndThrow(
-		      part::create::TextureSampler(
-			      manager->deviceState.device,
-			      manager->deviceState.physicalDevice,
-			      &_offscreenTextureSampler,
-			      1.0f, false,
-			      VK_FILTER_NEAREST,
-			      VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER),
-		      "Failed to create texture sampler");
-	      offscreenSamplerCreated = true;
-	  }
-	  offscreenViews = offscreenRenderPass->getAttachmentViews(0);
-	  if(offscreenViews.size() == 0)
-	      throw std::runtime_error(
-		      "Nothing returned for offscreen texture views");
-	  descriptor::Set offscreen_Set("offscreen texture", descriptor::ShaderStage::Fragment);
-	  offscreen_Set.AddSamplerDescriptor("sampler", 1, &_offscreenTextureSampler);
-	  offscreen_Set.AddImageViewDescriptor("frame", descriptor::Type::SampledImage,
-					       1, &offscreenViews[0]);
-	  offscreenTex = new DescSet(offscreen_Set, descriptorSizes,
-				     manager->deviceState.device);
-	  descriptorSets.push_back(offscreenTex);
+	  offscreenTransformSet = mainShaderPool->CreateSet(shader::vert);
+	  offscreenTransformSet->addUniformBuffer(0, sizeof(glm::mat4));
+	  
+	  offscreenTexSet = mainShaderPool->CreateSet(shader::frag);
+	  offscreenTexSet->addTextureSamplers(
+		  0, TextureSampler(TextureSampler::filter::nearest,
+				    TextureSampler::address_mode::clamp_to_border));
+	  offscreenTexSet->addTextures(
+		  1, offscreenRenderPass->getAttachmentTextures(0));
       }
       
-      LOG("Creating Descriptor pool and memory for set bindings");
-      
-      // create descripor pool
-      createdOffscreenData = false;
-      if(useFinalRenderpass) {
-	  std::vector<DS::DescriptorSet* > sets(descriptorSets.size());
-	  std::vector<DS::Binding*> bindings;
-	  for(int i = 0; i < sets.size(); i++) {
-	      sets[i] = &descriptorSets[i]->set;
-	      for(int j = 0; j < descriptorSets[i]->bindings.size(); j++)
-		  bindings.push_back(&descriptorSets[i]->bindings[j]);
-	  }
-     
-	  part::create::DescriptorPoolAndSet(
-		  manager->deviceState.device, &_descPool, sets,
-		  descriptorSizes);
-      
-	  // create memory mapped buffer for all descriptor set bindings
-	  part::create::PrepareShaderBufferSets(
-		  manager->deviceState, bindings,
-		  &_shaderBuffer, &_shaderMemory);
-	  createdOffscreenData = true;
-      }
+      mainShaderPool->CreateGpuResources();            
       
       LOG("Creating Graphics Pipelines");
 
@@ -353,7 +289,6 @@ bool swapchainRecreationRequired(VkResult result) {
       part::create::GraphicsPipeline(
 	      manager->deviceState.device, &_pipeline3D,
 	      offscreenRenderPass->getRenderPass(),
-	      {},
 	      {(SetVk*)vp3dSet, (SetVk*)perFrame3dSet, (SetVk*)emptySet,
 	       (SetVk*)textureSet, (SetVk*)lightingSet},
 	      {{VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(fragPushConstants)}},
@@ -367,7 +302,6 @@ bool swapchainRecreationRequired(VkResult result) {
       part::create::GraphicsPipeline(
 	      manager->deviceState.device, &_pipelineAnim3D,
 	      offscreenRenderPass->getRenderPass(),
-	      {},
 	      {(SetVk*)vp3dSet, (SetVk*)perFrame3dSet, (SetVk*)boneSet,
 	       (SetVk*)textureSet, (SetVk*)lightingSet},
 	      {{VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(fragPushConstants)}},
@@ -381,7 +315,6 @@ bool swapchainRecreationRequired(VkResult result) {
       part::create::GraphicsPipeline(
 	      manager->deviceState.device, &_pipeline2D,
 	      offscreenRenderPass->getRenderPass(),
-	      {},
 	      {(SetVk*)vp2dSet, (SetVk*)perFrame2dVertSet,
 	       (SetVk*)textureSet, (SetVk*)perFrame2DSet},
 	      {},
@@ -401,15 +334,13 @@ bool swapchainRecreationRequired(VkResult result) {
 	  part::create::GraphicsPipeline(
 		  manager->deviceState.device, &_pipelineFinal,
 		  finalRenderPass->getRenderPass(),
-		  {&offscreenTransform->set, &offscreenTex->set},
-		  {},
+		  {(SetVk*)offscreenTransformSet, (SetVk*)offscreenTexSet},
 		  {},
 		  pipelineSetup.getPath(shader::pipeline::final, shader::stage::vert),
 		  pipelineSetup.getPath(shader::pipeline::final, shader::stage::frag),
 		  swapchainExtent, {}, {},
 		  pipelineConf);
-	  
-	  offscreenTransformData = glmhelper::calcFinalOffset(
+	  offscreenMat = glmhelper::calcFinalOffset(
 		  glm::vec2(offscreenBufferExtent.width, offscreenBufferExtent.height),
 		  glm::vec2((float)swapchainExtent.width,
 			    (float)swapchainExtent.height));
@@ -424,18 +355,7 @@ bool swapchainRecreationRequired(VkResult result) {
   void RenderVk::_destroyFrameResources() {
       if(!_frameResourcesCreated)
 	  return;
-      LOG("Destroying frame resources");
-      LOG("    freeing shader memory");
-      if(createdOffscreenData) {
-	  vkDestroyBuffer(manager->deviceState.device, _shaderBuffer, nullptr);
-	  vkFreeMemory(manager->deviceState.device, _shaderMemory, nullptr);
-	  for(int i = 0; i < descriptorSets.size(); i++)
-	      delete descriptorSets[i];
-	  descriptorSets.clear();
-	  vkDestroyDescriptorPool(manager->deviceState.device, _descPool, nullptr);
-      }
       LOG("    destroying descriptors");
-
       // move to destructor after desc sets not remade each frame
       DestroyShaderPool(mainShaderPool);
       
@@ -816,9 +736,7 @@ void RenderVk::EndDraw(std::atomic<bool> &submit) {
 
   if(usingFinalRenderPass) {
       finalRenderPass->beginRenderPass(currentCommandBuffer, swapchainFrameIndex);
-  
-      offscreenTransform->bindings[0].storeSetData(
-	      frameIndex, &offscreenTransformData, 0, 0, 0);
+      offscreenTransformSet->setData(0, &offscreenMat);
       _pipelineFinal.begin(currentCommandBuffer, frameIndex);
       vkCmdDraw(currentCommandBuffer, 3, 1, 0, 0);
       

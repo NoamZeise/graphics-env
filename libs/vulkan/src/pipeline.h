@@ -16,12 +16,9 @@
 class Pipeline {
 public:
     Pipeline() {};
-    Pipeline(VkPipelineLayout layout, VkPipeline pipeline, std::vector<DS::DescriptorSet*> sets,
+    Pipeline(VkPipelineLayout layout, VkPipeline pipeline,
 	     std::vector<SetVk*> newSets);
-    void setDescSetState(DS::DescriptorSet* set, bool isActive);    
     void begin(VkCommandBuffer cmdBuff, size_t frameIndex);
-    void bindDynamicDS(
-	    VkCommandBuffer cmdBuff, DS::DescriptorSet *ds, size_t frameIndex, uint32_t dynOffset);
     void bindDynamicDSNew(
 	    VkCommandBuffer cmdBuff, size_t frameIndex, size_t offsetIndex, size_t setIndex,
 			  size_t bindingIndex);
@@ -31,8 +28,6 @@ public:
 private:
     VkPipelineLayout layout;
     VkPipeline pipeline;
-    std::vector<DS::DescriptorSet*> descriptorSets;
-    std::vector<bool> descriptorSetsActive;
     std::vector<SetVk*> newSets;
     std::vector<std::vector<uint32_t>> dynOffs;
 };

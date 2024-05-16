@@ -85,7 +85,6 @@ class RenderPass {
     /// offsets of 0, 0 and extent equal to the framebuffer extent.
     void beginRenderPass(VkCommandBuffer cmdBuff, uint32_t frameIndex);
     
-    std::vector<VkImageView> getAttachmentViews(uint32_t attachmentIndex);
     std::vector<Resource::Texture> getAttachmentTextures(uint32_t attachmentIndex);
     
     VkExtent2D getExtent() { return this->framebufferExtent; }

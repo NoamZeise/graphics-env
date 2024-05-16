@@ -11,11 +11,11 @@ class AttachmentImage {
 public:
     AttachmentImage(AttachmentDesc &desc);
     void Destroy(VkDevice device);
-    VkResult CreateImage(VkDevice device,
+    VkResult LoadImage(VkDevice device,
 			 VkExtent2D extent,
 			 TexLoaderVk* texloader);
     void AddImage(VkImage);
-    VkResult CreateImageView(TexLoaderVk* texloader,
+    VkResult GetImageView(TexLoaderVk* texloader,
 			     VkDevice device);
     void AddImageView(VkImageView);
     VkImageView getView();
@@ -34,12 +34,11 @@ private:
 
     bool usingExternalImage = false;
     bool imageForEachFrame = false;
-    
-    VkImage image;
-    VkImageView view;
-    
+        
     TextureInfoVk texinfo;
     Resource::Texture texture;
+    VkImage externalImage;
+    VkImageView view;
 };
 
 
@@ -183,27 +182,6 @@ void RenderPass::beginRenderPass(VkCommandBuffer cmdBuff, uint32_t frameIndex) {
     vkCmdSetScissor(cmdBuff, 0, 1, &scissor);
 }
 
-std::vector<VkImageView> RenderPass::getAttachmentViews(uint32_t attachmentIndex) {
-    if(framebuffers.empty())
-	throw std::runtime_error("RenderPass Error: Tried to get attachment views but framebuffers"
-				 " haven't been created.");
-    if(attachmentDescription.size() <= attachmentIndex)
-	throw std::runtime_error("RenderPass Error: Tried to get attchment views, but the"
-				 " supplied attachment Index was out of range");
-    if(attachmentDescription[attachmentIndex].getUse() != AttachmentUse::ShaderRead)
-	throw std::runtime_error("RenderPass Error: Tried to get attachment views, but the"
-				 " attachment is not for reading from a shader");
-    
-    std::vector<VkImageView> views(framebuffers.size());
-    for(int i = 0; i < framebuffers.size(); i++) {
-	if(framebuffers[0].attachments[attachmentIndex].hasImageForEachFrame())
-	    views[i] = framebuffers[i].attachments[attachmentIndex].getView();
-	else
-	    views[i] = framebuffers[0].attachments[attachmentIndex].getView();
-    }
-    return views;
-}
-
 std::vector<Resource::Texture> RenderPass::getAttachmentTextures(uint32_t attachmentIndex) {
     if(framebuffers.empty())
 	throw std::runtime_error("RenderPass Error: Tried to get attachment views but framebuffers"
@@ -252,7 +230,7 @@ void AttachmentImage::Destroy(VkDevice device)
     }
 }
 
-VkResult AttachmentImage::CreateImage(VkDevice device,
+VkResult AttachmentImage::LoadImage(VkDevice device,
 				      VkExtent2D extent,
 				      TexLoaderVk* texloader) {
     if(state != state::unmade)
@@ -277,11 +255,11 @@ void AttachmentImage::AddImage(VkImage image) {
 	throw std::runtime_error("Attachment Image Error: invalid attachment image op, "
 				 "tried to add image to attachment that "
 				 "does not use an external image (ie swapchain image)");
-    this->image = image;
+    this->externalImage = image;
     state = state::image;
 }
 
-VkResult AttachmentImage::CreateImageView(
+VkResult AttachmentImage::GetImageView(
 	TexLoaderVk* texloader,
 	VkDevice device) {
     VkResult result = VK_SUCCESS;
@@ -294,7 +272,7 @@ VkResult AttachmentImage::CreateImageView(
 	view = texloader->getImageView(texture);
     } else {    
 	result = part::create::ImageView(
-		device, &view, image, texinfo.format, texinfo.aspect, 1);
+		device, &view, externalImage, texinfo.format, texinfo.aspect, 1);
     }
 
     if(result == VK_SUCCESS)
@@ -348,7 +326,7 @@ VkResult Framebuffer::CreateImages(
 	else if(createImage || attachments[i].hasImageForEachFrame())
 	    msgAndReturnOnErr(
 		    attachments[i]
-		    .CreateImage(device, extent, tex),
+		    .LoadImage(device, extent, tex),
 		    "RenderPass Error: Failed to create framebuffer attachment image");
     }
     return result;
@@ -371,7 +349,7 @@ VkResult Framebuffer::CreateFramebuffer(TexLoaderVk* tex,
     for(int i = 0; i < attachments.size(); i++) {
 	if(firstFramebuffer == nullptr || attachments[i].hasImageForEachFrame()) {
 	    msgAndReturnOnErr(
-		    attachments[i].CreateImageView(tex, device),
+		    attachments[i].GetImageView(tex, device),
 		    "RenderPass Error: Failed to create image view for framebuffer");
 	} else {
 	    attachments[i].AddImageView(firstFramebuffer->attachments[i].getView());

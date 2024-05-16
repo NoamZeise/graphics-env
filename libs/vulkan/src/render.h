@@ -121,19 +121,7 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
       Pipeline _pipelineAnim3D;
       Pipeline _pipeline2D;
       Pipeline _pipelineFinal;
-
-      // descriptor set members
-      VkDeviceMemory _shaderMemory;
-      VkBuffer _shaderBuffer;
-
-      VkDescriptorPool _descPool;
-
-      bool createdOffscreenData = false;
-      DescSet *offscreenTransform;
-      glm::mat4 offscreenTransformData;
-      DescSet *offscreenTex;
-
-      // new shader pools
+      
       ShaderPool* mainShaderPool;      
       Set* perFrame2DSet;
       shaderStructs::Frag2DData perFrame2DFragData[Resource::MAX_2D_BATCH];
@@ -153,17 +141,13 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
       Set* perFrame2dVertSet;
       glm::mat4 perFrame2DVertData[Resource::MAX_2D_BATCH];
       Set* offscreenTransformSet;
+      glm::mat4 offscreenMat;
       Set* offscreenTexSet;
-      
-      bool offscreenSamplerCreated = false;
-      VkSampler _offscreenTextureSampler;
-
-      std::vector<DescSet*> descriptorSets;
 
       std::vector<ShaderPoolVk*> shaderPools;
 
-      Resource::Pool defaultPool;
-      ResourcePoolVk* framebufferPool;
+      Resource::Pool defaultResourcePool;
+      ResourcePoolVk* framebufferResourcePool;
       PoolManagerVk* pools;
 
       bool _begunDraw = false;
