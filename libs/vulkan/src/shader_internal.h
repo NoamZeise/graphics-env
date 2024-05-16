@@ -193,6 +193,7 @@ private:
     void createData();
     
     DeviceState state;
+    /// owned by render -> for converting passed textures to images and views
     PoolManagerVk* poolManager;
     int setCopies;
     std::vector<SetVk*> sets;

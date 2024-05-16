@@ -12,6 +12,8 @@ struct StagedTex {
     int width, height, nrChannels, filesize;
     std::string path;
     bool pathedTex;
+    // for renderers to subclass their own staged texture
+    // to know if this is of internal type or not
     bool internalTex = false;
     virtual void deleteData();
 };

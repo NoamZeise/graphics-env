@@ -38,7 +38,7 @@ private:
     AttachmentType type;
     AttachmentUse use;
     TextureInfoVk tex;
-    VkImageLayout finalImageLayout;
+    VkImageLayout attachmentImageLayout;
     VkAttachmentLoadOp loadOp;
     VkAttachmentStoreOp storeOp;
 };
@@ -51,12 +51,14 @@ struct Framebuffer {
     ~Framebuffer();
     VkResult CreateImages(
 	    VkDevice device,
+	    TexLoaderVk* tex,
 	    std::vector<AttachmentImage> attachImages,
 	    VkImage *swapchainImage, // can be null
 	    VkExtent2D extent,
 	    VkDeviceSize* pMemSize,
 	    uint32_t* pMemFlags,
 	    bool createImage);
+    
     VkResult CreateFramebuffer(
 	    VkRenderPass renderpass,
 	    VkDeviceMemory imageMemory,
@@ -87,7 +89,8 @@ class RenderPass {
     /// This will also destroy the previous framebuffers, but the
     /// caller is responsible for freeing the memory they allocated for the
     /// previous attachment images
-    VkResult createFramebufferImages(std::vector<VkImage> *swapchainImages,
+    VkResult createFramebufferImages(TexLoaderVk* tex,
+				     std::vector<VkImage> *swapchainImages,
 				     VkExtent2D extent,
 				     VkDeviceSize *pMemReq,
 				     uint32_t *pMemFlags);

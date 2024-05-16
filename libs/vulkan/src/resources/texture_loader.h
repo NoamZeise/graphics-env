@@ -30,15 +30,21 @@ public:
     uint32_t getImageCount();
     VkImageView getImageView(Resource::Texture tex);
     VkImageLayout getImageLayout(Resource::Texture tex);
+    bool sampledImage(Resource::Texture tex);
     void setIndex(Resource::Texture texture, uint32_t index);
     unsigned int getViewIndex(Resource::Texture tex) override;
     
 private:
     VkDeviceSize stageTexDataCreateImages(VkBuffer &stagingBuffer,
 					  VkDeviceMemory &stagingMemory,
-					  uint32_t *pFinalMemType);
+					  uint32_t *pFinalMemType,
+					  bool* stagingBufferCreated);
     void textureDataStagingToFinal(VkBuffer stagingBuffer,
 				   VkCommandBuffer &cmdbuff);
+
+    TextureInfoVk defaultShaderReadTextureInfo(StagedTex* t);
+
+    void checkPoolValid(Resource::Texture tex, std::string msg);
             
     DeviceState base;
     VkCommandPool cmdpool;

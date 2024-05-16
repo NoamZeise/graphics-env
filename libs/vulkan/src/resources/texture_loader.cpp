@@ -16,39 +16,18 @@ struct StagedTexVk : public StagedTex {
 };
 
 struct TextureInGPU {
-    /// for user loaded textures
-    TextureInGPU(VkDevice device, StagedTex *tex, bool srgb) {
+    TextureInGPU(VkDevice device, StagedTex *tex, TextureInfoVk info) {
 	this->device = device;
-	width = tex->width;
-	height = tex->height;
-	this->info.mipLevels = (int)std::floor(std::log2(width > height ? width : height)) + 1;
-	if(tex->nrChannels != 4)
-	    throw std::runtime_error("GPU Tex has unsupport no. of channels!");
-	if(srgb)
-	    this->info.format = VK_FORMAT_R8G8B8A8_SRGB;
-	else
-	    this->info.format = VK_FORMAT_R8G8B8A8_UNORM;
-	this->info.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	this->info.aspect = VK_IMAGE_ASPECT_COLOR_BIT;
-	this->info.access = VK_ACCESS_SHADER_READ_BIT;
-	this->info.usage = VK_IMAGE_USAGE_SAMPLED_BIT |
-	    VK_IMAGE_USAGE_TRANSFER_DST_BIT |
-	    VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-	this->info.samples = VK_SAMPLE_COUNT_1_BIT;
-    }
-
-    /// for internally loaded textures
-    TextureInGPU(VkDevice device, StagedTex *tex) {
-	if(tex->internalTex) {
-	    this->device = device;
-	    this->width = tex->width;
-	    this->height = tex->height;
-	    this->info = ((StagedTexVk*)tex)->info;
-	    if(tex->filesize == 0)
-		internalImage = true;
-	} else 
-	    throw std::invalid_argument(
-		    "Error: vulkan: Texture In GPU given non-internal texture");
+	this->info = info;
+	this->width = tex->width;
+	this->height = tex->height;
+	gpuOnly = tex->filesize == 0;
+	currentImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	currentImageAccessMask = 0;
+	if(!tex->internalTex) {
+	    if(tex->nrChannels != 4)
+		throw std::runtime_error("GPU Tex has unsupport no. of channels!");
+	}
     }
     
     ~TextureInGPU() {
@@ -61,15 +40,20 @@ struct TextureInGPU {
     uint32_t width;
     uint32_t height;
     TextureInfoVk info;
+    VkImageLayout currentImageLayout;
+    VkAccessFlags currentImageAccessMask;
+
     VkImage image;
     VkImageView view;
     VkDeviceSize imageMemSize;
     VkDeviceSize imageMemOffset;
-    bool internalImage = false;
+    bool gpuOnly;
+    
     VkResult createImage(VkDevice device, VkMemoryRequirements *pMemreq);
     void createMipMaps(VkCommandBuffer &cmdBuff);
     VkResult createImageView(VkDevice device);
 };
+
   
 TexLoaderVk::TexLoaderVk(DeviceState base, VkCommandPool cmdpool,
 			 Resource::Pool pool, RenderConfig config)
@@ -115,15 +99,16 @@ void TexLoaderVk::loadGPU() {
     clearGPU();
     InternalTexLoader::loadGPU();
     textures.resize(staged.size());
-    LOG("end texture load, loading " << staged.size() << " textures to GPU");
+    LOG("Loading " << staged.size() << " textures to GPU");
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingMemory;
     uint32_t memoryTypeBits;
+    bool stagingBufferCreated = false;
     VkDeviceSize finalMemSize = stageTexDataCreateImages(
-	    stagingBuffer, stagingMemory, &memoryTypeBits);
+	    stagingBuffer, stagingMemory, &memoryTypeBits, &stagingBufferCreated);
 
-    LOG("creating final memory buffer " << finalMemSize << " bytes");
+    LOG("creating final memory buffer [" << finalMemSize << " bytes]");
     
     // create final memory
     checkResultAndThrow(vkhelper::allocateMemory(base.device, base.physicalDevice,
@@ -131,8 +116,6 @@ void TexLoaderVk::loadGPU() {
 						 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 						 memoryTypeBits),
 			"Failed to allocate memeory for final texture storage");
-
-    LOG("creating temp cmdbuff");
 
     VkCommandBuffer tempCmdBuffer;
     checkResultAndThrow(part::create::CommandBuffer(base.device, cmdpool, &tempCmdBuffer),
@@ -142,13 +125,13 @@ void TexLoaderVk::loadGPU() {
     checkResultAndThrow(vkBeginCommandBuffer(tempCmdBuffer, &cmdBeginInfo),
 			"failed to begin staging texture data command buffer");
 
+    LOG("binding images to GPU memory");
     // move texture data from staging memory to final memory
+    // and ready images for mipmapping
     textureDataStagingToFinal(stagingBuffer, tempCmdBuffer);
 
     checkResultAndThrow(vkEndCommandBuffer(tempCmdBuffer),
 			"failed to end cmdbuff for moving tex data");
-
-    LOG("submitting cmdBuffer");
     
     checkResultAndThrow(vkhelper::submitCmdBuffAndWait(
 				base.device,
@@ -161,14 +144,17 @@ void TexLoaderVk::loadGPU() {
     checkResultAndThrow(vkResetCommandPool(base.device, cmdpool, 0),
 			"Failed to reset command pool in end texture loading");
 
-    // free staging buffer/memory 
-    vkUnmapMemory(base.device, stagingMemory);
-    vkDestroyBuffer(base.device, stagingBuffer, nullptr);
-    vkFreeMemory(base.device, stagingMemory, nullptr);
+    if(stagingBufferCreated) {
+	LOG("freeing staging buffer and memory");
+	vkUnmapMemory(base.device, stagingMemory);
+	vkDestroyBuffer(base.device, stagingBuffer, nullptr);
+	vkFreeMemory(base.device, stagingMemory, nullptr);
+    }
     
     checkResultAndThrow(vkBeginCommandBuffer(tempCmdBuffer, &cmdBeginInfo),
 			"Failed to begin mipmap creation command buffer");
 
+    LOG("Converting textures to final layout");    
     for (auto& tex : textures)
 	tex->createMipMaps(tempCmdBuffer);
 
@@ -181,7 +167,7 @@ void TexLoaderVk::loadGPU() {
 					   &graphicsPresentMutex),
 			"failed to sumbit mipmap creation commands");
     
-    LOG("finished creating mip maps");
+    LOG("creating image views");
     
     //create image views
     for (auto &tex: textures)
@@ -189,39 +175,40 @@ void TexLoaderVk::loadGPU() {
 		tex->createImageView(base.device), 
 		"Failed to create image view from texture");
 
-    LOG("finished creating image views and texture samplers");
     vkFreeCommandBuffers(base.device, cmdpool, 1, &tempCmdBuffer);
     clearStaged();
-    LOG("finished loading textures");
+    LOG("texture loading complete");
 }
 
 uint32_t TexLoaderVk::getImageCount() { return textures.size(); }
 
-VkImageView TexLoaderVk::getImageView(Resource::Texture tex) {
+void TexLoaderVk::checkPoolValid(Resource::Texture tex, std::string msg) {
     if(tex.pool != this->pool)
 	throw std::invalid_argument(
-		"tex loader - getViewIndex Vk: Texture does not belong to this resource pool");
+		"tex loader - " + msg + " Vk: Texture does not belong to this resource pool");
     if(tex.ID >= textures.size())
-	throw std::runtime_error("getImageView Vk: texture ID was out of range");
+	throw std::runtime_error(msg + " Vk: texture ID was out of range");
+}
+
+VkImageView TexLoaderVk::getImageView(Resource::Texture tex) {
+    checkPoolValid(tex, "getImageView");
     return textures[tex.ID]->view;
 }
 
 VkImageLayout TexLoaderVk::getImageLayout(Resource::Texture tex) {
-    if(tex.pool != this->pool)
-	throw std::invalid_argument(
-		"tex loader - getViewLayout Vk: Texture does not belong to this resource pool");
-    if(tex.ID >= textures.size())
-	throw std::runtime_error("getImageLayout Vk: texture ID was out of range");
+    checkPoolValid(tex, "getImageLayout");
     return textures[tex.ID]->info.layout;
 }
 
-void TexLoaderVk::setIndex(Resource::Texture texture, uint32_t index) {
-    if(texture.pool != this->pool)
-	throw std::invalid_argument(
-		"tex loader - getViewIndex: Texture does not belong to this resource pool");
-    if (texture.ID >= textures.size())
-	throw std::runtime_error("no textures to replace error id with");
-    textures[texture.ID]->imageViewIndex = index;
+bool TexLoaderVk::sampledImage(Resource::Texture tex) {
+    checkPoolValid(tex, "sampledImage");
+    TextureInGPU* t = textures[tex.ID];
+    return t->info.usage & VK_IMAGE_USAGE_SAMPLED_BIT;
+}
+
+void TexLoaderVk::setIndex(Resource::Texture tex, uint32_t index) {
+    checkPoolValid(tex, "setIndex");
+    textures[tex.ID]->imageViewIndex = index;
 }
 
 unsigned int TexLoaderVk::getViewIndex(Resource::Texture tex) {
@@ -271,22 +258,28 @@ VkResult TextureInGPU::createImage(VkDevice device, VkMemoryRequirements *pMemre
 
 VkDeviceSize TexLoaderVk::stageTexDataCreateImages(VkBuffer &stagingBuffer,
 						   VkDeviceMemory &stagingMemory,
-						   uint32_t *pFinalMemType) {
+						   uint32_t *pFinalMemType,
+						   bool *stagingBufferCreated) {
     VkDeviceSize totalDataSize = 0;
     for(const auto tex: staged)
 	totalDataSize += tex->filesize;
 
-    LOG("creating staging buffer for textures. size: " << totalDataSize << " bytes");
-    checkResultAndThrow(vkhelper::createBufferAndMemory(
-				base, totalDataSize, &stagingBuffer, &stagingMemory,
-				VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-				VK_MEMORY_PROPERTY_HOST_COHERENT_BIT),
-			"Failed to create staging memory for texture data");
-      
-    vkBindBufferMemory(base.device, stagingBuffer, stagingMemory, 0);
-    void* pMem;
-    vkMapMemory(base.device, stagingMemory, 0, totalDataSize, 0, &pMem);
+    void* pMem = nullptr;
+    if(totalDataSize > 0) {
+	LOG("creating staging buffer for textures. size: " << totalDataSize << " bytes");
+	checkResultAndThrow(vkhelper::createBufferAndMemory(
+				    base, totalDataSize, &stagingBuffer, &stagingMemory,
+				    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+				    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+				    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT),
+			    "Failed to create staging memory for texture data");
+	*stagingBufferCreated = true;
+	vkBindBufferMemory(base.device, stagingBuffer, stagingMemory, 0);
+	vkMapMemory(base.device, stagingMemory, 0, totalDataSize, 0, &pMem);
+    } else {
+	LOG("No textures to load from RAM");
+	*stagingBufferCreated = false;
+    }
 
     VkDeviceSize finalMemSize = 0;
     VkMemoryRequirements memreq;
@@ -295,29 +288,36 @@ VkDeviceSize TexLoaderVk::stageTexDataCreateImages(VkBuffer &stagingBuffer,
     *pFinalMemType = 0;
     minimumMipmapLevel = UINT32_MAX;
     for (size_t i = 0; i < staged.size(); i++) {
+	// move textures in RAM to staging buffer
 	if(staged[i]->filesize > 0) {
+	    if(pMem == nullptr)
+		throw std::runtime_error(
+			"Texture Load to GPU: Need to stage texture but "
+			"pointer to staging buffer was nullptr");
 	    std::memcpy(static_cast<char*>(pMem) + bufferOffset,
 			staged[i]->data,
 			staged[i]->filesize);
 	    staged[i]->deleteData();
 	    bufferOffset += staged[i]->filesize;
-	} 
-	if(staged[i]->internalTex) {
-	    textures[i] = new TextureInGPU(base.device, staged[i]);
-	} else 
-	    textures[i] = new TextureInGPU(base.device, staged[i], srgb);
+	}
+
+	TextureInfoVk texInfo = defaultShaderReadTextureInfo(staged[i]);		    
+	if(staged[i]->internalTex)
+	    texInfo = ((StagedTexVk*)staged[i])->info;
+	textures[i] = new TextureInGPU(base.device, staged[i], texInfo);
+	
 	if (!mipmapping ||
 	    !formatSupportsMipmapping(base.physicalDevice, textures[i]->info.format))
 	    textures[i]->info.mipLevels = 1;
-	  
+	
 	checkResultAndThrow(textures[i]->createImage(base.device, &memreq),
 			    "failed to create image in texture loader"
 			    "for texture at index " + std::to_string(i));
-
+	
 	// update smallest mip levels of any texture
 	if (textures[i]->info.mipLevels < minimumMipmapLevel)
 	    minimumMipmapLevel = textures[i]->info.mipLevels;
-	  
+	
 	*pFinalMemType |= memreq.memoryTypeBits;
 	finalMemSize = vkhelper::correctMemoryAlignment(finalMemSize, memreq.alignment);
 	textures[i]->imageMemOffset = finalMemSize;
@@ -325,9 +325,30 @@ VkDeviceSize TexLoaderVk::stageTexDataCreateImages(VkBuffer &stagingBuffer,
 		memreq.size, memreq.alignment);
 	finalMemSize += textures[i]->imageMemSize;
     }
-    LOG("successfully copied textures to staging buffer");
+
+    if(stagingBufferCreated)
+	LOG("successfully copied textures to staging buffer");
     
     return finalMemSize;
+}
+
+TextureInfoVk TexLoaderVk::defaultShaderReadTextureInfo(StagedTex* t) {
+    TextureInfoVk info;
+    info.mipLevels =
+	1 + (int)std::floor(
+		std::log2(t->width > t->height ? t->width : t->height));
+    if(srgb)
+	info.format = VK_FORMAT_R8G8B8A8_SRGB;
+    else
+	info.format = VK_FORMAT_R8G8B8A8_UNORM;
+    info.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    info.aspect = VK_IMAGE_ASPECT_COLOR_BIT;
+    info.access = VK_ACCESS_SHADER_READ_BIT;
+    info.usage = VK_IMAGE_USAGE_SAMPLED_BIT |
+	VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+	VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+    info.samples = VK_SAMPLE_COUNT_1_BIT;
+    return info;
 }
 
 VkImageMemoryBarrier initialBarrierSettings();
@@ -337,10 +358,7 @@ VkImageMemoryBarrier initialBarrierSettings();
 void TexLoaderVk::textureDataStagingToFinal(VkBuffer stagingBuffer,
 					    VkCommandBuffer &cmdbuff) {
     VkImageMemoryBarrier barrier = initialBarrierSettings();
-    barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL; // this layout used for mipmapping
-    barrier.srcAccessMask = 0;
-    barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 
     VkBufferImageCopy region{};
     region.bufferRowLength = 0;
@@ -354,27 +372,33 @@ void TexLoaderVk::textureDataStagingToFinal(VkBuffer stagingBuffer,
     for (int i = 0; i < textures.size(); i++) {
 	vkBindImageMemory(base.device, textures[i]->image, memory, textures[i]->imageMemOffset);
 
-	if(textures[i]->internalImage) // layout managed by internal 
-	    continue;
-	
-	barrier.image = textures[i]->image;
-	barrier.subresourceRange.levelCount = textures[i]->info.mipLevels;
-	barrier.subresourceRange.aspectMask = textures[i]->info.aspect;
-	addImagePipelineBarrier(cmdbuff, barrier,
-				VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-				VK_PIPELINE_STAGE_TRANSFER_BIT);
-	region.imageExtent = { textures[i]->width, textures[i]->height, 1 };
-	region.bufferOffset = bufferOffset;
-	region.imageSubresource.aspectMask = textures[i]->info.aspect;
-	bufferOffset += staged[i]->filesize;
-
-	vkCmdCopyBufferToImage(cmdbuff, stagingBuffer, textures[i]->image,
-			       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-			       1, &region);
+	if(staged[i]->filesize > 0) {
+	    barrier.image = textures[i]->image;
+	    barrier.subresourceRange.levelCount = textures[i]->info.mipLevels;
+	    barrier.subresourceRange.aspectMask = textures[i]->info.aspect;
+	    barrier.oldLayout = textures[i]->currentImageLayout;
+	    barrier.srcAccessMask = textures[i]->currentImageAccessMask;
+	    barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+	    addImagePipelineBarrier(cmdbuff, barrier,
+				    VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+				    VK_PIPELINE_STAGE_TRANSFER_BIT);
+	    textures[i]->currentImageLayout = barrier.newLayout;
+	    textures[i]->currentImageAccessMask = barrier.dstAccessMask;
+	    region.imageExtent = { textures[i]->width, textures[i]->height, 1 };
+	    region.bufferOffset = bufferOffset;
+	    region.imageSubresource.aspectMask = textures[i]->info.aspect;
+	    bufferOffset += staged[i]->filesize;
+	    
+	    vkCmdCopyBufferToImage(cmdbuff, stagingBuffer, textures[i]->image,
+				   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+				   1, &region);
+	}
     }
 }
 
-/// --- Mipmapping ---
+
+/// ----------- Mipmapping -----------
+
   
 void dstToSrcBarrier(VkImageMemoryBarrier *barrier);
   
@@ -384,9 +408,8 @@ VkImageBlit getMipmapBlit(int32_t currentW, int32_t currentH, int destMipLevel,
 			  VkImageAspectFlags aspect);
 
 void TextureInGPU::createMipMaps(VkCommandBuffer &cmdBuff) {
-    if(this->internalImage)
+    if(gpuOnly)
 	return;
-    
     VkImageMemoryBarrier barrier = initialBarrierSettings();
     barrier.image = this->image;
     barrier.subresourceRange.aspectMask = info.aspect;
@@ -412,14 +435,19 @@ void TextureInGPU::createMipMaps(VkCommandBuffer &cmdBuff) {
 	if(mipW > 1) mipW /= 2;
 	if(mipH > 1) mipH /= 2;
     }
-    //transition last mipmap lvl from dst to shader read only
+
+    
+    // Transition Image to final layout
+    
     dstSrcToLayoutBarrier(&barrier, info.layout, info.access);
     barrier.subresourceRange.baseMipLevel = info.mipLevels - 1;
-    barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-    barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    barrier.oldLayout = currentImageLayout;
+    barrier.srcAccessMask = currentImageAccessMask;
     addImagePipelineBarrier(cmdBuff, barrier,
 			    VK_PIPELINE_STAGE_TRANSFER_BIT,
 			    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+    currentImageLayout = info.layout;
+    currentImageAccessMask = info.access;
 }
 
 VkImageBlit getMipmapBlit(int32_t currentW, int32_t currentH, int destMipLevel,

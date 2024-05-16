@@ -164,6 +164,7 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
       std::vector<ShaderPoolVk*> shaderPools;
 
       Resource::Pool defaultPool;
+      ResourcePoolVk* framebufferPool;
       PoolManagerVk* pools;
 
       bool _begunDraw = false;

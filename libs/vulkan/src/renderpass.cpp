@@ -6,9 +6,7 @@
 #include "vkhelper.h"
 
 
-/// ----- Attachment Image -----
-
-
+/// ----- Internal Attachment Image -----
 
 class AttachmentImage {
 public:
@@ -16,6 +14,7 @@ public:
     void Destroy(VkDevice device);
     VkResult CreateImage(VkDevice device,
 			 VkExtent2D extent,
+			 TexLoaderVk* texloader,
 			 VkDeviceSize *pMemoryRequirements,
 			 uint32_t *pMemoryFlagBits);
     void AddImage(VkImage);
@@ -37,11 +36,13 @@ private:
 
     bool usingExternalImage = false;
     bool imageForEachFrame = false;
+
     VkImage image;
     VkImageView view;
     size_t memoryOffset;
 
-    TextureInfoVk tex;
+    TextureInfoVk texinfo;
+    Resource::Texture texture;
 };
 
 
@@ -127,7 +128,8 @@ RenderPass::~RenderPass() {
     vkDestroyRenderPass(device, this->renderpass, VK_NULL_HANDLE);
 }
 
-VkResult RenderPass::createFramebufferImages(std::vector<VkImage> *swapchainImages,
+VkResult RenderPass::createFramebufferImages(TexLoaderVk* tex,
+					     std::vector<VkImage> *swapchainImages,
 					     VkExtent2D extent,
 					     VkDeviceSize *pMemSize,
 					     uint32_t *pMemFlags) {
@@ -143,7 +145,7 @@ VkResult RenderPass::createFramebufferImages(std::vector<VkImage> *swapchainImag
     framebufferExtent = extent;
     for(int i = 0; i < framebuffers.size(); i++) {
 	framebuffers[i].CreateImages(
-		device, attachImages,
+		device, tex, attachImages,
 		swapchainImages == nullptr ? nullptr : &(*swapchainImages)[i],
 		extent, pMemSize, pMemFlags, i == 0);
     }
@@ -212,7 +214,7 @@ std::vector<VkImageView> RenderPass::getAttachmentViews(uint32_t attachmentIndex
 
 
 AttachmentImage::AttachmentImage(AttachmentDesc &attachmentDesc) {
-    this->tex = attachmentDesc.getImageInfo();
+    this->texinfo = attachmentDesc.getImageInfo();
     switch(attachmentDesc.getUse()) {
     case AttachmentUse::PresentSrc:
 	usingExternalImage = true;
@@ -238,6 +240,7 @@ void AttachmentImage::Destroy(VkDevice device)
 
 VkResult AttachmentImage::CreateImage(VkDevice device,
 				      VkExtent2D extent,
+				      TexLoaderVk* texloader,
 				      VkDeviceSize *pMemoryRequirements,
 				      uint32_t *pMemoryFlagBits)  {
     if(state != state::unmade)
@@ -248,10 +251,13 @@ VkResult AttachmentImage::CreateImage(VkDevice device,
 	throw std::runtime_error("Attachment Image Error: invalid attachment image op, "
 				 "tried to create image with attachment that "
 				 "uses an external image.");
+
+    this->texture = texloader->addGpuTexture(extent.width, extent.height, texinfo);
+    
     VkResult result = VK_SUCCESS;
     VkMemoryRequirements memReq;
     returnOnErr(part::create::Image(
-        device, &image, &memReq, tex.usage, extent, tex.format, tex.samples, 1));
+        device, &image, &memReq, texinfo.usage, extent, texinfo.format, texinfo.samples, 1));
     *pMemoryRequirements = vkhelper::correctMemoryAlignment(*pMemoryRequirements, memReq.alignment);
     this->memoryOffset = *pMemoryRequirements;
     *pMemoryRequirements += vkhelper::correctMemoryAlignment(memReq.size, memReq.alignment);
@@ -287,7 +293,7 @@ VkResult AttachmentImage::CreateImageView(
 			  attachmentMemory, memoryOffset);
     
     VkResult result = part::create::ImageView(
-	    device, &view, image, tex.format, tex.aspect, 1);
+	    device, &view, image, texinfo.format, texinfo.aspect, 1);
     if(result == VK_SUCCESS)
 	state = state::imageview;
     return result;
@@ -316,6 +322,7 @@ Framebuffer::~Framebuffer() {
 
 VkResult Framebuffer::CreateImages(
 	    VkDevice device,
+	    TexLoaderVk* tex,
 	    std::vector<AttachmentImage> attachmentImages,
 	    VkImage *swapchainImage,
 	    VkExtent2D extent,
@@ -340,7 +347,7 @@ VkResult Framebuffer::CreateImages(
 	else if(createImage || attachments[i].hasImageForEachFrame())
 	    msgAndReturnOnErr(
 		    attachments[i]
-		    .CreateImage(device, extent, pMemSize, pMemFlags),
+		    .CreateImage(device, extent, tex, pMemSize, pMemFlags),
 		    "RenderPass Error: Failed to create framebuffer attachment image");
     }
     return result;
@@ -396,13 +403,13 @@ AttachmentDesc::AttachmentDesc(uint32_t index, AttachmentType type, AttachmentUs
     case AttachmentType::Resolve:
 	this->loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     case AttachmentType::Colour:
-	this->tex.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	attachmentImageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	this->tex.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 	this->tex.aspect = VK_IMAGE_ASPECT_COLOR_BIT;
 	break;
     case AttachmentType::Depth:
 	//must be depth_stencil, unless seperate depth stencil layout feature is enabled.
-	this->tex.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+	attachmentImageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 	this->tex.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 	this->tex.aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
 	break;
@@ -411,17 +418,17 @@ AttachmentDesc::AttachmentDesc(uint32_t index, AttachmentType type, AttachmentUs
     case AttachmentUse::TransientAttachment:
 	this->tex.usage |= VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
     case AttachmentUse::Attachment:
-	finalImageLayout = tex.layout;
+        tex.layout = attachmentImageLayout;
 	storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	break;
     case AttachmentUse::ShaderRead:
 	storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	finalImageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	tex.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	this->tex.usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
 	break;
     case AttachmentUse::PresentSrc:
 	storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	finalImageLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	tex.layout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 	break;
     }
 }
@@ -429,7 +436,7 @@ AttachmentDesc::AttachmentDesc(uint32_t index, AttachmentType type, AttachmentUs
 VkAttachmentReference AttachmentDesc::getAttachmentReference() {
     VkAttachmentReference attachRef;
     attachRef.attachment = index;
-    attachRef.layout = tex.layout;
+    attachRef.layout = attachmentImageLayout;
     return attachRef;
 }
 
@@ -443,7 +450,7 @@ VkAttachmentDescription AttachmentDesc::getAttachmentDescription() {
     desc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     desc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     desc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    desc.finalLayout = finalImageLayout;
+    desc.finalLayout = tex.layout;
     return desc;
 }
 

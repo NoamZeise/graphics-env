@@ -14,7 +14,6 @@
 #include <graphics/shader.h>
 
 #include <GLFW/glfw3.h>
-#include <cstring>
 #include <iostream>
 #include <stdexcept>
 #include <stdint.h>
@@ -62,6 +61,7 @@ VkFormat getDepthBufferFormat(VkPhysicalDevice physicalDevice) {
 			      manager->deviceState.queue.graphicsPresentFamilyIndex);
     pools = new PoolManagerVk;
     defaultPool = CreateResourcePool()->id();
+    framebufferPool = (ResourcePoolVk*)CreateResourcePool();
 }
   
 RenderVk::~RenderVk() {
@@ -102,6 +102,10 @@ bool swapchainRecreationRequired(VkResult result) {
 	      *getMinMipmap = n;
 	  std::vector<Resource::Texture> texs = pools->get(i)->texLoader->getTextures();
 	  for(int j = 0; j < texs.size(); j++) {
+	      if(!pools->get(i)->texLoader->sampledImage(texs[j])) {
+		  LOG("skip");
+		  continue;
+	      }
 	      pools->get(i)->texLoader->setIndex(texs[j], allTextures.size());
 	      allTextures.push_back(texs[j]);
 	  }
@@ -206,11 +210,13 @@ bool swapchainRecreationRequired(VkResult result) {
       VkDeviceSize attachmentMemorySize = 0;
       uint32_t attachmentMemoryFlags = 0;
       offscreenRenderPass->createFramebufferImages(
+	      framebufferPool->texLoader,
 	      useFinalRenderpass ? nullptr : swapchainImages, offscreenBufferExtent,
 	      &attachmentMemorySize, &attachmentMemoryFlags);
 
       if(useFinalRenderpass)
 	  finalRenderPass->createFramebufferImages(
+		  framebufferPool->texLoader,
 		  swapchainImages, swapchainExtent,
 		  &attachmentMemorySize, &attachmentMemoryFlags);
       if(attachmentMemorySize > 0) {
@@ -225,6 +231,8 @@ bool swapchainRecreationRequired(VkResult result) {
 			  attachmentMemoryFlags),
 		  "Render Error: Failed to Allocate Memory for Framebuffer Images");
       }
+
+      framebufferPool->loadGpu();
       
       offscreenRenderPass->createFramebuffers(framebufferMemory);
       if(useFinalRenderpass)
@@ -288,7 +296,7 @@ bool swapchainRecreationRequired(VkResult result) {
       //offscreenTexSet->addTextures(
       //      1, offscreenRenderPass->getAttachmentTextures(0));
       
-      mainShaderPool->CreateGpuResources();      
+      mainShaderPool->CreateGpuResources();
       
       if(useFinalRenderpass) {
 	  descriptor::Set offscreenView_Set("Offscreen Transform", descriptor::ShaderStage::Vertex);
