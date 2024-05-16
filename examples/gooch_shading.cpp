@@ -21,7 +21,7 @@ int main(int argc, char** argv) {
     state.render.multisampling = true;
     state.setShader(shader::pipeline::_3D, shader::stage::frag,
 		    "vk-shaders/gooch.frag.spv", "ogl-shaders/gooch.frag");
-    state.defaultRenderer = parseArgs(argc, argv, &state.windowTitle);
+    parseArgs(argc, argv, &state);
     state.cursor = cursorState::disabled;
     Manager manager(state);
 

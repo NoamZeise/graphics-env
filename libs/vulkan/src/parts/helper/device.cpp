@@ -69,7 +69,7 @@ std::vector<VkDeviceQueueCreateInfo> fillQueueFamiliesCreateInfo(std::set<uint32
 
 VkPhysicalDeviceFeatures setRequestedDeviceFeatures(
 	VkPhysicalDevice physicalDevice,
-	EnabledFeatures requestedFeatures, EnabledFeatures *setFeatures) {
+	EnabledDeviceFeatures requestedFeatures, EnabledDeviceFeatures *setFeatures) {
     VkPhysicalDeviceFeatures availableDeviceFeatures;
     vkGetPhysicalDeviceFeatures(physicalDevice, &availableDeviceFeatures);
     VkPhysicalDeviceFeatures chosenDeviceFeatures{};

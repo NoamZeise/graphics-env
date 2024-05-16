@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
     // setup renderer with desired state
     ManagerState state;
     state.windowTitle = "minimum example";
-    state.defaultRenderer = parseArgs(argc, argv, &state.windowTitle);
+    parseArgs(argc, argv, &state);
     Manager manager(state);
     
     ResourcePool* pool = manager.render->pool();

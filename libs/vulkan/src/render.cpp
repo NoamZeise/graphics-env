@@ -48,8 +48,9 @@ VkFormat getDepthBufferFormat(VkPhysicalDevice physicalDevice) {
 
   RenderVk::RenderVk(GLFWwindow *window, RenderConfig renderConf, shader::PipelineSetup pipelineSetup) : Render(window, renderConf, pipelineSetup) {
     checkVolk();
-    EnabledFeatures features;
+    EnabledDeviceFeatures features;
     features.sampleRateShading = renderConf.sample_shading;
+    features.manuallyChosePhysicalDevice = renderConf.manuallyChoseGpu;
     manager = new VulkanManager(window, features);
     offscreenDepthFormat = getDepthBufferFormat(manager->deviceState.physicalDevice);
     

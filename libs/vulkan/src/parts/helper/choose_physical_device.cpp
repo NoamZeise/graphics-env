@@ -1,12 +1,9 @@
 #include "choose_physical_device.h"
 
-
 #include <iostream>
 #include <memory>
 #include "device.h"
 #include "../../logger.h"
-
-// #define CHOOSE_PHYSICAL_DEVICE_MANUALLY
 
 bool getGraphicsPresentQueueID(VkPhysicalDevice candidateDevice,
 			       VkSurfaceKHR surface,
@@ -40,7 +37,8 @@ VkResult choosePhysicalDevice(VkInstance instance,
 			      VkSurfaceKHR surface,
 			      VkPhysicalDevice *pPhysicalDevice,
 			      uint32_t *pGraphicsPresentQueueFamilyId,
-			      const std::vector<const char*> &requestedExtensions) {
+			      const std::vector<const char*> &requestedExtensions,
+			      bool selectManually) {
     VkResult result;
     uint32_t deviceCount;
     msgAndReturnOnErr(vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr),
@@ -55,12 +53,8 @@ VkResult choosePhysicalDevice(VkInstance instance,
     msgAndReturnOnErr(vkEnumeratePhysicalDevices(instance, &deviceCount, gpus.get()),
 		      "Failed to get device list!");
 
-    LOG("Finding Suitable Physical Device:");
-#ifdef CHOOSE_PHYSICAL_DEVICE_MANUALLY
-    int chosenPhysicalDeviceIndex = -1;
-    LOG("choose physical device index: ");
-    std::cin >> physIndex;
-#endif
+    LOG("Finding Suitable Physical Device ("
+	<< deviceCount << " candidates)");
     LOG_LINE();
     PhysicalDeviceProps bestDeviceProperties;
     bool foundSuitable = false;
@@ -70,25 +64,34 @@ VkResult choosePhysicalDevice(VkInstance instance,
 	
 	uint32_t queueFamilyCount = 0;
 	vkGetPhysicalDeviceQueueFamilyProperties(gpus.get()[i], &queueFamilyCount, nullptr);
-	std::unique_ptr<VkQueueFamilyProperties> queueFamilies(new VkQueueFamilyProperties[queueFamilyCount]);
-	vkGetPhysicalDeviceQueueFamilyProperties(gpus.get()[i], &queueFamilyCount, queueFamilies.get());
+	std::unique_ptr<VkQueueFamilyProperties> queueFamilies(
+		new VkQueueFamilyProperties[queueFamilyCount]);
+	vkGetPhysicalDeviceQueueFamilyProperties(
+		gpus.get()[i], &queueFamilyCount, queueFamilies.get());
 	
-	if (getGraphicsPresentQueueID(gpus.get()[i], surface, queueFamilies.get(), queueFamilyCount,
+	if (getGraphicsPresentQueueID(gpus.get()[i], surface,
+				      queueFamilies.get(), queueFamilyCount,
 				      pGraphicsPresentQueueFamilyId, requestedExtensions)) {
-#ifdef CHOOSE_PHYSICAL_DEVICE_MANUALLY
-	  if(i == chosenPhysicalDeviceIndex) {
-	    *pPhysicalDevice = gpus.get()[i];
-	    foundSuitable = true;
-	    bestDeviceProperties = deviceProperties;
-	    LOG("selected chosen physical device\n");
-	    break;
-	  }
-#endif
-	  if(!foundSuitable || rankPhysicalDevices(bestDeviceProperties, deviceProperties)) {
-	    *pPhysicalDevice = gpus.get()[i];
-	    foundSuitable = true;
-	    bestDeviceProperties = deviceProperties;
-	  }
+	    if(selectManually) {
+		std::string response;
+		while(!(response == "y" || response == "n")) {
+		    LOG("Choose This device? (y/n)");		    
+		    std::cin >> response;
+		}
+		if(response == "y") {
+		    *pPhysicalDevice = gpus.get()[i];
+		    foundSuitable = true;
+		    bestDeviceProperties = deviceProperties;
+		    LOG("selected chosen physical device\n");
+		    break;
+		}
+		
+	    } else if(!foundSuitable
+		      || rankPhysicalDevices(bestDeviceProperties, deviceProperties)) {
+		*pPhysicalDevice = gpus.get()[i];
+		foundSuitable = true;
+		bestDeviceProperties = deviceProperties;
+	    }
 	}
     }
     if (!foundSuitable)  {

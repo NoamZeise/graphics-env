@@ -4,9 +4,11 @@
 #include <volk.h>
 #include <vector>
 
-VkResult choosePhysicalDevice(VkInstance instance, VkSurfaceKHR surface,
+VkResult choosePhysicalDevice(VkInstance instance,
+			      VkSurfaceKHR surface,
 			      VkPhysicalDevice *physicalDevice,
 			      uint32_t *graphicsPresentQueueFamilyId,
-			      const std::vector<const char*> &requestedExtensions);
+			      const std::vector<const char*> &requestedExtensions,
+			      bool selectManually);
 
 #endif

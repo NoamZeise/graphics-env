@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
     state.windowTitle = "Asset Pools Examples";
     state.render.multisampling = true;
     state.render.sample_shading = true;
-    state.defaultRenderer = parseArgs(argc, argv, &state.windowTitle);
+    parseArgs(argc, argv, &state);
     Manager manager(state);
     //get default pool
     ResourcePool* defaultPool = manager.render->pool();

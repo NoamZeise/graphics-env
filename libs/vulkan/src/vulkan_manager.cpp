@@ -9,7 +9,7 @@ std::mutex graphicsPresentMutex;
   if (result_expr != VK_SUCCESS)                                               \
     throw std::runtime_error(error_message);
 
-VulkanManager::VulkanManager(GLFWwindow *window, EnabledFeatures featuresToEnable) {
+VulkanManager::VulkanManager(GLFWwindow *window, EnabledDeviceFeatures featuresToEnable) {
     throwOnErr(part::create::Instance(&instance),
 	       "Failed to create Vulkan Instance");
 #ifndef NDEBUG

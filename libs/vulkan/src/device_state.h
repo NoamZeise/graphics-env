@@ -11,9 +11,10 @@ struct QueueFamilies {
     VkQueue graphicsPresentQueue;
 };
 
-struct EnabledFeatures {
+struct EnabledDeviceFeatures {
     bool samplerAnisotropy = false;
     bool sampleRateShading = false;
+    bool manuallyChosePhysicalDevice = false;
 #ifndef NDEBUG
     bool debugErrorOnly = false;
 #endif
@@ -23,7 +24,7 @@ struct DeviceState {
     VkPhysicalDevice physicalDevice;
     VkDevice device;
     QueueFamilies queue;
-    EnabledFeatures features;
+    EnabledDeviceFeatures features;
 };
 
 #endif

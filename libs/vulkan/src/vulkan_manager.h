@@ -10,7 +10,7 @@
 #include "device_state.h"
 
 struct VulkanManager {
-    VulkanManager(GLFWwindow *window, EnabledFeatures featuresToEnable);
+    VulkanManager(GLFWwindow *window, EnabledDeviceFeatures featuresToEnable);
     ~VulkanManager();
 
     DeviceState deviceState;

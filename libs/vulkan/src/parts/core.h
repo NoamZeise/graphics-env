@@ -11,7 +11,7 @@ namespace part {
     VkResult Device(VkInstance instance,
 		    DeviceState* base,
 		    VkSurfaceKHR surface,
-		    EnabledFeatures requestFeatures);
+		    EnabledDeviceFeatures requestFeatures);
   }
 
 #ifndef NDEBUG

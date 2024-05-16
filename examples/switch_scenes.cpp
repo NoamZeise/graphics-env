@@ -10,7 +10,7 @@
 
 class App {
 public:
-    App(RenderFramework defaultFramework);
+    App(int argc, char** argv);
     ~App();
     void run();
 private:
@@ -66,7 +66,6 @@ private:
 
 #include <stdexcept>
 #include <graphics/logger.h>
-#include <fstream>
 
 #include "helper.h"
 
@@ -74,7 +73,7 @@ int main(int argc, char** argv) {
   try
     {
       std::string t("");
-      App app(parseArgs(argc, argv, &t));
+      App app(argc, argv);
       app.run();
     }
   catch (const std::exception& e)
@@ -102,11 +101,10 @@ int main(int argc, char** argv) {
 #include <graphics/shader_structs.h>
 #include <graphics/logger.h>
 
-App::App(RenderFramework defaultFramework) {
+App::App(int argc, char** argv) {
     ManagerState state;
-    state.defaultRenderer = defaultFramework;
-    state.windowTitle = std::string("Test App ") +
-	(defaultFramework == RenderFramework::Vulkan ? "vulkan" : "opengl");
+    state.windowTitle = "switch scene";
+    parseArgs(argc, argv, &state);
     state.cursor = cursorState::disabled;
     manager = new Manager(state);
     

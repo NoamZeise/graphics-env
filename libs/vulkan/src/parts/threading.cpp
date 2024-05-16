@@ -1,8 +1,8 @@
 #include "threading.h"
 
-
 namespace part {
   namespace create {
+    
     VkResult Semaphore(VkDevice device, VkSemaphore *semaphore) {
 	return Semaphore(device, semaphore, nullptr);
     }
@@ -27,5 +27,6 @@ namespace part {
 	else fenceInfo.flags = 0;
 	return vkCreateFence(device, &fenceInfo, nullptr, fence);
     }
-  }
+    
+  } // namespace end
 }

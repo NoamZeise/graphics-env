@@ -2,12 +2,12 @@
 #define PARTS_SWAPCHAIN_H
 
 #include <volk.h>
-#include <GLFW/glfw3.h>
-
 #include <vector>
 
 namespace part {
   namespace create {
+
+    // Returns swapchain images
     std::vector<VkImage> Swapchain(
 	    VkDevice device,
 	    VkPhysicalDevice physicalDevice,
@@ -19,7 +19,8 @@ namespace part {
 	    VkSwapchainKHR *swapchain,
 	    VkSurfaceFormatKHR *format,
 	    VkExtent2D *extent);
-    }
+    
+  }
 }
 
 #endif

@@ -97,7 +97,6 @@ namespace part {
 		    EnabledDeviceFeatures requestFeatures) {
 	VkResult result = VK_SUCCESS;
 	// get a suitable physical device
-	LOG(requestFeatures.manuallyChosePhysicalDevice);
 	returnOnErr(choosePhysicalDevice(
 			    instance,
 			    surface,

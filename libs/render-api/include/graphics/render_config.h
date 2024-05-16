@@ -23,6 +23,9 @@ struct RenderConfig {
     bool mip_mapping = false;
     // for a pixelated look (ie no smoothing of pixels)
     bool texture_filter_nearest = false;
+
+    // vulkan only
+    bool manuallyChoseGpu = false;
 };
 
 #endif

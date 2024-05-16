@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
     state.render.sample_shading = true;
     state.render.mip_mapping = false;
     state.windowTitle = "Animated Models";
-    state.defaultRenderer = parseArgs(argc, argv, &state.windowTitle);
+    parseArgs(argc, argv, &state);
     Manager manager(state);
     ResourcePool* pool = manager.render->pool();
     
