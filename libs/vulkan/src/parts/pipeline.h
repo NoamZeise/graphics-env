@@ -2,7 +2,7 @@
 #define PARTS_RENDER_STYLE_H
 
 #include "../pipeline.h"
-#include "../shader_internal.h"
+#include "../shader_buffers.h"
 #include <volk.h>
 
 #include <string>

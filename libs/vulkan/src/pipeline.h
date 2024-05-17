@@ -11,7 +11,7 @@
 
 #include <stdint.h>
 #include <vector>
-#include "shader_internal.h"
+#include "shader_buffers.h"
 
 class Pipeline {
 public:

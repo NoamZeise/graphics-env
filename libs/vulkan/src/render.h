@@ -17,13 +17,13 @@
 #include "frame.h"
 #include "renderpass.h"
 #include "pipeline.h"
-#include "shader_internal.h"
 #include "shader_structs.h"
 #include <atomic>
 #include <vector>
 
 class PoolManagerVk;
 class ShaderPoolVk;
+class Set;
 
 namespace vkenv {
 

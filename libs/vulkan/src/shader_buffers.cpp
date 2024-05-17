@@ -1,4 +1,4 @@
-#include "shader_internal.h"
+#include "shader_buffers.h"
 
 #include <cstring>
 #include <stdexcept>
