@@ -93,7 +93,8 @@ public:
 		 size_t bytesToRead,
 		 size_t destinationOffset,
 		 size_t arrayIndex,
-		 size_t dynamicIndex) override;
+		 size_t dynamicIndex,
+		 bool setAllFrames) override;
 
     void updateSampler(size_t index, size_t arrayIndex, TextureSampler sampler) override;
 
@@ -166,7 +167,7 @@ public:
 	    delete set;
     }
     
-    Set* CreateSet(shader::Stage flags) override {
+    ShaderSet* CreateSet(shader::Stage flags) override {
 	sets.push_back(new SetVk(state, flags, poolManager));
 	return sets[sets.size() - 1];
     }

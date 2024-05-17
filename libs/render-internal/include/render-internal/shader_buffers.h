@@ -44,9 +44,10 @@ struct Binding {
     std::vector<Resource::Texture> textures;
 };
 
-class InternalSet : public Set {
+class InternalSet : public ShaderSet {
  public:
-    InternalSet(shader::Stage stageFlags);
+    
+    InternalSet(shader::Stage shaderStageFlags);
     
     virtual ~InternalSet() {}
 
@@ -63,7 +64,8 @@ class InternalSet : public Set {
 		 size_t bytesToRead,
 		 size_t destinationOffset,
 		 size_t arrayIndex,
-		 size_t dynamicIndex) override;
+		 size_t dynamicIndex,
+		 bool setAllFrames) override;
 
 
     /// ----------- Samplers -----------

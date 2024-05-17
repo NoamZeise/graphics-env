@@ -341,10 +341,11 @@ bool swapchainRecreationRequired(VkResult result) {
 		  pipelineSetup.getPath(shader::pipeline::final, shader::stage::frag),
 		  swapchainExtent, {}, {},
 		  pipelineConf);
-	  offscreenMat = glmhelper::calcFinalOffset(
+	  glm::mat4 offscreenMat = glmhelper::calcFinalOffset(
 		  glm::vec2(offscreenBufferExtent.width, offscreenBufferExtent.height),
 		  glm::vec2((float)swapchainExtent.width,
 			    (float)swapchainExtent.height));
+	  offscreenTransformSet->setAllData(0, &offscreenMat);
       }
       
       LOG("Finished Creating Frame Resources");
@@ -587,7 +588,7 @@ void RenderVk::DrawAnimModel(Resource::Model model, glm::mat4 modelMatrix,
 	LOG("warning, too many animation calls!\n");
 	return;
     }
-    boneSet->setData(0, &bonesData, 0, 0, 0, currentBonesDynamicIndex);
+    boneSet->setDynamicData(0, &bonesData, currentBonesDynamicIndex);
     _pipelineAnim3D.bindDynamicDSNew(
 	    currentCommandBuffer, frameIndex, currentBonesDynamicIndex, 2, 0);
     
@@ -737,7 +738,6 @@ void RenderVk::EndDraw(std::atomic<bool> &submit) {
 
   if(usingFinalRenderPass) {
       finalRenderPass->beginRenderPass(currentCommandBuffer, swapchainFrameIndex);
-      offscreenTransformSet->setData(0, &offscreenMat);
       _pipelineFinal.begin(currentCommandBuffer, frameIndex);
       vkCmdDraw(currentCommandBuffer, 3, 1, 0, 0);
       

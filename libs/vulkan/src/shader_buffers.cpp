@@ -21,19 +21,26 @@ void SetVk::setData(size_t index,
 		    size_t bytesToRead,
 		    size_t destinationOffset,
 		    size_t arrayIndex,
-		    size_t dynamicIndex) {
+		    size_t dynamicIndex,
+		    bool setAllFrames) {
     try {
 	InternalSet::setData(
 		index, data, bytesToRead, destinationOffset,
-		arrayIndex, dynamicIndex);
+		arrayIndex, dynamicIndex, setAllFrames);
     } catch(std::invalid_argument e) {
 	LOG_ERROR(e.what());
 	return;
     }
     if(bytesToRead == 0)
 	bytesToRead = bindings[index].typeSize - destinationOffset;
-    bindings[index].setBuffer(
-	    data, bytesToRead, destinationOffset, currentSetIndex, arrayIndex, dynamicIndex);
+    if(setAllFrames) {
+	for(int i = 0; i < setHandles.size(); i++)
+	    bindings[index].setBuffer(
+		    data, bytesToRead, destinationOffset, i, arrayIndex, dynamicIndex);
+    } else {
+	bindings[index].setBuffer(
+		data, bytesToRead, destinationOffset, currentSetIndex, arrayIndex, dynamicIndex);
+    }
 }
 
 void SetVk::updateSampler(size_t index, size_t arrayIndex, TextureSampler sampler) {

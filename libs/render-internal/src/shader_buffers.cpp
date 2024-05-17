@@ -85,7 +85,8 @@ void InternalSet::setData(size_t index,
 			  size_t bytesToRead,
 			  size_t destinationOffset,
 			  size_t arrayIndex,
-			  size_t dynamicIndex)  {
+			  size_t dynamicIndex,
+			  bool setAllFrames)  {
     if(!gpuResourcesCreated)
 	throw std::invalid_argument(
 		"Shader Set Error:  Tried to setData for set "

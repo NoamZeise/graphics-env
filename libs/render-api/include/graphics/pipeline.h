@@ -11,7 +11,7 @@ private:
     PipelineInput input;
     std::string vertexShader;
     std::string fragmentShader;
-    std::vector<Set*> sets;  
+    std::vector<ShaderSet*> sets;  
     std::vector<PushConstant> pushConstants;
 };
 

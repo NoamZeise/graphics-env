@@ -23,7 +23,7 @@
 
 class PoolManagerVk;
 class ShaderPoolVk;
-class Set;
+class ShaderSet;
 
 namespace vkenv {
 
@@ -123,26 +123,25 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
       Pipeline _pipelineFinal;
       
       ShaderPool* mainShaderPool;      
-      Set* perFrame2DSet;
+      ShaderSet* perFrame2DSet;
       shaderStructs::Frag2DData perFrame2DFragData[Resource::MAX_2D_BATCH];
-      Set* lightingSet;
+      ShaderSet* lightingSet;
       BPLighting lightingData;
-      Set* textureSet;
-      Set* boneSet;
+      ShaderSet* textureSet;
+      ShaderSet* boneSet;
       size_t currentBonesDynamicIndex;
-      Set* emptySet;
-      Set* vp3dSet;
+      ShaderSet* emptySet;
+      ShaderSet* vp3dSet;
       shaderStructs::timeUbo timeData;
       shaderStructs::viewProjection VP3DData;
-      Set* vp2dSet;
+      ShaderSet* vp2dSet;
       shaderStructs::viewProjection VP2DData;
-      Set* perFrame3dSet;
+      ShaderSet* perFrame3dSet;
       shaderStructs::PerFrame3D perFrame3DData[Resource::MAX_3D_BATCH];
-      Set* perFrame2dVertSet;
+      ShaderSet* perFrame2dVertSet;
       glm::mat4 perFrame2DVertData[Resource::MAX_2D_BATCH];
-      Set* offscreenTransformSet;
-      glm::mat4 offscreenMat;
-      Set* offscreenTexSet;
+      ShaderSet* offscreenTransformSet;
+      ShaderSet* offscreenTexSet;
 
       std::vector<ShaderPoolVk*> shaderPools;
 
