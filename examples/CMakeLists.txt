@@ -14,9 +14,6 @@ if((NOT NO_ASSIMP) AND (NOT NO_FREETYPE))
   add_example(gooch_shading gooch_shading.cpp)
 endif()
 
-add_example(spirv_testing spirv_testing.cpp)
-target_link_libraries(spirv_testing spirv-cross-c)
-
 # Copy files for one executable - ie libs/resource files
 # this does mean only `minimum` will get built statically
 set(exec-name minimum)

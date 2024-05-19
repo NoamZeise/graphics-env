@@ -24,6 +24,8 @@ struct Binding {
 	TextureSampler,
 	Texture,
     };
+
+    static std::string to_string(type t);
     
     Binding() {}
 

@@ -68,40 +68,43 @@ Manager::Manager(ManagerState state) {
     if(state.fixedWindowRatio)
 	glfwSetWindowAspectRatio(window, winWidth, winHeight);
 
-    shader::PipelineSetup pl = state.getPipelineSetup(framework);
+    shader::PipelineSetup pl = state.getPipelineSetup(RenderFramework::Vulkan);
+    shader::PipelineSetup ogl_pl = state.getPipelineSetup(RenderFramework::OpenGL);
+    setShaders(&pl, shader::pipeline::_3D,
+	       "shaders/vulkan/3D-lighting.vert.spv",
+	       "shaders/vulkan/blinnphong.frag.spv");
+    setShaders(&pl, shader::pipeline::anim3D,
+	       "shaders/vulkan/3D-lighting-anim.vert.spv",
+	       "shaders/vulkan/blinnphong.frag.spv");
+    setShaders(&pl, shader::pipeline::_2D,
+	       "shaders/vulkan/flat.vert.spv",
+	       "shaders/vulkan/flat.frag.spv");
+    setShaders(&pl, shader::pipeline::final,
+	       "shaders/vulkan/final.vert.spv",
+	       "shaders/vulkan/final.frag.spv");
+
+    //temp - until spirv-cross working
+    setShaders(&ogl_pl, shader::pipeline::_3D,
+	       "shaders/opengl/3D-lighting.vert",
+	       "shaders/opengl/blinnphong.frag");
+    setShaders(&ogl_pl, shader::pipeline::anim3D,
+	       "shaders/opengl/3D-lighting-anim.vert",
+	       "shaders/opengl/blinnphong.frag");
+    setShaders(&ogl_pl, shader::pipeline::_2D,
+	       "shaders/opengl/flat.vert",
+	       "shaders/opengl/flat.frag");
+    setShaders(&ogl_pl, shader::pipeline::final,
+	       "shaders/opengl/final.vert",
+	       "shaders/opengl/final.frag");
     switch(framework) {
     case RenderFramework::Vulkan:
 #ifndef NO_VULKAN
-	setShaders(&pl, shader::pipeline::_3D,
-		  "shaders/vulkan/3D-lighting.vert.spv",
-		  "shaders/vulkan/blinnphong.frag.spv");
-	setShaders(&pl, shader::pipeline::anim3D,
-		  "shaders/vulkan/3D-lighting-anim.vert.spv",
-		  "shaders/vulkan/blinnphong.frag.spv");
-	setShaders(&pl, shader::pipeline::_2D,
-		  "shaders/vulkan/flat.vert.spv",
-		  "shaders/vulkan/flat.frag.spv");
-	setShaders(&pl, shader::pipeline::final,
-		  "shaders/vulkan/final.vert.spv",
-		  "shaders/vulkan/final.frag.spv");
 	render = static_cast<Render*>(new vkenv::RenderVk(window, state.render, pl));
 	break;
 #endif
     case RenderFramework::OpenGL:
 #ifndef NO_OPENGL
-	setShaders(&pl, shader::pipeline::_3D,
-		  "shaders/opengl/3D-lighting.vert",
-		  "shaders/opengl/blinnphong.frag");
-	setShaders(&pl, shader::pipeline::anim3D,
-		  "shaders/opengl/3D-lighting-anim.vert",
-		  "shaders/opengl/blinnphong.frag");
-	setShaders(&pl, shader::pipeline::_2D,
-		  "shaders/opengl/flat.vert",
-		  "shaders/opengl/flat.frag");
-	setShaders(&pl, shader::pipeline::final,
-		  "shaders/opengl/final.vert",
-		  "shaders/opengl/final.frag");
-	render = static_cast<Render*>(new glenv::RenderGl(window, state.render, pl));
+	render = static_cast<Render*>(new glenv::RenderGl(window, state.render, ogl_pl, pl));
 	break;
 #endif
     default:

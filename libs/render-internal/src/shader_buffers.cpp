@@ -46,6 +46,27 @@ Binding::Binding(size_t arrayCount, std::vector<Resource::Texture> textures) {
     this->arrayCount = arrayCount;
 }
 
+std::string Binding::to_string(type t) {
+    switch(t) {
+    case type::None:
+	return "None";
+    case type::StorageBuffer:
+	return "StorageBuffer";
+    case type::StorageBufferDynamic:
+	return "StorageBufferDynamic";
+    case type::UniformBuffer:
+	return "UniformBuffer";
+    case type::UniformBufferDynamic:
+	return "UniformBufferDynamic";
+    case type::Texture:
+	return "Texture";
+    case type::TextureSampler:
+	return "TextureSampler";
+    default:
+	throw std::runtime_error(
+		"Unrecognised binding type in internal render");
+    }
+}
 
 /// ----------- Internal Set -----------
 

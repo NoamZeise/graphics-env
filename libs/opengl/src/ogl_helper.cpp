@@ -12,10 +12,10 @@ void createShaderStorageBuffer(GLuint* glBuffer, size_t bufferSize, void* pBuffe
 
  void shaderStorageBufferData(GLuint glBuffer, size_t bufferSize, void* pBufferArray,
 			      GLuint bufferBaseSize){
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, glBuffer);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, bufferSize, pBufferArray, GL_DYNAMIC_DRAW);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bufferBaseSize, glBuffer);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+     glBindBuffer(GL_SHADER_STORAGE_BUFFER, glBuffer);
+     glBufferData(GL_SHADER_STORAGE_BUFFER, bufferSize, pBufferArray, GL_DYNAMIC_DRAW);
+     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bufferBaseSize, glBuffer);
+     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
   }
 
   /// 1 samples = no multisamping

@@ -1,13 +1,16 @@
 #include "render.h"
 
+#include <graphics/logger.h>
+#include <graphics/glm_helper.h>
+
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/matrix_inverse.hpp>
+#include <stdexcept>
+
 #include "ogl_helper.h"
 #include "shader.h"
 #include "resources/resource_pool.h"
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/matrix_inverse.hpp>
-#include <graphics/logger.h>
-#include <graphics/glm_helper.h>
-#include <stdexcept>
+#include "spirv_shaders.h"
 
 namespace glenv {
 
@@ -18,7 +21,7 @@ namespace glenv {
       return true;
   }
     
-  RenderGl::RenderGl(GLFWwindow *window, RenderConfig renderConf, shader::PipelineSetup pipelineSetup) : Render(window, renderConf, pipelineSetup) {
+  RenderGl::RenderGl(GLFWwindow *window, RenderConfig renderConf, shader::PipelineSetup pipelineSetup, shader::PipelineSetup spirvPipeline) : Render(window, renderConf, pipelineSetup) {
       glfwMakeContextCurrent(window);
       
       if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -31,6 +34,8 @@ namespace glenv {
 
       view2D = glm::mat4(1.0f);
       createShaders();
+
+      SpirvShaders s(spirvPipeline);
       
       pools = new GLPoolManager();
       defaultPool = CreateResourcePool()->id();

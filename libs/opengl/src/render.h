@@ -8,8 +8,6 @@
 
 #include <string>
 #include <atomic>
-#include <vector>
-#include <iostream>
 
 #include <graphics/render.h>
 #include <graphics/shader_structs.h>
@@ -29,7 +27,8 @@ namespace glenv {
   class RenderGl : public Render {
   public:
       static bool LoadOpenGL();
-      RenderGl(GLFWwindow* window, RenderConfig renderConf, shader::PipelineSetup pipelineSetup);
+      RenderGl(GLFWwindow* window, RenderConfig renderConf, shader::PipelineSetup pipelineSetup,
+	       shader::PipelineSetup spirvPipeline);
       ~RenderGl();
 
       ResourcePool* CreateResourcePool() override;
