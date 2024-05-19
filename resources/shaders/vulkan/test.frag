@@ -4,8 +4,6 @@ layout(set = 2, binding = 0) uniform sampler texSamp;
 layout(set = 2, binding = 1) uniform texture2D tex;
 layout(set = 2, binding = 2) uniform texture2D textures[20];
 
-layout(set = 3, binding = 0) uniform texture2D texs[2];
-
 struct per2DFragData
 {
     vec4 colour;
@@ -16,6 +14,20 @@ struct per2DFragData
 layout(std140, set = 3, binding = 0) readonly buffer PerInstanceBuffer {
     per2DFragData data[];
 } pib;
+
+layout(set = 4, binding = 0) uniform texture2D texs[25];
+layout(set = 4, binding = 1) uniform sampler samps[2];
+
+layout(set = 5, binding = 0) uniform UBO {
+  mat4 mat;
+  vec4 vec;
+} ubo[110];
+
+layout(push_constant) uniform pcs
+{
+  mat4 matI;
+  int mID;
+} pc;
 
 layout(location = 0) in vec3 inTexCoord;
 

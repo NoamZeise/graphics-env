@@ -5,30 +5,37 @@
 #include <render-internal/shader_buffers.h>
 #include <vector>
 
-struct GLSpirvBinding {
-    std::string name;
-    Binding::type type = Binding::type::None;
-    unsigned int arrayCount = 0;
-};
-
-struct GLSpirvDescriptorSet {
-    std::vector<GLSpirvBinding> bindings;
-};
-
 namespace spirv_cross {
     struct Resource;
     struct CompilerGLSL;
 }
 
-struct SpirvShader {
-    SpirvShader(std::string path);
+struct SpirvBindingGl {
+    SpirvBindingGl(){}
+    SpirvBindingGl(spirv_cross::Resource* resource,
+		   spirv_cross::CompilerGLSL* glsl,
+		   Binding::type type);
+    std::string name;
+    Binding::type type = Binding::type::None;
+    unsigned int arrayCount = 0;
+};
+
+struct SpirvDescriptorSetGl {
+    std::vector<SpirvBindingGl> bindings;
+};
+
+struct SpirvShaderGl {
+    SpirvShaderGl(std::string path);       
     
+    std::vector<SpirvDescriptorSetGl> sets;
+    std::vector<SpirvBindingGl> combinedSamplers;
+    std::vector<SpirvBindingGl> pushConsts; 
+    std::string code;
+
+private:
     void addBinding(spirv_cross::Resource* resource,
 		    spirv_cross::CompilerGLSL* glsl,
 		    Binding::type type);
-    
-    std::vector<GLSpirvDescriptorSet> sets;
-    std::string code;
 };
 
 class SpirvShaders {
@@ -36,7 +43,7 @@ class SpirvShaders {
     SpirvShaders(shader::PipelineSetup spirvShaders);
 
  private:
-    std::vector<SpirvShader> shaders;
+    std::vector<SpirvShaderGl> shaders;
 };
 
 
