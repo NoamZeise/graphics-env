@@ -1,8 +1,8 @@
 #ifndef RESOURCE_FONT_LOADER
 #define RESOURCE_FONT_LOADER
 
-#include <graphics/font_loader.h>
-#include <graphics/texture_loader.h>
+#include <graphics/resource_loaders/font_loader.h>
+#include <graphics/resource_loaders/texture_loader.h>
 #include <glm/glm.hpp>
 #include <vector>
 #include <string>

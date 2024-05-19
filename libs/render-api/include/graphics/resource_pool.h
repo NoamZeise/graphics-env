@@ -1,9 +1,9 @@
 #ifndef OUTFACING_GRAPHICS_RESOURCE_POOL
 #define OUTFACING_GRAPHICS_RESOURCE_POOL
 
-#include "model_loader.h"
-#include "texture_loader.h"
-#include "font_loader.h"
+#include "resource_loaders/model_loader.h"
+#include "resource_loaders/texture_loader.h"
+#include "resource_loaders/font_loader.h"
 
 class ResourcePool {
  public:

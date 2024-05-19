@@ -1,5 +1,0 @@
-#ifndef GRAPHICS_API_SHADER_H
-#define GRAPHICS_API_SHADER_H
-
-
-#endif

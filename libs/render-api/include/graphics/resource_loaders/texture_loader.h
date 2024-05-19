@@ -1,7 +1,7 @@
 #ifndef OUTFACING_TEXTURE_LOADER
 #define OUTFACING_TEXTURE_LOADER
 
-#include "resources.h"
+#include "../resources.h"
 #include <string>
 #include <vector>
 

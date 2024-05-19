@@ -4,7 +4,6 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <resource-loaders/vertex_types.h>
-
 #include <vector>
 
 class GLVertexData

@@ -1,9 +1,8 @@
 #ifndef OUTFACING_MODEL_LOADER
 #define OUTFACING_MODEL_LOADER
 
-#include "resources.h"
-#include "model/animation.h"
-
+#include "../resources.h"
+#include "../model/animation.h"
 
 class ModelLoader {
     const std::string DEFAULT_TEXTURE_PATH = "textures/";

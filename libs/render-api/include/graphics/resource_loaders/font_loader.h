@@ -1,7 +1,7 @@
 #ifndef OUTFACING_FONT_LOADER_H
 #define OUTFACING_FONT_LOADER_H
 
-#include "resources.h"
+#include "../resources.h"
 #include <string>
 
 class FontLoader {

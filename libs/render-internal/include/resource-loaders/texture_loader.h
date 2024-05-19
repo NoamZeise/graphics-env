@@ -1,7 +1,7 @@
 #ifndef RESOURCE_TEXTURE_LOADER_H
 #define RESOURCE_TEXTURE_LOADER_H
 
-#include <graphics/texture_loader.h>
+#include <graphics/resource_loaders/texture_loader.h>
 #include <graphics/render_config.h>
 #include <vector>
 
