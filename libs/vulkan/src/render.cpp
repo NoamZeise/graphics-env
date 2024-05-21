@@ -9,7 +9,7 @@
 
 #include <resource-loaders/pool_manager.h>
 #include <graphics/glm_helper.h>
-#include <graphics/shader.h>
+#include <graphics/pipeline.h>
 
 #include <GLFW/glfw3.h>
 #include <iostream>
@@ -286,7 +286,36 @@ bool swapchainRecreationRequired(VkResult result) {
       pipelineConf.msaaSamples = sampleCount;
       pipelineConf.useSampleShading = manager->deviceState.features.sampleRateShading;
       pipelineConf.useDepthTest = renderConf.useDepthTest;
-      
+
+      PipelineInput v2d(sizeof(Vertex2D), {	      
+	      PipelineInput::Entry(
+		      PipelineInput::type::vec3, offsetof(Vertex2D, Position)),
+	      PipelineInput::Entry(
+		      PipelineInput::type::vec2, offsetof(Vertex2D, TexCoord))
+	  });
+
+      PipelineInput v3d(sizeof(Vertex3D), {	      
+	      PipelineInput::Entry(
+		      PipelineInput::type::vec3, offsetof(Vertex3D, Position)),
+	      PipelineInput::Entry(
+		      PipelineInput::type::vec3, offsetof(Vertex3D, Normal)),
+	      PipelineInput::Entry(
+		      PipelineInput::type::vec2, offsetof(Vertex3D, TexCoord))
+	  });
+
+      PipelineInput v3dAnim(sizeof(VertexAnim3D), {	      
+	      PipelineInput::Entry(
+		      PipelineInput::type::vec3, offsetof(VertexAnim3D, Position)),
+	      PipelineInput::Entry(
+		      PipelineInput::type::vec3, offsetof(VertexAnim3D, Normal)),
+	      PipelineInput::Entry(
+		      PipelineInput::type::vec2, offsetof(VertexAnim3D, TexCoord)),
+	      PipelineInput::Entry(
+		      PipelineInput::type::ivec4, offsetof(VertexAnim3D, BoneIDs)),
+	      PipelineInput::Entry(
+		      PipelineInput::type::vec4, offsetof(VertexAnim3D, Weights)),
+	  });
+	  
       part::create::GraphicsPipeline(
 	      manager->deviceState.device, &_pipeline3D,
 	      offscreenRenderPass->getRenderPass(),
@@ -296,8 +325,8 @@ bool swapchainRecreationRequired(VkResult result) {
 	      pipelineSetup.getPath(shader::pipeline::_3D, shader::stage::vert),
 	      pipelineSetup.getPath(shader::pipeline::_3D, shader::stage::frag),
 	      offscreenBufferExtent,
-	      pipeline_inputs::V3D::attributeDescriptions(),
-	      pipeline_inputs::V3D::bindingDescriptions(),
+	      getAttribDesc(0, v3d),
+	      {getBindingDesc(0, v3d)},
 	      pipelineConf);
       
       part::create::GraphicsPipeline(
@@ -309,8 +338,8 @@ bool swapchainRecreationRequired(VkResult result) {
 	      pipelineSetup.getPath(shader::pipeline::anim3D, shader::stage::vert),
 	      pipelineSetup.getPath(shader::pipeline::anim3D, shader::stage::frag),
 	      offscreenBufferExtent,
-	      pipeline_inputs::VAnim3D::attributeDescriptions(),
-	      pipeline_inputs::VAnim3D::bindingDescriptions(),
+	      getAttribDesc(0, v3dAnim),
+	      {getBindingDesc(0, v3dAnim)},
 	      pipelineConf);
 
       part::create::GraphicsPipeline(
@@ -322,8 +351,8 @@ bool swapchainRecreationRequired(VkResult result) {
 	      pipelineSetup.getPath(shader::pipeline::_2D, shader::stage::vert),
 	      pipelineSetup.getPath(shader::pipeline::_2D, shader::stage::frag),
 	      offscreenBufferExtent,
-	      pipeline_inputs::V2D::attributeDescriptions(),
-	      pipeline_inputs::V2D::bindingDescriptions(),
+	      getAttribDesc(0, v2d),
+	      {getBindingDesc(0, v2d)},
 	      pipelineConf);
 
       if(useFinalRenderpass) {

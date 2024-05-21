@@ -1,6 +1,46 @@
 #include "pipeline.h"
 
-#include "logger.h"
+VkVertexInputBindingDescription getBindingDesc(uint32_t bindingIndex,
+					       PipelineInput in) {
+    VkVertexInputBindingDescription binding;
+    binding.binding = bindingIndex;
+    binding.stride = in.size;
+    binding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+    return binding;
+}
+
+VkVertexInputAttributeDescription getAttrib(uint32_t bindingIndex,
+					    uint32_t location,
+					    PipelineInput::Entry entry) {
+    VkVertexInputAttributeDescription attrib;
+    attrib.binding = bindingIndex;
+    attrib.location = location;
+    attrib.offset = entry.offset;
+    switch(entry.input_type) {
+    case PipelineInput::type::vec2:
+	attrib.format = VK_FORMAT_R32G32_SFLOAT;
+	break;
+    case PipelineInput::type::vec3:
+	attrib.format = VK_FORMAT_R32G32B32_SFLOAT;
+	break;
+    case PipelineInput::type::vec4:
+	attrib.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	break;
+    case PipelineInput::type::ivec4:
+	attrib.format = VK_FORMAT_R32G32B32A32_SINT;
+	break;
+    }
+    return attrib;
+}
+
+std::vector<VkVertexInputAttributeDescription> getAttribDesc(uint32_t bindingIndex,
+							     PipelineInput in) {
+    std::vector<VkVertexInputAttributeDescription> attribs(in.entries.size());
+    for(int i = 0; i < attribs.size(); i++)
+	attribs[i] = getAttrib(bindingIndex, i, in.entries[i]);
+    return attribs;
+}
+
 
 Pipeline::Pipeline(
 	VkPipelineLayout layout, VkPipeline pipeline,

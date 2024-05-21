@@ -4,6 +4,8 @@
 #include <glm/gtc/matrix_inverse.hpp>
 #include <graphics/logger.h>
 
+#include <graphics/default_vertex_types.h>
+
 #include "helper.h"
 
 
@@ -23,32 +25,7 @@ int main(int argc, char** argv) {
 		    "vk-shaders/gooch.frag.spv", "ogl-shaders/gooch.frag");
     parseArgs(argc, argv, &state);
     state.cursor = cursorState::disabled;
-    Manager manager(state);
-
-    // example shader use
-
-    /*
-
-      //init
-      ShaderPool* sp = render->CreateShaderPool();
-            
-      shader::Set* timeds = sp->CreateSet(shaderstage::vertex | shaderstage::fragment);
-      timeds->addBinding(0, shader::Binding::UniformBuffer(sizeof(TimeStruct)));
-      timeds->addUniformBuffer(0, sizeof(TimeStruct));
-
-      //this
-      render->AttachSet(pipeline::3D, 2, timeds);
-      //or
-      pipeline* p = render->GetPipeline(pipeline::3D);
-      p->attach(2, timeds);
-
-      // during update
-      timeds->setData(0, TimeStruct { dt });
-
-      // if we want to update all? ie less frequent updates - need to change all frame's values
-      timeds->setAllFrameData(0, TimeStruct {dt});
-      
-     */
+    Manager manager(state);    
 
     BPLighting l;
     l.specular.w = 30.0f;
@@ -56,6 +33,7 @@ int main(int argc, char** argv) {
     manager.render->setLightingProps(l);
     
     ResourcePool* pool = manager.render->pool();
+    Resource::Model bunnyTest = pool->model()->load(vert3DType, "models/bunny.obj");
     Resource::Model bunny = pool->model()->load("models/bunny.obj");
 
     manager.render->LoadResourcesToGPU(pool);

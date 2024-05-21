@@ -6,7 +6,6 @@
 
 #include <glm/glm.hpp>
 #include <volk.h>
-#include <vector>
 
 struct fragPushConstants {
     glm::vec4 colour;
@@ -14,18 +13,4 @@ struct fragPushConstants {
     int32_t TexID;
 };
 
-namespace pipeline_inputs {
-  namespace V2D {
-    std::vector<VkVertexInputBindingDescription> bindingDescriptions();
-    std::vector<VkVertexInputAttributeDescription> attributeDescriptions();
-  }
-  namespace V3D {
-    std::vector<VkVertexInputBindingDescription> bindingDescriptions();
-    std::vector<VkVertexInputAttributeDescription> attributeDescriptions();
-  }
-  namespace VAnim3D {
-    std::vector<VkVertexInputBindingDescription> bindingDescriptions();
-    std::vector<VkVertexInputAttributeDescription> attributeDescriptions();
-  }
-}
 #endif

@@ -12,7 +12,7 @@ struct GLMesh : public GPUMesh {
 struct GPUModelGL : public GPUModel {
     std::vector<GLMesh> meshes;    
     template <typename T_Vert>
-    GPUModelGL(LoadedModel<T_Vert> &data);    
+    GPUModelGL(LoadedModel<T_Vert> &data);  
     ~GPUModelGL();
     void draw(Resource::Model model, int instanceCount, BasePoolManager *pools, int colLoc,
 	      int enableTexLoc);
@@ -23,6 +23,7 @@ ModelLoaderGL::ModelLoaderGL(Resource::Pool pool, BasePoolManager *pools)
 
 ModelLoaderGL::~ModelLoaderGL() {
     clearGPU();
+    //InternalModelLoader::~InternalModelLoader();
 }
 
 void ModelLoaderGL::clearGPU() {

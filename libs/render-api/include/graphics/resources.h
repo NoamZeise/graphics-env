@@ -9,6 +9,7 @@
 #include <cstddef>
 #include <stdint.h>
 #include <glm/glm.hpp>
+#include "pipeline_input.h"
 
 namespace Resource {
 
@@ -90,10 +91,17 @@ namespace Resource {
 	  this->pool = pool;
       }
 
+      Model(size_t ID, PipelineInput vertType, Pool pool) {
+	  this->ID = ID;
+	  this->vertType = vertType;
+	  this->pool = pool;
+      }
+
       bool operator==(Model other) {
 	  return
 	      ID == other.ID &&
 	      type == other.type &&
+	      vertType == other.vertType &&
 	      pool == other.pool &&
 	      overrideTexture == other.overrideTexture &&
 	      colour.r == other.colour.r &&
@@ -107,6 +115,8 @@ namespace Resource {
       
       
       Pool pool;
+      PipelineInput vertType;
+      //todo: remove
       ModelType type;
       Resource::Texture overrideTexture = Resource::Texture(NULL_ID);
       // use diffuse colour if alpha == 0

@@ -11,6 +11,8 @@ InternalModelLoader::InternalModelLoader(Resource::Pool pool, BasePoolManager* p
 InternalModelLoader::~InternalModelLoader() {
     clearStaged();
     delete loader;
+    for(auto &s: staged)
+	delete s;
 }
 
 void InternalModelLoader::clearStaged() {
@@ -84,4 +86,65 @@ int modelGetTexID(Resource::Model model, Resource::Texture texture, BasePoolMana
 	texture : model.overrideTexture;    
     return meshTex.ID != Resource::NULL_ID ?
 	pools->tex(meshTex)->getViewIndex(meshTex) : -1;
+}
+
+ModelData::ModelData(ModelInfo::Model &model,
+		     PipelineInput format,
+		     std::vector<void*> meshVertData,
+		     std::string texturePath,
+		     TextureLoader* tex) {
+    this->format = format;
+
+    if(meshVertData.size() != model.meshes.size())
+	throw std::runtime_error(
+		"Internal Model Loader: "
+		"Mesh Vertex data array was not the same size as mesh array!");
+    meshes.resize(model.meshes.size());
+    for(int i = 0; i < model.meshes.size(); i++)
+	meshes[i] = new MeshData(model.meshes[i], meshVertData[i], texturePath, tex);
+    
+    for(ModelInfo::Animation &anim: model.animations) {
+	if(model.bones.size() >= Resource::MAX_BONES)
+	    LOG_CERR("Model had more bones than MAX_BONES, "
+		     "consider upping the shader max bones. "
+		     "Ignoring excess bones", "Warning: ");
+	animations.push_back(Resource::ModelAnimation(model.bones, anim));
+    }
+}
+
+MeshData::MeshData(ModelInfo::Mesh &mesh,
+		   void* vertexData,
+		   std::string texturePath,
+		   TextureLoader* tex) {
+    this->vertices = vertexData;
+    this->vertexCount = mesh.verticies.size();
+    this->indices = mesh.indices;
+
+    //TODO: remove after pipeline update
+    this->diffuseColour = mesh.diffuseColour;
+    if(mesh.diffuseTextures.size() > 0)
+	this->texture = tex->load(texturePath + mesh.diffuseTextures[0]);
+}
+
+Resource::Model InternalModelLoader::loadData(
+	PipelineInput format,
+	ModelInfo::Model &model,
+	std::vector<void*> &meshVertData,
+	std::string textureFolder,
+	std::vector<Resource::ModelAnimation> *pAnimations) {
+    
+    if(textureFolder.size() > 0 && textureFolder[textureFolder.size() - 1] != '/')
+	textureFolder.push_back('/');
+	
+    Resource::Model usermodel(currentIndex++, format, pool);
+    staged.push_back(new ModelData(model, format, meshVertData,
+				   //temp
+				   textureFolder,
+				   pools->tex(pool)));
+    if(pAnimations != nullptr)
+	*pAnimations = staged.back()->animations;       
+    LOG("Model Loaded " <<
+	" - pool: " << pool.ID <<
+	" - id: " << usermodel.ID);
+    return usermodel;
 }

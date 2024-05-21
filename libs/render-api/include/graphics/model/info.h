@@ -13,11 +13,6 @@
 
 namespace ModelInfo {
   /// A point on the model.
-  /// -------------
-  /// By default:
-  /// - 2D models will only use position and texcoord.
-  /// - 3D models will only use position, texcoord and normal.
-  /// - 3D animated models will use all of these properties.
   /// --------------
   /// If the model does not have certain properties,
   /// it will have a value of zero for all vertices

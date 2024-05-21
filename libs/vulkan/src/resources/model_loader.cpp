@@ -118,7 +118,7 @@ void ModelLoaderVk::drawModel(VkCommandBuffer cmdBuff, VkPipelineLayout layout,
 
     bindGroupVertexBuffer(cmdBuff, modelInfo->type);
     
-    for(size_t i = 0; i < modelInfo->meshes.size(); i++) {	
+    for(size_t i = 0; i < modelInfo->meshes.size(); i++) {
 	fragPushConstants fps {
 	    model.colour.a == 0.0f ? modelInfo->meshes[i].diffuseColour : model.colour,
 	    glm::vec4(0, 0, 1, 1),

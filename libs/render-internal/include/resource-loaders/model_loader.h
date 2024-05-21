@@ -5,10 +5,44 @@
 #include <graphics/resource_loaders/model_loader.h>
 #include <graphics/logger.h>
 #include <map>
+#include <cstdlib>
 
 #include "pool_manager.h"
 
 class AssimpLoader;
+
+#include <graphics/logger.h>
+
+struct MeshData {
+    MeshData(ModelInfo::Mesh &mesh, void* vertexData,
+	     //temp
+	     std::string texturePath,
+	     TextureLoader* tex);
+    ~MeshData() {
+	std::free(vertices);
+    }
+    void* vertices;
+    size_t vertexCount;
+    std::vector<unsigned int> indices;
+    //temp until pipeline changes
+    Resource::Texture texture;
+    glm::vec4 diffuseColour;
+};
+
+struct ModelData {
+    ModelData(ModelInfo::Model &model, PipelineInput format,
+	      std::vector<void*> meshVertData,
+	      //temp
+	      std::string texturePath,
+	      TextureLoader* tex);
+    ~ModelData() {
+	for(auto& m: meshes)
+	    delete m;
+    }
+    PipelineInput format;
+    std::vector<MeshData*> meshes;
+    std::vector<Resource::ModelAnimation> animations;
+};
 
 struct GPUMesh {
     Resource::Texture texture;
@@ -71,6 +105,7 @@ public:
     
 protected:
     Resource::Pool pool;
+    // TODO: wont need after pipeline update
     BasePoolManager *pools;
     unsigned int currentIndex = 0;
     ModelGroup<Vertex2D> stage2D;
@@ -79,11 +114,21 @@ protected:
     Resource::Model quad;
     AssimpLoader* loader;
 
+    std::vector<ModelData*> staged;
+
     template <class T_Vert>
     Resource::Model loadData(ModelInfo::Model& model,
 			     ModelGroup<T_Vert>& modelGroup,
 			     std::string textureFolder,
 			     std::vector<Resource::ModelAnimation> *pAnimations);
+
+
+    Resource::Model loadData(PipelineInput format,
+			     ModelInfo::Model &model,
+			     std::vector<void*> &meshVertData,
+			     std::string textureFolder,
+			     std::vector<Resource::ModelAnimation> *pAnimations) override;
+    
     void loadQuad();
 };
 
