@@ -35,6 +35,8 @@ private:
 
     void stageModelData(void* pMem);
 
+    void copyModelDataToGPU(VkBuffer stagingBuffer);
+
     GPUModelVk* getModel(VkCommandBuffer cmdBuff, Resource::Model model);
     
     void drawMesh(VkCommandBuffer cmdBuff,

@@ -65,7 +65,7 @@ struct GPUModelVk : public GPUModel {
 ModelLoaderVk::ModelLoaderVk(DeviceState base, VkCommandPool cmdpool,
 			     VkCommandBuffer generalCmdBuff,
 			     Resource::Pool pool, BasePoolManager* pools)
-    : InternalModelLoader(pool, pools){
+    : InternalModelLoader(pool, pools) {
       this->base = base;
       this->cmdpool = cmdpool;
       this->cmdbuff = generalCmdBuff;
@@ -146,65 +146,36 @@ void ModelLoaderVk::drawQuad(VkCommandBuffer cmdBuff,
 
 void ModelLoaderVk::loadGPU() {
     clearGPU();
-
     loadQuad();
 
     processModelData();
-
-    LOG("Loading model data - size: " << vertexDataSize + indexDataSize);
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingMemory;
 
     if(vkhelper::createBufferAndMemory(
-	       base, vertexDataSize + indexDataSize, &stagingBuffer, &stagingMemory,
+	       base, vertexDataSize + indexDataSize,
+	       &stagingBuffer, &stagingMemory,
 	       VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-	       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
-       != VK_SUCCESS) {
+	       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+	       VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) != VK_SUCCESS)
 	throw std::runtime_error("Failed to create staging buffer for model data");
-    }
 
     vkBindBufferMemory(base.device, stagingBuffer, stagingMemory, 0);
     void* pMem;
     vkMapMemory(base.device, stagingMemory, 0, vertexDataSize + indexDataSize, 0, &pMem);
 
     stageModelData(pMem);
+
     clearStaged();
 
-    LOG("Copying Model Data to GPU");
-
-    vkhelper::createBufferAndMemory(base, vertexDataSize + indexDataSize, &buffer, &memory,
-				    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
-				    VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
-				    VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-				    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-    vkBindBufferMemory(base.device, buffer, memory, 0);
-
-
-    VkCommandBufferBeginInfo beginInfo{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
-    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-    vkBeginCommandBuffer(cmdbuff, &beginInfo);
-
-    VkBufferCopy copyRegion{};
-    copyRegion.srcOffset = 0;
-    copyRegion.dstOffset = 0;
-    copyRegion.size = vertexDataSize + indexDataSize;
-    vkCmdCopyBuffer(cmdbuff, stagingBuffer, buffer, 1, &copyRegion);
-    vkEndCommandBuffer(cmdbuff);
-
-    checkResultAndThrow(vkhelper::submitCmdBuffAndWait(
-				base.device,
-				base.queue.graphicsPresentQueue,
-				&cmdbuff, loadedFence,
-				&graphicsPresentMutex),
-			"failed to submit model load commands");
+    copyModelDataToGPU(stagingBuffer);
 
     //free staging buffer
     vkDestroyBuffer(base.device, stagingBuffer, nullptr);
     vkFreeMemory(base.device, stagingMemory, nullptr);
 
-    LOG("finished loading model data to gpu");
+    LOG("finished loading Model Data to gpu");
 }
 
 void ModelLoaderVk::processModelData() {
@@ -234,6 +205,7 @@ void ModelLoaderVk::processModelData() {
 	
 	models[i] = model;
     }
+    LOG("Loading model data - size: " << vertexDataSize + indexDataSize);
 }
 
 void ModelLoaderVk::stageModelData(void* pMem) {
@@ -256,7 +228,37 @@ void ModelLoaderVk::stageModelData(void* pMem) {
 	    indexOffset += sizeof(model->meshes[i]->indices[0])
 		* model->meshes[i]->indices.size();	      
 	}
-    }    
+    }
+}
+
+void ModelLoaderVk::copyModelDataToGPU(VkBuffer stagingBuffer) {
+    LOG("Copying Model Data to GPU");
+    // create final GPU memory
+    vkhelper::createBufferAndMemory(
+	    base, vertexDataSize + indexDataSize, &buffer, &memory,
+	    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
+	    VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
+	    VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    vkBindBufferMemory(base.device, buffer, memory, 0);
+
+    VkCommandBufferBeginInfo beginInfo{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    vkBeginCommandBuffer(cmdbuff, &beginInfo);
+
+    VkBufferCopy copyRegion{};
+    copyRegion.srcOffset = 0;
+    copyRegion.dstOffset = 0;
+    copyRegion.size = vertexDataSize + indexDataSize;
+    vkCmdCopyBuffer(cmdbuff, stagingBuffer, buffer, 1, &copyRegion);
+    vkEndCommandBuffer(cmdbuff);
+
+    checkResultAndThrow(vkhelper::submitCmdBuffAndWait(
+				base.device,
+				base.queue.graphicsPresentQueue,
+				&cmdbuff, loadedFence,
+				&graphicsPresentMutex),
+			"failed to submit model load commands");
 }
 
 Resource::ModelAnimation ModelLoaderVk::getAnimation(Resource::Model model, std::string animation) {

@@ -21,18 +21,14 @@ class ResourcePoolVk : public ResourcePool {
     TextureLoader* tex() override { return texLoader; }
     FontLoader* font()   override { return fontLoader; }
     
-
     void setUseGPUResources(bool value);
-
-    // private:
 
     TexLoaderVk* texLoader;
     ModelLoaderVk* modelLoader;
-    InternalFontLoader* fontLoader;
+    InternalFontLoader* fontLoader;   
 
     bool UseGPUResources = true;
     bool usingGPUResources = false;
-
     bool useModelLoader = true;
 };
 
