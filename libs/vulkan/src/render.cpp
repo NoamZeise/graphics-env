@@ -157,12 +157,12 @@ bool swapchainRecreationRequired(VkResult result) {
 	      }
 	  }
 	  auto offscreenFinalAttachUse = useFinalRenderpass ?
-	      AttachmentUse::ShaderRead : AttachmentUse::PresentSrc;
+	      AttachmentUse::ShaderRead : AttachmentUse::Screen;
 	  std::vector<AttachmentDesc> offscreenAttachments;
 	  if(renderConf.multisampling) {
 	      offscreenAttachments.push_back(
 		      AttachmentDesc(1, AttachmentType::Colour,
-				     AttachmentUse::TransientAttachment,
+				     AttachmentUse::Attachment,
 				     sampleCount, swapchainFormat));
 	      offscreenAttachments.push_back(
 		      AttachmentDesc(0, AttachmentType::Resolve,
@@ -187,7 +187,7 @@ bool swapchainRecreationRequired(VkResult result) {
 	      finalRenderPass =
 		  new RenderPass(manager->deviceState.device,
 				 { AttachmentDesc(0, AttachmentType::Colour,
-						  AttachmentUse::PresentSrc,
+						  AttachmentUse::Screen,
 						  VK_SAMPLE_COUNT_1_BIT, swapchainFormat)},
 				 renderConf.scaled_border_colour);
 	  }

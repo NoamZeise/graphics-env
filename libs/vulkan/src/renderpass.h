@@ -4,20 +4,8 @@
 #include <volk.h>
 #include <vector>
 #include <graphics/resources.h>
+#include <graphics/render_pass.h>
 #include "resources/texture_loader.h"
-
-enum class AttachmentType {
-  Colour,
-  Depth,
-  Resolve,
-};
-
-enum class AttachmentUse {
-  Attachment,
-  TransientAttachment, 
-  ShaderRead,
-  PresentSrc,
-};
 
 /// A high level description of the framebuffer attachments
 class AttachmentDesc {

@@ -209,7 +209,7 @@ std::vector<Resource::Texture> RenderPass::getAttachmentTextures(uint32_t attach
 AttachmentImage::AttachmentImage(AttachmentDesc &attachmentDesc) {
     this->texinfo = attachmentDesc.getImageInfo();
     switch(attachmentDesc.getUse()) {
-    case AttachmentUse::PresentSrc:
+    case AttachmentUse::Screen:
 	usingExternalImage = true;
 	imageForEachFrame = true;
 	break;
@@ -394,8 +394,8 @@ AttachmentDesc::AttachmentDesc(uint32_t index, AttachmentType type, AttachmentUs
 	break;
     }
     switch(use) {
-    case AttachmentUse::TransientAttachment:
-	this->tex.usage |= VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
+	//case AttachmentUse::TransientAttachment:
+	//this->tex.usage |= VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
     case AttachmentUse::Attachment:
         tex.layout = attachmentImageLayout;
 	storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -405,7 +405,7 @@ AttachmentDesc::AttachmentDesc(uint32_t index, AttachmentType type, AttachmentUs
 	tex.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	this->tex.usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
 	break;
-    case AttachmentUse::PresentSrc:
+    case AttachmentUse::Screen:
 	storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 	tex.layout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 	break;
