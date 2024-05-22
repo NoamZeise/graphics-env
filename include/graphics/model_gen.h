@@ -1,7 +1,7 @@
 #ifndef MODEL_GEN_H
 #define MODEL_GEN_H
 
-#include <graphics/model/info.h>
+#include <graphics/resource_loaders/model_info.h>
 #include <functional>
 
 struct SurfaceParam {

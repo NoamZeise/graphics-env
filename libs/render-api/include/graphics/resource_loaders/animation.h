@@ -4,7 +4,7 @@
 #ifndef MODEL_ANIMATION_H
 #define MODEL_ANIMATION_H
 
-#include "info.h"
+#include "model_info.h"
 
 namespace Resource {
   class ModelAnimation {

@@ -1,4 +1,4 @@
-#include <graphics/model/animation.h>
+#include <graphics/resource_loaders/animation.h>
 #include <graphics/logger.h>
 
 namespace Resource {

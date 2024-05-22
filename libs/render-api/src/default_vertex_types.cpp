@@ -5,7 +5,7 @@
 
 namespace vertex {
 
-  ModelType<data::Vertex2D> v2D( {
+  ModelVertexType<data::Vertex2D> v2D( {
 	  PipelineInput::Entry(
 		  PipelineInput::type::vec3, offsetof(data::Vertex2D, Position)),
 	  PipelineInput::Entry(
@@ -19,7 +19,7 @@ namespace vertex {
 
 
 
-  ModelType<data::Vertex3D> v3D( {
+  ModelVertexType<data::Vertex3D> v3D( {
 	  PipelineInput::Entry(
 		  PipelineInput::type::vec3, offsetof(data::Vertex3D, Position)),
 	  PipelineInput::Entry(
@@ -35,7 +35,7 @@ namespace vertex {
       });
 
   
-  ModelType<data::VertexAnim3D> Anim3D( {
+  ModelVertexType<data::VertexAnim3D> Anim3D( {
 	  PipelineInput::Entry(
 		  PipelineInput::type::vec3, offsetof(data::VertexAnim3D, Position)),
 	  PipelineInput::Entry(

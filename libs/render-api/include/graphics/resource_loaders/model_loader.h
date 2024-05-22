@@ -2,8 +2,8 @@
 #define RENDER_API_MODEL_LOADER_H
 
 #include "../resources.h"
-#include "../model/animation.h"
-#include "../pipeline.h"
+#include "animation.h"
+#include "vertex_type.h"
 #include "../default_vertex_types.h"
 
 
@@ -16,13 +16,13 @@ class ModelLoader {
     /// ----- Load Models from ModelInfo::Model -----
     
     template <typename T_Vert>
-    Resource::Model load(ModelType<T_Vert> modelType,
+    Resource::Model load(ModelVertexType<T_Vert> modelType,
 			 ModelInfo::Model  model,
 			 std::string       textureFolder,
 			 std::vector<Resource::ModelAnimation>* pAnimations);
 
     template <typename T_Vert>
-    Resource::Model load(ModelType<T_Vert> modeltype,
+    Resource::Model load(ModelVertexType<T_Vert> modeltype,
 			 ModelInfo::Model  model) {
 	return load(modeltype, model, DEFAULT_TEXTURE_PATH, nullptr);
     }
@@ -35,7 +35,7 @@ class ModelLoader {
     /// -----  Load Models from file -----
 
     template <typename T_Vert>
-    Resource::Model load(ModelType<T_Vert> modeltype,
+    Resource::Model load(ModelVertexType<T_Vert> modeltype,
 			 std::string       path,
 			 std::string       textureFolder,
 			 std::vector<Resource::ModelAnimation>* pAnimations) {
@@ -44,21 +44,21 @@ class ModelLoader {
     }
     
     template <typename T_Vert>
-    Resource::Model load(ModelType<T_Vert> modeltype,
+    Resource::Model load(ModelVertexType<T_Vert> modeltype,
 			 std::string       path,
 			 std::string       textureFolder) {
 	return load(modeltype, path, textureFolder, nullptr);
     }
 
     template <typename T_Vert>
-    Resource::Model load(ModelType<T_Vert> modeltype,
+    Resource::Model load(ModelVertexType<T_Vert> modeltype,
 			 std::string       path,
 			 std::vector<Resource::ModelAnimation>* pAnimations) {
 	return load(modeltype, path, DEFAULT_TEXTURE_PATH, pAnimations);
     }   
     
     template <typename T_Vert>
-    Resource::Model load(ModelType<T_Vert> modeltype,
+    Resource::Model load(ModelVertexType<T_Vert> modeltype,
 			 std::string       path) {
 	return load(modeltype, path, DEFAULT_TEXTURE_PATH, nullptr);
     }
@@ -91,7 +91,7 @@ protected:
 
 
 template <typename T_Vert>
-Resource::Model ModelLoader::load(ModelType<T_Vert> modelType,
+Resource::Model ModelLoader::load(ModelVertexType<T_Vert> modelType,
 				  ModelInfo::Model model,
 				  std::string textureFolder,
 				  std::vector<Resource::ModelAnimation>* pAnimations) {

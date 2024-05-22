@@ -1,7 +1,7 @@
 #ifndef RENDER_API_DEFAULT_VERTEX_TYPES_H
 #define RENDER_API_DEFAULT_VERTEX_TYPES_H
 
-#include "pipeline.h"
+#include "resource_loaders/vertex_type.h"
 #include <glm/glm.hpp>
 
 namespace vertex {
@@ -28,11 +28,11 @@ namespace vertex {
     }
 
     
-    extern ModelType<data::Vertex2D> v2D;
+    extern ModelVertexType<data::Vertex2D> v2D;
 
-    extern ModelType<data::Vertex3D> v3D;
+    extern ModelVertexType<data::Vertex3D> v3D;
 
-    extern ModelType<data::VertexAnim3D> Anim3D;
+    extern ModelVertexType<data::VertexAnim3D> Anim3D;
 
 }
 

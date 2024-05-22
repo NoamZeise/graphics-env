@@ -5,7 +5,7 @@
 #ifndef RES_LOADER_ASSIMP_H
 #define RES_LOADER_ASSIMP_H
 
-#include <graphics/model/info.h>
+#include <graphics/resource_loaders/model_info.h>
 #include <string>
 
 #ifdef NO_ASSIMP
