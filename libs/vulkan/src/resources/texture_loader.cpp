@@ -15,8 +15,8 @@ struct StagedTexVk : public StagedTex {
     TextureInfoVk info;
 };
 
-struct TextureInGPU {
-    TextureInGPU(VkDevice device, StagedTex *tex, TextureInfoVk info) {
+struct GPUTexture {
+    GPUTexture(VkDevice device, StagedTex *tex, TextureInfoVk info) {
 	this->device = device;
 	this->info = info;
 	this->width = tex->width;
@@ -30,7 +30,7 @@ struct TextureInGPU {
 	}
     }
     
-    ~TextureInGPU() {
+    ~GPUTexture() {
 	vkDestroyImageView(device, view, nullptr);
 	vkDestroyImage(device, image, nullptr);	  
     }
@@ -202,7 +202,7 @@ VkImageLayout TexLoaderVk::getImageLayout(Resource::Texture tex) {
 
 bool TexLoaderVk::sampledImage(Resource::Texture tex) {
     checkPoolValid(tex, "sampledImage");
-    TextureInGPU* t = textures[tex.ID];
+    GPUTexture* t = textures[tex.ID];
     return t->info.usage & VK_IMAGE_USAGE_SAMPLED_BIT;
 }
 
@@ -248,7 +248,7 @@ bool formatSupportsMipmapping(VkPhysicalDevice physicalDevice, VkFormat format) 
 	    VK_FORMAT_FEATURE_BLIT_DST_BIT);
 }
 
-VkResult TextureInGPU::createImage(VkDevice device, VkMemoryRequirements *pMemreq) {
+VkResult GPUTexture::createImage(VkDevice device, VkMemoryRequirements *pMemreq) {
     return part::create::Image(device, &this->image, pMemreq,
 			       info.usage,
 			       VkExtent2D { this->width, this->height },
@@ -304,7 +304,7 @@ VkDeviceSize TexLoaderVk::stageTexDataCreateImages(VkBuffer &stagingBuffer,
 	TextureInfoVk texInfo = defaultShaderReadTextureInfo(staged[i]);		    
 	if(staged[i]->internalTex)
 	    texInfo = ((StagedTexVk*)staged[i])->info;
-	textures[i] = new TextureInGPU(base.device, staged[i], texInfo);
+	textures[i] = new GPUTexture(base.device, staged[i], texInfo);
 	
 	if (!mipmapping ||
 	    !formatSupportsMipmapping(base.physicalDevice, textures[i]->info.format))
@@ -407,7 +407,7 @@ void dstSrcToLayoutBarrier(VkImageMemoryBarrier *barrier, VkImageLayout layout, 
 VkImageBlit getMipmapBlit(int32_t currentW, int32_t currentH, int destMipLevel,
 			  VkImageAspectFlags aspect);
 
-void TextureInGPU::createMipMaps(VkCommandBuffer &cmdBuff) {
+void GPUTexture::createMipMaps(VkCommandBuffer &cmdBuff) {
     if(gpuOnly)
 	return;
     VkImageMemoryBarrier barrier = initialBarrierSettings();
@@ -474,7 +474,7 @@ VkImageBlit getMipmapBlit(int32_t currentW, int32_t currentH, int destMipLevel,
 
 /// --- image view creation ---
 
-VkResult TextureInGPU::createImageView(VkDevice device) {
+VkResult GPUTexture::createImageView(VkDevice device) {
     return part::create::ImageView(
 	    device, &this->view, this->image,
 	    this->info.format, this->info.aspect, this->info.mipLevels);

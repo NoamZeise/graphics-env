@@ -1,10 +1,10 @@
 #ifndef TEXTURE_LOADER_H
 #define TEXTURE_LOADER_H
 
-#include <resource-loaders/texture_loader.h>
+#include <render-internal/resource-loaders/texture_loader.h>
 #include "../device_state.h"
 
-struct TextureInGPU;
+struct GPUTexture;
 
 struct TextureInfoVk {
     VkFormat format;
@@ -48,7 +48,7 @@ private:
             
     DeviceState base;
     VkCommandPool cmdpool;
-    std::vector<TextureInGPU*> textures;
+    std::vector<GPUTexture*> textures;
     VkDeviceMemory memory;
     uint32_t minimumMipmapLevel;
     VkFence loadedFence;

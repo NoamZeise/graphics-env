@@ -1,10 +1,10 @@
 #ifndef MODEL_RENDER_H
 #define MODEL_RENDER_H
 
-#include <resource-loaders/model_loader.h>
+#include <render-internal/resource-loaders/model_loader.h>
 #include "../device_state.h"
 
-struct ModelInGPU;
+struct GPUModelVk;
 
 class ModelLoaderVk : public InternalModelLoader {
 public:
@@ -35,10 +35,10 @@ private:
 
     void stageModelData(void* pMem);
 
-    ModelInGPU* getModel(VkCommandBuffer cmdBuff, Resource::Model model);
+    GPUModelVk* getModel(VkCommandBuffer cmdBuff, Resource::Model model);
     
     void drawMesh(VkCommandBuffer cmdBuff,
-		  ModelInGPU *modelInfo,
+		  GPUModelVk *modelInfo,
 		  uint32_t meshIndex,
 		  uint32_t instanceCount,
 		  uint32_t instanceOffset);
@@ -47,7 +47,7 @@ private:
     VkCommandPool cmdpool;
     VkCommandBuffer cmdbuff;
     VkFence loadedFence;
-    std::vector<ModelInGPU*> models;
+    std::vector<GPUModelVk*> models;
     VkBuffer buffer;
     VkDeviceMemory memory;
 

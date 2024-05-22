@@ -5,7 +5,6 @@
 #include "../model/animation.h"
 #include "../pipeline.h"
 #include "../default_vertex_types.h"
-#include <cstdlib>
 
 
 class ModelLoader {

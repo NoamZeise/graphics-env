@@ -7,7 +7,7 @@
 #include "vkhelper.h"
 #include "logger.h"
 
-#include <resource-loaders/pool_manager.h>
+#include <render-internal/resource-loaders/pool_manager.h>
 #include <graphics/glm_helper.h>
 #include <graphics/pipeline.h>
 

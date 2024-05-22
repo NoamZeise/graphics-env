@@ -1,7 +1,6 @@
 #include "model_loader.h"
 
 #include <stdexcept>
-#include <cmath>
 #include <cstring>
 
 #include "../vkhelper.h"
@@ -9,10 +8,10 @@
 #include "../pipeline_data.h"
 #include "../parts/threading.h"
 
-struct MeshInfo : public GPUMesh {
-    MeshInfo() {}
+struct GPUMeshVk : public GPUMesh {
+    GPUMeshVk() {}
 
-    MeshInfo(MeshData* mesh, uint32_t indexOffset, uint32_t vertexOffset) : GPUMesh(mesh) {
+    GPUMeshVk(MeshData* mesh, uint32_t indexOffset, uint32_t vertexOffset) : GPUMesh(mesh) {
 	this->indexCount = mesh->indices.size();
 	this->indexOffset = indexOffset;
 	this->vertexOffset = vertexOffset;
@@ -22,8 +21,8 @@ struct MeshInfo : public GPUMesh {
     uint32_t vertexOffset = 0;
 };
 
-struct ModelInGPU : public GPUModel {
-    std::vector<MeshInfo> meshes;
+struct GPUModelVk : public GPUModel {
+    std::vector<GPUMeshVk> meshes;
     uint32_t vertexCount = 0;
     uint32_t indexCount  = 0;
     // unused as there my be multiple vertex data types
@@ -39,7 +38,7 @@ struct ModelInGPU : public GPUModel {
     uint32_t indexOffset = 0;
     uint32_t vertexDataOffset = 0;
 
-    ModelInGPU(ModelData *model) : GPUModel(model) {}
+    GPUModelVk(ModelData *model) : GPUModel(model) {}
     
     void draw(VkCommandBuffer cmdBuff,
 	      uint32_t meshIndex,
@@ -84,7 +83,7 @@ void ModelLoaderVk::clearGPU() {
     indexDataSize = 0;
     if(models.empty())
 	return;
-    for(ModelInGPU* model: models)
+    for(GPUModelVk* model: models)
 	delete model;
     models.clear();      
       
@@ -96,14 +95,14 @@ void ModelLoaderVk::bindBuffers(VkCommandBuffer cmdBuff) {
     vkCmdBindIndexBuffer(cmdBuff, buffer, vertexDataSize, VK_INDEX_TYPE_UINT32);
 }
 
-ModelInGPU* ModelLoaderVk::getModel(VkCommandBuffer cmdBuff, Resource::Model model) {
+GPUModelVk* ModelLoaderVk::getModel(VkCommandBuffer cmdBuff, Resource::Model model) {
     if(model.ID >= models.size()) {
 	LOG_ERROR("in draw with out of range model. id: "
                   << model.ID << " -  model count: " << models.size());
 	return nullptr;
     }
 
-    ModelInGPU *modelInfo = models[model.ID];
+    GPUModelVk *modelInfo = models[model.ID];
 
     VkBuffer vertexBuffers[] = { buffer };
     VkDeviceSize offsets[] = { modelInfo->vertexDataOffset };
@@ -119,7 +118,7 @@ void ModelLoaderVk::drawModel(VkCommandBuffer cmdBuff,
     if(count == 0)
 	return;
 
-    ModelInGPU* modelInfo = getModel(cmdBuff, model);
+    GPUModelVk* modelInfo = getModel(cmdBuff, model);
     if(modelInfo == nullptr) return;
     
     for(size_t i = 0; i < modelInfo->meshes.size(); i++) {
@@ -140,7 +139,7 @@ void ModelLoaderVk::drawQuad(VkCommandBuffer cmdBuff,
 			     uint32_t instanceOffset) {
     if(count == 0)
 	return;
-    ModelInGPU* modelInfo = getModel(cmdBuff, quad);
+    GPUModelVk* modelInfo = getModel(cmdBuff, quad);
     if(modelInfo == nullptr) return;
     modelInfo->draw(cmdBuff, 0, count, instanceOffset);    
 }
@@ -212,7 +211,7 @@ void ModelLoaderVk::processModelData() {
     uint32_t modelVertexOffset = 0;
     models.resize(staged.size());
     for(int i = 0; i < staged.size(); i++) {
-	ModelInGPU* model = new ModelInGPU(staged[i]);
+	GPUModelVk* model = new GPUModelVk(staged[i]);
 	// zero for now as may be multiple vertex types packed together
 	model->vertexOffset = 0;//modelVertexOffset;
 	model->vertexDataOffset = vertexDataSize;
@@ -220,7 +219,7 @@ void ModelLoaderVk::processModelData() {
 	model->meshes.resize(staged[i]->meshes.size());
 	for(int j = 0 ; j <  staged[i]->meshes.size(); j++) {
 	    MeshData* mesh = staged[i]->meshes[j];
-	    model->meshes[j] = MeshInfo(mesh,
+	    model->meshes[j] = GPUMeshVk(mesh,
 					model->indexCount,  //as offset
 					model->vertexCount //as offset
 					);

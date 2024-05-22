@@ -1,4 +1,4 @@
-#include <resource-loaders/texture_loader.h>
+#include <render-internal/resource-loaders/texture_loader.h>
 #include "stb_image.h"
 #include <graphics/logger.h>
 

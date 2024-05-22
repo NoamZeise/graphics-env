@@ -1,4 +1,4 @@
-#include <resource-loaders/font_loader.h>
+#include <render-internal/resource-loaders/font_loader.h>
 
 #include <graphics/glm_helper.h>
 #include <graphics/logger.h>

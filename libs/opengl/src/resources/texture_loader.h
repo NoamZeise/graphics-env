@@ -2,7 +2,7 @@
 #define GLTEXTURE_LOADER_H
 
 #include <glad/glad.h>
-#include <resource-loaders/texture_loader.h>
+#include <render-internal/resource-loaders/texture_loader.h>
   
 class TextureLoaderGL : public InternalTexLoader {
 public:

@@ -1,8 +1,8 @@
 #ifndef GL_MODEL_RENDER_H
 #define GL_MODEL_RENDER_H
 
-#include <resource-loaders/texture_loader.h>
-#include <resource-loaders/model_loader.h>
+#include <render-internal/resource-loaders/texture_loader.h>
+#include <render-internal/resource-loaders/model_loader.h>
 
 struct GPUModelGL;
 

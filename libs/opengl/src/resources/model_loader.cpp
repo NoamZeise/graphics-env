@@ -3,9 +3,9 @@
 #include "vertex_data.h"
 #include <graphics/logger.h>
 
-struct GLMesh : public GPUMesh {
-    GLMesh(){}
-    GLMesh(MeshData* mesh) : GPUMesh(mesh) {}
+struct GPUMeshGL : public GPUMesh {
+    GPUMeshGL(){}
+    GPUMeshGL(MeshData* mesh) : GPUMesh(mesh) {}
     
     GLVertexData *vertexData;
     void draw(Resource::Model model, int instanceCount, BasePoolManager *pools,
@@ -13,7 +13,7 @@ struct GLMesh : public GPUMesh {
 };
 
 struct GPUModelGL : public GPUModel {
-    std::vector<GLMesh> meshes;    
+    std::vector<GPUMeshGL> meshes;    
     GPUModelGL(ModelData *data);  
     ~GPUModelGL();
     void draw(Resource::Model model, int instanceCount, BasePoolManager *pools, int colLoc,
@@ -92,7 +92,7 @@ Resource::ModelAnimation ModelLoaderGL::getAnimation(Resource::Model model, int 
 GPUModelGL::GPUModelGL(ModelData *data) : GPUModel(data) {
     meshes.resize(data->meshes.size());
     for (int i = 0; i < meshes.size(); i++) {
-	meshes[i] = GLMesh(data->meshes[i]);
+	meshes[i] = GPUMeshGL(data->meshes[i]);
 	meshes[i].vertexData = new GLVertexData(
 		data->format,
 		data->meshes[i]->vertices,
@@ -115,7 +115,7 @@ void GPUModelGL::draw(Resource::Model model, int instanceCount, BasePoolManager 
 
 ///  ---  Mesh  ---
 
-void GLMesh::draw(Resource::Model model, int instanceCount, BasePoolManager *pools,
+void GPUMeshGL::draw(Resource::Model model, int instanceCount, BasePoolManager *pools,
 		  int colLoc, int enableTexLoc) {
     glActiveTexture(GL_TEXTURE0);
     int texID = modelGetTexID(model, texture, pools);
