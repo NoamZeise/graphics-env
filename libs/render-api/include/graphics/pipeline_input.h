@@ -29,11 +29,6 @@ struct PipelineInput {
     };
 
     PipelineInput(){}
-    //temp -> until using ModelType in backend
-    PipelineInput(float size, std::vector<PipelineInput::Entry> entries) {
-	this->size = size;
-	this->entries = entries;
-    }
 
     bool operator==(PipelineInput other) {
 	if(entries.size() != other.entries.size())

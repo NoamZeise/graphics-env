@@ -3,7 +3,6 @@
 
 #include <resource-loaders/texture_loader.h>
 #include <resource-loaders/model_loader.h>
-#include <resource-loaders/vertex_model.h>
 
 struct GPUModelGL;
 

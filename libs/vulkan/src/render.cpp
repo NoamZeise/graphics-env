@@ -61,6 +61,7 @@ VkFormat getDepthBufferFormat(VkPhysicalDevice physicalDevice) {
     pools = new PoolManagerVk;
     defaultResourcePool = CreateResourcePool()->id();
     framebufferResourcePool = (ResourcePoolVk*)CreateResourcePool();
+    framebufferResourcePool->useModelLoader = false;    
 }
   
 RenderVk::~RenderVk() {
@@ -286,35 +287,6 @@ bool swapchainRecreationRequired(VkResult result) {
       pipelineConf.msaaSamples = sampleCount;
       pipelineConf.useSampleShading = manager->deviceState.features.sampleRateShading;
       pipelineConf.useDepthTest = renderConf.useDepthTest;
-
-      PipelineInput v2d(sizeof(Vertex2D), {	      
-	      PipelineInput::Entry(
-		      PipelineInput::type::vec3, offsetof(Vertex2D, Position)),
-	      PipelineInput::Entry(
-		      PipelineInput::type::vec2, offsetof(Vertex2D, TexCoord))
-	  });
-
-      PipelineInput v3d(sizeof(Vertex3D), {	      
-	      PipelineInput::Entry(
-		      PipelineInput::type::vec3, offsetof(Vertex3D, Position)),
-	      PipelineInput::Entry(
-		      PipelineInput::type::vec3, offsetof(Vertex3D, Normal)),
-	      PipelineInput::Entry(
-		      PipelineInput::type::vec2, offsetof(Vertex3D, TexCoord))
-	  });
-
-      PipelineInput v3dAnim(sizeof(VertexAnim3D), {	      
-	      PipelineInput::Entry(
-		      PipelineInput::type::vec3, offsetof(VertexAnim3D, Position)),
-	      PipelineInput::Entry(
-		      PipelineInput::type::vec3, offsetof(VertexAnim3D, Normal)),
-	      PipelineInput::Entry(
-		      PipelineInput::type::vec2, offsetof(VertexAnim3D, TexCoord)),
-	      PipelineInput::Entry(
-		      PipelineInput::type::ivec4, offsetof(VertexAnim3D, BoneIDs)),
-	      PipelineInput::Entry(
-		      PipelineInput::type::vec4, offsetof(VertexAnim3D, Weights)),
-	  });
 	  
       part::create::GraphicsPipeline(
 	      manager->deviceState.device, &_pipeline3D,
@@ -325,8 +297,8 @@ bool swapchainRecreationRequired(VkResult result) {
 	      pipelineSetup.getPath(shader::pipeline::_3D, shader::stage::vert),
 	      pipelineSetup.getPath(shader::pipeline::_3D, shader::stage::frag),
 	      offscreenBufferExtent,
-	      getAttribDesc(0, v3d),
-	      {getBindingDesc(0, v3d)},
+	      getAttribDesc(0, vertex::v3D.input),
+	      {getBindingDesc(0, vertex::v3D.input)},
 	      pipelineConf);
       
       part::create::GraphicsPipeline(
@@ -338,8 +310,8 @@ bool swapchainRecreationRequired(VkResult result) {
 	      pipelineSetup.getPath(shader::pipeline::anim3D, shader::stage::vert),
 	      pipelineSetup.getPath(shader::pipeline::anim3D, shader::stage::frag),
 	      offscreenBufferExtent,
-	      getAttribDesc(0, v3dAnim),
-	      {getBindingDesc(0, v3dAnim)},
+	      getAttribDesc(0, vertex::Anim3D.input),
+	      {getBindingDesc(0, vertex::Anim3D.input)},
 	      pipelineConf);
 
       part::create::GraphicsPipeline(
@@ -351,8 +323,8 @@ bool swapchainRecreationRequired(VkResult result) {
 	      pipelineSetup.getPath(shader::pipeline::_2D, shader::stage::vert),
 	      pipelineSetup.getPath(shader::pipeline::_2D, shader::stage::frag),
 	      offscreenBufferExtent,
-	      getAttribDesc(0, v2d),
-	      {getBindingDesc(0, v2d)},
+	      getAttribDesc(0, vertex::v2D.input),
+	      {getBindingDesc(0, vertex::v2D.input)},
 	      pipelineConf);
 
       if(useFinalRenderpass) {
@@ -610,9 +582,8 @@ void RenderVk::DrawAnimModel(Resource::Model model, glm::mat4 modelMatrix,
 
     auto animBones = animation->getCurrentBones();
     shaderStructs::Bones bonesData;
-    for(int i = 0; i < animBones->size() && i < Resource::MAX_BONES; i++) {
+    for(int i = 0; i < animBones->size() && i < Resource::MAX_BONES; i++)
 	bonesData.mat[i] = animBones->at(i);
-    }
     if(currentBonesDynamicIndex >= MAX_ANIMATIONS_PER_FRAME) {
 	LOG("warning, too many animation calls!\n");
 	return;
@@ -625,7 +596,10 @@ void RenderVk::DrawAnimModel(Resource::Model model, glm::mat4 modelMatrix,
     currentBonesDynamicIndex++;
 }
 
-void RenderVk::DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix, glm::vec4 colour, glm::vec4 texOffset) {
+void RenderVk::DrawQuad(Resource::Texture texture,
+			glm::mat4 modelMatrix,
+			glm::vec4 colour,
+			glm::vec4 texOffset) {
   if (_current2DInstanceIndex >= Resource::MAX_2D_BATCH) {
       LOG("WARNING: ran out of 2D instance models!\n");
       return;
@@ -647,12 +621,17 @@ void RenderVk::DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix, glm::v
     _drawBatch();
 }
 
-void RenderVk::DrawString(Resource::Font font, std::string text, glm::vec2 position, float size, float depth, glm::vec4 colour, float rotate) {
+void RenderVk::DrawString(Resource::Font font,
+			  std::string text,
+			  glm::vec2 position,
+			  float size,
+			  float depth,
+			  glm::vec4 colour,
+			  float rotate) {
     auto draws = pools->get(font.pool)->fontLoader->DrawString(
 	    font, text, position, size, depth, colour, rotate);
-    for (const auto &draw : draws) {
+    for (const auto &draw : draws)
 	DrawQuad(draw.tex, draw.model, draw.colour, draw.texOffset);
-    }
 }
 
   void RenderVk::_bindModelPool(Resource::Model model) {
@@ -706,10 +685,8 @@ void RenderVk::_drawBatch() {
 	pools->get(currentModelPool)->modelLoader->drawQuad(
 		currentCommandBuffer,
 		_pipeline2D.getLayout(),
-		0, _instance2Druns,
-		_current2DInstanceIndex,
-		_currentColour,
-		_currentTexOffset);
+		_instance2Druns,
+		_current2DInstanceIndex);
 	_current2DInstanceIndex += _instance2Druns;
 	_instance2Druns = 0;
 	break;

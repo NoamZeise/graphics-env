@@ -20,19 +20,22 @@ void ResourcePoolVk::setUseGPUResources(bool value) {
 void ResourcePoolVk::loadGpu() {
     texLoader->loadGPU();
     fontLoader->loadGPU();
-    modelLoader->loadGPU();
+    if(useModelLoader)
+	modelLoader->loadGPU();
     usingGPUResources = false;
 }
 
 void ResourcePoolVk::unloadStaged() {
     texLoader->clearStaged();
-    modelLoader->clearStaged();
+    if(useModelLoader)
+	modelLoader->clearStaged();
     fontLoader->clearStaged();
 }
 
 void ResourcePoolVk::unloadGPU() {
     texLoader->clearGPU();
-    modelLoader->clearGPU();
+    if(useModelLoader)
+	modelLoader->clearGPU();
     fontLoader->clearGPU();
     usingGPUResources = false;
 }

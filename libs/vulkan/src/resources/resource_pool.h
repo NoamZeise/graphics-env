@@ -32,6 +32,8 @@ class ResourcePoolVk : public ResourcePool {
 
     bool UseGPUResources = true;
     bool usingGPUResources = false;
+
+    bool useModelLoader = true;
 };
 
 MAKE_POOL_MANAGER(PoolManagerVk, ResourcePoolVk)

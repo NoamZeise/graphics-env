@@ -4,6 +4,9 @@
 #include <graphics/logger.h>
 
 struct GLMesh : public GPUMesh {
+    GLMesh(){}
+    GLMesh(MeshData* mesh) : GPUMesh(mesh) {}
+    
     GLVertexData *vertexData;
     void draw(Resource::Model model, int instanceCount, BasePoolManager *pools,
 	      int colLoc, int enableTexLoc);
@@ -11,8 +14,7 @@ struct GLMesh : public GPUMesh {
 
 struct GPUModelGL : public GPUModel {
     std::vector<GLMesh> meshes;    
-    template <typename T_Vert>
-    GPUModelGL(LoadedModel<T_Vert> &data);  
+    GPUModelGL(ModelData *data);  
     ~GPUModelGL();
     void draw(Resource::Model model, int instanceCount, BasePoolManager *pools, int colLoc,
 	      int enableTexLoc);
@@ -23,25 +25,20 @@ ModelLoaderGL::ModelLoaderGL(Resource::Pool pool, BasePoolManager *pools)
 
 ModelLoaderGL::~ModelLoaderGL() {
     clearGPU();
-    //InternalModelLoader::~InternalModelLoader();
 }
 
 void ModelLoaderGL::clearGPU() {
     for (GPUModelGL *model : models)
 	delete model;
-    models.clear();      
+    models.clear();
 }
 
 void ModelLoaderGL::loadGPU() {
     clearGPU();
     loadQuad();
-    models.resize(currentIndex);
-    for(auto &model: stage2D.models)
-	models[model.ID] = new GPUModelGL(model);
-    for(auto &model: stage3D.models)
-	models[model.ID] = new GPUModelGL(model);
-    for(auto &model: stageAnim3D.models)
-	models[model.ID] = new GPUModelGL(model);
+    models.resize(staged.size());
+    for(int i = 0; i < staged.size(); i++)
+	models[i] = new GPUModelGL(staged[i]);
     clearStaged();
 }
 
@@ -92,13 +89,15 @@ Resource::ModelAnimation ModelLoaderGL::getAnimation(Resource::Model model, int 
 
 /// --- Model ---
 
-template<typename T_Vert>
-GPUModelGL::GPUModelGL(LoadedModel<T_Vert> &data) : GPUModel(data) {
-    meshes.resize(data.meshes.size());
+GPUModelGL::GPUModelGL(ModelData *data) : GPUModel(data) {
+    meshes.resize(data->meshes.size());
     for (int i = 0; i < meshes.size(); i++) {
-	Mesh<T_Vert> *mesh = data.meshes[i];
-	meshes[i].vertexData = new GLVertexData(mesh->verticies, mesh->indices);
-	meshes[i].load(mesh);
+	meshes[i] = GLMesh(data->meshes[i]);
+	meshes[i].vertexData = new GLVertexData(
+		data->format,
+		data->meshes[i]->vertices,
+		data->meshes[i]->vertexCount,
+		data->meshes[i]->indices);
     }
 }
 
@@ -114,7 +113,7 @@ void GPUModelGL::draw(Resource::Model model, int instanceCount, BasePoolManager 
 }
 
 
-///  ---  MESH  ---
+///  ---  Mesh  ---
 
 void GLMesh::draw(Resource::Model model, int instanceCount, BasePoolManager *pools,
 		  int colLoc, int enableTexLoc) {

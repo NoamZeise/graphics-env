@@ -10,29 +10,36 @@
 #include "../parts/threading.h"
 
 struct MeshInfo : public GPUMesh {
-    MeshInfo() { indexCount = 0; indexOffset = 0; vertexOffset = 0; }
-    template <typename T_Vert>
-    MeshInfo(uint32_t indexCount, uint32_t indexOffset, uint32_t vertexOffset,
-	     Mesh<T_Vert> *mesh) {
-	this->indexCount = indexCount;
+    MeshInfo() {}
+
+    MeshInfo(MeshData* mesh, uint32_t indexOffset, uint32_t vertexOffset) : GPUMesh(mesh) {
+	this->indexCount = mesh->indices.size();
 	this->indexOffset = indexOffset;
 	this->vertexOffset = vertexOffset;
-	this->load(mesh);
     }
-    uint32_t indexCount;
-    uint32_t indexOffset;
-    uint32_t vertexOffset;
+    uint32_t indexCount = 0;
+    uint32_t indexOffset = 0;
+    uint32_t vertexOffset = 0;
 };
 
 struct ModelInGPU : public GPUModel {
     std::vector<MeshInfo> meshes;
     uint32_t vertexCount = 0;
     uint32_t indexCount  = 0;
+    // unused as there my be multiple vertex data types
+    // in use in a model loader, so we rebind the
+    // vertex buffer each time a model is drawn.
+    // -> in future:
+    // Could optimize by packining same vertex types
+    // together in buffer, then using vertex offset
+    // and only rebinding vertex buffer when the type changes.
+    // or checking if only one type of vertex is used by all models
+    // then using only a single vertex buffer binding
     uint32_t vertexOffset = 0;
     uint32_t indexOffset = 0;
+    uint32_t vertexDataOffset = 0;
 
-    template <typename T_Vert>
-    ModelInGPU(LoadedModel<T_Vert> &model) : GPUModel(model){}
+    ModelInGPU(ModelData *model) : GPUModel(model) {}
     
     void draw(VkCommandBuffer cmdBuff,
 	      uint32_t meshIndex,
@@ -73,50 +80,47 @@ ModelLoaderVk::~ModelLoaderVk() {
 }
 
 void ModelLoaderVk::clearGPU() {
+    vertexDataSize = 0;
+    indexDataSize = 0;
     if(models.empty())
 	return;
     for(ModelInGPU* model: models)
 	delete model;
-    models.clear();
-      
-    vertexDataSize = 0;
-    indexDataSize = 0;
+    models.clear();      
       
     vkDestroyBuffer(base.device, buffer, nullptr);
     vkFreeMemory(base.device, memory, nullptr);
 }
 
 void ModelLoaderVk::bindBuffers(VkCommandBuffer cmdBuff) {
-    boundThisFrame = false;
-    //bind index buffer - can only have one index buffer
     vkCmdBindIndexBuffer(cmdBuff, buffer, vertexDataSize, VK_INDEX_TYPE_UINT32);
 }
 
-void ModelLoaderVk::bindGroupVertexBuffer(VkCommandBuffer cmdBuff, Resource::ModelType type) {
-    if(boundThisFrame && type == prevBoundType)
-	return;
-    boundThisFrame = true;
-    prevBoundType = type;
-    size_t vOffset = modelTypeOffset[(size_t)type];
-    VkBuffer vertexBuffers[] = { buffer };
-    VkDeviceSize offsets[] = { vOffset };
-    vkCmdBindVertexBuffers(cmdBuff, 0, 1, vertexBuffers, offsets);
-}
-
-void ModelLoaderVk::drawModel(VkCommandBuffer cmdBuff, VkPipelineLayout layout,
-			      Resource::Model model,
-			      uint32_t count, uint32_t instanceOffset) {
+ModelInGPU* ModelLoaderVk::getModel(VkCommandBuffer cmdBuff, Resource::Model model) {
     if(model.ID >= models.size()) {
 	LOG_ERROR("in draw with out of range model. id: "
                   << model.ID << " -  model count: " << models.size());
-	return;
+	return nullptr;
     }
-    if(count == 0)
-	return;
 
     ModelInGPU *modelInfo = models[model.ID];
 
-    bindGroupVertexBuffer(cmdBuff, modelInfo->type);
+    VkBuffer vertexBuffers[] = { buffer };
+    VkDeviceSize offsets[] = { modelInfo->vertexDataOffset };
+    vkCmdBindVertexBuffers(cmdBuff, 0, 1, vertexBuffers, offsets);
+    return modelInfo;
+}
+
+void ModelLoaderVk::drawModel(VkCommandBuffer cmdBuff,
+			      VkPipelineLayout layout,
+			      Resource::Model model,
+			      uint32_t count,
+			      uint32_t instanceOffset) {
+    if(count == 0)
+	return;
+
+    ModelInGPU* modelInfo = getModel(cmdBuff, model);
+    if(modelInfo == nullptr) return;
     
     for(size_t i = 0; i < modelInfo->meshes.size(); i++) {
 	fragPushConstants fps {
@@ -130,25 +134,26 @@ void ModelLoaderVk::drawModel(VkCommandBuffer cmdBuff, VkPipelineLayout layout,
     }
 }
 
-void ModelLoaderVk::drawQuad(VkCommandBuffer cmdBuff, VkPipelineLayout layout, unsigned int texID,
-			     uint32_t count, uint32_t instanceOffset, glm::vec4 colour,
-			     glm::vec4 texOffset) {
-    bindGroupVertexBuffer(cmdBuff, Resource::ModelType::m2D);
-    models[quad.ID]->draw(cmdBuff, 0, count, instanceOffset);
+void ModelLoaderVk::drawQuad(VkCommandBuffer cmdBuff,
+			     VkPipelineLayout layout,
+			     uint32_t count,
+			     uint32_t instanceOffset) {
+    if(count == 0)
+	return;
+    ModelInGPU* modelInfo = getModel(cmdBuff, quad);
+    if(modelInfo == nullptr) return;
+    modelInfo->draw(cmdBuff, 0, count, instanceOffset);    
 }
 
 void ModelLoaderVk::loadGPU() {
     clearGPU();
+
     loadQuad();
-    models.resize(currentIndex);
-    //get size of vertex data + offsets
-    processLoadGroup(&stage2D);
-    processLoadGroup(&stage3D);
-    processLoadGroup(&stageAnim3D);
 
-    LOG("finished processing model groups");
+    processModelData();
 
-    //load to staging buffer
+    LOG("Loading model data - size: " << vertexDataSize + indexDataSize);
+
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingMemory;
 
@@ -164,18 +169,11 @@ void ModelLoaderVk::loadGPU() {
     void* pMem;
     vkMapMemory(base.device, stagingMemory, 0, vertexDataSize + indexDataSize, 0, &pMem);
 
-    //copy each model's data to staging memory
-    size_t currentVertexOffset = 0;
-    size_t currentIndexOffset = vertexDataSize;
-
-    stageLoadGroup(pMem, &stage2D, currentVertexOffset, currentIndexOffset);
-    stageLoadGroup(pMem, &stage3D, currentVertexOffset, currentIndexOffset);
-    stageLoadGroup(pMem, &stageAnim3D, currentVertexOffset, currentIndexOffset);
+    stageModelData(pMem);
     clearStaged();
 
-    LOG("finished staging model groups");
+    LOG("Copying Model Data to GPU");
 
-    //create final dest memory
     vkhelper::createBufferAndMemory(base, vertexDataSize + indexDataSize, &buffer, &memory,
 				    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
 				    VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
@@ -184,7 +182,6 @@ void ModelLoaderVk::loadGPU() {
 
     vkBindBufferMemory(base.device, buffer, memory, 0);
 
-    //copy from staging buffer to final memory location
 
     VkCommandBufferBeginInfo beginInfo{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
     beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
@@ -211,64 +208,56 @@ void ModelLoaderVk::loadGPU() {
     LOG("finished loading model data to gpu");
 }
 
-template <class T_Vert >
-void ModelLoaderVk::processLoadGroup(ModelGroup<T_Vert>* pGroup) {
-    T_Vert vert = T_Vert();
-    Resource::ModelType type = getModelType(vert);
-    modelTypeOffset[(size_t)type] = vertexDataSize;
-    pGroup->vertexDataOffset = vertexDataSize;
+void ModelLoaderVk::processModelData() {
     uint32_t modelVertexOffset = 0;
-    for(int i = 0; i < pGroup->models.size(); i++) {
-	models[pGroup->models[i].ID] = new ModelInGPU(pGroup->models[i]);
-	ModelInGPU* model = models[pGroup->models[i].ID];
-
-	model->type = type;
-	model->vertexOffset = modelVertexOffset;
-	model->indexOffset = indexDataSize / sizeof(pGroup->models[i].meshes[0]->indices[0]);
-	model->meshes.resize(pGroup->models[i].meshes.size());
-	for(int j = 0 ; j <  pGroup->models[i].meshes.size(); j++) {
-	    Mesh<T_Vert>* mesh = pGroup->models[i].meshes[j];
-	    model->meshes[j] = MeshInfo(
-		    (uint32_t)mesh->indices.size(),
-		    model->indexCount,  //as offset
-		    model->vertexCount, //as offset
-		    mesh);
-	    model->vertexCount += (uint32_t)mesh->verticies.size();
+    models.resize(staged.size());
+    for(int i = 0; i < staged.size(); i++) {
+	ModelInGPU* model = new ModelInGPU(staged[i]);
+	// zero for now as may be multiple vertex types packed together
+	model->vertexOffset = 0;//modelVertexOffset;
+	model->vertexDataOffset = vertexDataSize;
+	model->indexOffset = indexDataSize / sizeof(staged[i]->meshes[0]->indices[0]);
+	model->meshes.resize(staged[i]->meshes.size());
+	for(int j = 0 ; j <  staged[i]->meshes.size(); j++) {
+	    MeshData* mesh = staged[i]->meshes[j];
+	    model->meshes[j] = MeshInfo(mesh,
+					model->indexCount,  //as offset
+					model->vertexCount //as offset
+					);
+	    model->vertexCount += (uint32_t)mesh->vertexCount;
 	    model->indexCount  += (uint32_t)mesh->indices.size();
-	    vertexDataSize += sizeof(T_Vert)
-		* (uint32_t)mesh->verticies.size();
-	    indexDataSize +=  sizeof(mesh->indices[0])
-		* (uint32_t)mesh->indices.size();
+	    vertexDataSize += (uint32_t)(
+		    model->vertType.size * mesh->vertexCount);
+	    indexDataSize +=  (uint32_t)(
+		    sizeof(mesh->indices[0]) * mesh->indices.size());
 	}
 	modelVertexOffset += model->vertexCount;
+	
+	models[i] = model;
     }
-    pGroup->vertexDataSize = vertexDataSize - pGroup->vertexDataOffset;
 }
 
-template <class T_Vert >
-void ModelLoaderVk::stageLoadGroup(void* pMem, ModelGroup<T_Vert >* pGroup,
-				   size_t &pVertexDataOffset, size_t &pIndexDataOffset) {
-    for(auto& model: pGroup->models) {
-	for(size_t i = 0; i < model.meshes.size(); i++) {
+void ModelLoaderVk::stageModelData(void* pMem) {
+    size_t vertexOffset = 0;
+    size_t indexOffset = vertexDataSize;
+    for(auto model: staged) {
+	for(size_t i = 0; i < model->meshes.size(); i++) {
 	      
-	    std::memcpy(static_cast<char*>(pMem) + pVertexDataOffset,
-			model.meshes[i]->verticies.data(),
-			sizeof(T_Vert ) * model.meshes[i]->verticies.size());
+	    std::memcpy(static_cast<char*>(pMem) + vertexOffset,
+			model->meshes[i]->vertices,
+			model->format.size * model->meshes[i]->vertexCount);
 	      
-	    pVertexDataOffset += sizeof(T_Vert ) * model.meshes[i]->verticies.size();
+	    vertexOffset += model->format.size * model->meshes[i]->vertexCount;
 	      
-	    std::memcpy(static_cast<char*>(pMem) + pIndexDataOffset,
-			model.meshes[i]->indices.data(),
-			sizeof(model.meshes[i]->indices[0])
-			* model.meshes[i]->indices.size());
+	    std::memcpy(static_cast<char*>(pMem) + indexOffset,
+			model->meshes[i]->indices.data(),
+			sizeof(model->meshes[i]->indices[0])
+			* model->meshes[i]->indices.size());
 	      
-	    pIndexDataOffset += sizeof(model.meshes[i]->indices[0])
-		* model.meshes[i]->indices.size();
-	      
-	    delete model.meshes[i];
+	    indexOffset += sizeof(model->meshes[i]->indices[0])
+		* model->meshes[i]->indices.size();	      
 	}
-    }
-    pGroup->models.clear();
+    }    
 }
 
 Resource::ModelAnimation ModelLoaderVk::getAnimation(Resource::Model model, std::string animation) {

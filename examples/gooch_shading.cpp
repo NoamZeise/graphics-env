@@ -33,7 +33,6 @@ int main(int argc, char** argv) {
     manager.render->setLightingProps(l);
     
     ResourcePool* pool = manager.render->pool();
-    Resource::Model bunnyTest = pool->model()->load(vert3DType, "models/bunny.obj");
     Resource::Model bunny = pool->model()->load("models/bunny.obj");
 
     manager.render->LoadResourcesToGPU(pool);

@@ -1,6 +1,17 @@
 #include <resource-loaders/model_loader.h>
+
 #include <graphics/logger.h>
 #include "assimp_loader.h"
+#include <cstdlib>
+
+int modelGetTexID(Resource::Model model, Resource::Texture texture, BasePoolManager* pools) {
+    Resource::Texture meshTex = model.overrideTexture.ID == Resource::NULL_ID ?
+	texture : model.overrideTexture;    
+    return meshTex.ID != Resource::NULL_ID ?
+	pools->tex(meshTex)->getViewIndex(meshTex) : -1;
+}
+
+/// ------- Internal Model Loader --------
 
 InternalModelLoader::InternalModelLoader(Resource::Pool pool, BasePoolManager* pools) {
     this->pool = pool;
@@ -11,81 +22,16 @@ InternalModelLoader::InternalModelLoader(Resource::Pool pool, BasePoolManager* p
 InternalModelLoader::~InternalModelLoader() {
     clearStaged();
     delete loader;
-    for(auto &s: staged)
-	delete s;
 }
 
 void InternalModelLoader::clearStaged() {
-    stage2D.clearData();
-    stage3D.clearData();
-    stageAnim3D.clearData();
-    currentIndex = 0;
-}
-
-Resource::Model InternalModelLoader::load(
-	Resource::ModelType type, ModelInfo::Model &modelData,
-	std::string textureFolder,
-	std::vector<Resource::ModelAnimation>* pAnimations) {
-    switch(type) {
-    case Resource::ModelType::m2D:
-	return loadData(modelData, stage2D, textureFolder, pAnimations);
-    case Resource::ModelType::m3D:
-	return loadData(modelData, stage3D, textureFolder, pAnimations);
-    case Resource::ModelType::m3D_Anim:
-	return loadData(modelData, stageAnim3D, textureFolder, pAnimations);
-    default:
-	throw std::runtime_error("Model Type Not implemented in "
-				 "InternalModelLoader");
-    }
+    for(auto &s: staged)
+	delete s;
+    staged.clear();
 }
 
 ModelInfo::Model InternalModelLoader::loadModelData(std::string path) {
     return loader->LoadModel(path);
-}
-
-template <class T_Vert>
-Resource::Model InternalModelLoader::loadData(ModelInfo::Model& model,
-					      ModelGroup<T_Vert>& modelGroup,
-					      std::string textureFolder,
-					      std::vector<Resource::ModelAnimation> *pAnimations) {
-    Resource::Model usermodel(currentIndex++, getModelType(T_Vert()), pool);
-    modelGroup.loadModel(model, usermodel.ID);
-    LoadedModel<T_Vert>* loaded = modelGroup.getPreviousModel();
-    if(textureFolder.size() > 0 && textureFolder[textureFolder.size() - 1] != '/') {
-	textureFolder.push_back('/');
-    }
-    for(Mesh<T_Vert> *mesh: loaded->meshes) {
-	if(mesh->texToLoad != "")
-	    mesh->texture = pools->tex(pool)->load(textureFolder + mesh->texToLoad);
-	else
-	    mesh->texture.ID = Resource::NULL_ID;
-    }
-    
-    for(ModelInfo::Animation &anim: model.animations) {
-	if(model.bones.size() >= Resource::MAX_BONES)
-	    LOG_CERR("Model had more bones than MAX_BONES, "
-		     "consider upping the shader max bones", "Warning: ");
-	loaded->animations.push_back(Resource::ModelAnimation(model.bones, anim));
-	if(pAnimations != nullptr)
-	    pAnimations->push_back(loaded->animations[loaded->animations.size() - 1]);
-    }
-    
-    LOG("Model Loaded " <<
-	" - pool: " << pool.ID <<
-	" - id: " << usermodel.ID);
-    return usermodel;
-}
-
-void InternalModelLoader::loadQuad() {
-    ModelInfo::Model q = makeQuadModel();
-    quad = load(Resource::ModelType::m2D, q, "", nullptr);
-}
-
-int modelGetTexID(Resource::Model model, Resource::Texture texture, BasePoolManager* pools) {
-    Resource::Texture meshTex = model.overrideTexture.ID == Resource::NULL_ID ?
-	texture : model.overrideTexture;    
-    return meshTex.ID != Resource::NULL_ID ?
-	pools->tex(meshTex)->getViewIndex(meshTex) : -1;
 }
 
 ModelData::ModelData(ModelInfo::Model &model,
@@ -112,6 +58,57 @@ ModelData::ModelData(ModelInfo::Model &model,
     }
 }
 
+Resource::Model InternalModelLoader::loadData(
+	PipelineInput format,
+	ModelInfo::Model &model,
+	std::vector<void*> &meshVertData,
+	std::string textureFolder,
+	std::vector<Resource::ModelAnimation> *pAnimations) {
+    
+    if(textureFolder.size() > 0 && textureFolder[textureFolder.size() - 1] != '/')
+	textureFolder.push_back('/');
+	
+    Resource::Model usermodel(staged.size(), format, pool);
+    staged.push_back(new ModelData(model, format, meshVertData,
+				   //temp
+				   textureFolder,
+				   pools->tex(pool)));
+    if(pAnimations != nullptr)
+	*pAnimations = staged.back()->animations;       
+    LOG("Model Loaded " <<
+	" - pool: " << pool.ID <<
+	" - id: " << usermodel.ID);
+    return usermodel;
+}
+
+void InternalModelLoader::loadQuad() {
+    ModelInfo::Mesh mesh;
+    mesh.verticies.resize(4);
+    mesh.verticies[0].Position = {0.0f, 0.0f, 0.0f};
+    mesh.verticies[0].TexCoord = {0.0f, 0.0f};
+    mesh.verticies[1].Position = {1.0f, 0.0f, 0.0f};
+    mesh.verticies[1].TexCoord = {1.0f, 0.0f};
+    mesh.verticies[2].Position = {1.0f, 1.0f, 0.0f};
+    mesh.verticies[2].TexCoord = {1.0f, 1.0f};
+    mesh.verticies[3].Position = {0.0f, 1.0f, 0.0f};
+    mesh.verticies[3].TexCoord = {0.0f, 1.0f};
+    mesh.indices = { 0, 3, 2, 2, 1, 0};
+    ModelInfo::Model quad;
+    
+    quad.meshes.push_back(mesh);
+    
+    this->quad = ModelLoader::load(vertex::v2D, quad, "", nullptr);
+}
+
+
+/// ------- Model and Mesh Staging Data -------
+
+
+ModelData::~ModelData() {
+    for(auto& m: meshes)
+	delete m;
+}
+
 MeshData::MeshData(ModelInfo::Mesh &mesh,
 		   void* vertexData,
 		   std::string texturePath,
@@ -126,25 +123,43 @@ MeshData::MeshData(ModelInfo::Mesh &mesh,
 	this->texture = tex->load(texturePath + mesh.diffuseTextures[0]);
 }
 
-Resource::Model InternalModelLoader::loadData(
-	PipelineInput format,
-	ModelInfo::Model &model,
-	std::vector<void*> &meshVertData,
-	std::string textureFolder,
-	std::vector<Resource::ModelAnimation> *pAnimations) {
-    
-    if(textureFolder.size() > 0 && textureFolder[textureFolder.size() - 1] != '/')
-	textureFolder.push_back('/');
-	
-    Resource::Model usermodel(currentIndex++, format, pool);
-    staged.push_back(new ModelData(model, format, meshVertData,
-				   //temp
-				   textureFolder,
-				   pools->tex(pool)));
-    if(pAnimations != nullptr)
-	*pAnimations = staged.back()->animations;       
-    LOG("Model Loaded " <<
-	" - pool: " << pool.ID <<
-	" - id: " << usermodel.ID);
-    return usermodel;
+MeshData::~MeshData() {
+    std::free(vertices);
 }
+
+
+/// ------ Model and Mesh GPU Data -------
+
+
+GPUMesh::GPUMesh(MeshData* mesh) {
+    diffuseColour = mesh->diffuseColour;
+    texture = mesh->texture;
+}
+
+GPUModel::GPUModel(ModelData* model) {
+    vertType = model->format;
+    animations.resize(model->animations.size());
+    for (int i = 0; i < model->animations.size(); i++) {
+	animations[i] = model->animations[i];
+	animationMap[model->animations[i].getName()] = i;
+    }
+}
+
+Resource::ModelAnimation GPUModel::getAnimation(int index) {
+    if (index >= animations.size()) {
+	LOG_ERROR("Model animation index was out of range. "
+		  "animation index: " << index
+		  << " - size: " << animations.size());
+	return Resource::ModelAnimation();
+    }
+    return animations[index];
+}
+
+Resource::ModelAnimation GPUModel::getAnimation(std::string animation) {
+    if (animationMap.find(animation) == animationMap.end()) {
+	LOG_ERROR("No animation called " << animation << " could be found in the"
+		  " animation map for model");
+	return Resource::ModelAnimation();
+    }        
+    return getAnimation(animationMap[animation]);  
+}    

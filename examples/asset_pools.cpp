@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
     // use pool2 to load a wolf with animations
     std::vector<Resource::ModelAnimation> wolfAnims;
     Resource::Model wolfModel = pool1->model()->load(
-	    Resource::ModelType::m3D_Anim, "models/wolf.fbx", &wolfAnims);
+	    vertex::Anim3D, "models/wolf.fbx", &wolfAnims);
     ModelDraw wolf = ModelDraw(
 	    wolfModel,
 	    glm::translate(glm::scale(base, glm::vec3(0.1f)),

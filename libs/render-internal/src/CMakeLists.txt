@@ -1,6 +1,5 @@
 add_library(render-internal
     stb_image_impl.cpp
-    vertex_model.cpp
     texture_loader.cpp
     model_loader.cpp
     assimp_loader.cpp

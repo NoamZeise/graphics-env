@@ -69,27 +69,10 @@ namespace Resource {
       glm::vec2 dim = glm::vec2(0, 0);
   };
 
-  enum class ModelType {
-      m2D,
-      m3D,
-      m3D_Anim,
-  };
-
   static size_t NULL_MODEL_ID = SIZE_MAX;
   
   struct Model {
       Model() {}
-
-      Model(size_t ID) {
-	  this->ID = ID;
-	  this->type = ModelType::m3D;
-      }
-      
-      Model(size_t ID, ModelType type, Pool pool) {
-	  this->ID = ID;
-	  this->type = type;
-	  this->pool = pool;
-      }
 
       Model(size_t ID, PipelineInput vertType, Pool pool) {
 	  this->ID = ID;
@@ -100,7 +83,6 @@ namespace Resource {
       bool operator==(Model other) {
 	  return
 	      ID == other.ID &&
-	      type == other.type &&
 	      vertType == other.vertType &&
 	      pool == other.pool &&
 	      overrideTexture == other.overrideTexture &&
@@ -116,10 +98,8 @@ namespace Resource {
       
       Pool pool;
       PipelineInput vertType;
-      //todo: remove
-      ModelType type;
       Resource::Texture overrideTexture = Resource::Texture(NULL_ID);
-      // use diffuse colour if alpha == 0
+      // uses diffuse colour if alpha == 0
       glm::vec4 colour = glm::vec4(0);
       size_t ID = NULL_MODEL_ID;
   };

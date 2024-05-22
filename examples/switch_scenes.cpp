@@ -287,7 +287,7 @@ void App::loadTestScene1(std::atomic<bool> &loaded) {
   monkeyModel1 = p->model()->load("models/monkey.obj");
   colouredCube1 =p->model()->load("models/ROOM.fbx");
   std::vector<Resource::ModelAnimation> animations;
-  wolf1 = p->model()->load(Resource::ModelType::m3D_Anim, "models/wolf.fbx", &animations);
+  wolf1 = p->model()->load(vertex::Anim3D, "models/wolf.fbx", &animations);
   if(animations.size() > 2)
       wolfAnim1 = animations[1];
   else

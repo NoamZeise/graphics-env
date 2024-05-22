@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
     glm::mat4 texturedMonkeyMat2 = glm::translate(monkeyMat, glm::vec3(6, 0, 0));
     std::vector<Resource::ModelAnimation> wolfAnims;
     Resource::Model wolf = pool->model()->load(
-	    Resource::ModelType::m3D_Anim, "models/wolf.fbx", &wolfAnims);
+	    vertex::Anim3D, "models/wolf.fbx", &wolfAnims);
     Resource::ModelAnimation anim = wolfAnims[0];
     glm::mat4 wolfMat = glm::translate(
 	    glm::scale(monkeyMat, glm::vec3(0.1f)), glm::vec3(-25.0f, -50.0f, -80.0f));

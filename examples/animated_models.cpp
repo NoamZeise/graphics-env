@@ -14,7 +14,7 @@ struct AnimatedModel {
 							 glm::vec3(0, 1, 0)),
 						 glm::vec3(0.0f, -8.0f, -10.0f));
 	this->modelMat = glm::translate(glm::scale(basemat, glm::vec3(scale)), translate);
-	this->model = load->load(Resource::ModelType::m3D_Anim, modelpath, texPath, &animations);
+	this->model = load->load(vertex::Anim3D, modelpath, texPath, &animations);
 	nextAnim();
     }
     void update(Timer &timer) {
