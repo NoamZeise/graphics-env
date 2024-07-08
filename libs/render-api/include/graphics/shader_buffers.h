@@ -5,13 +5,6 @@
 #include "shader_info.h"
 #include <vector>
 
-class PushConstant {
-private:
-    shader::Stage stageFlags;
-    //int offset; calc manually?
-    //int size;
-};
-
 class ShaderSet;
 
 /// Holds shader sets

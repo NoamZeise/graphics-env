@@ -245,7 +245,6 @@ bool swapchainRecreationRequired(VkResult result) {
 				minmipmap));
       textureSet->addTextures(1, Resource::MAX_TEXTURES_SUPPORTED, activeTextures);
 
-
       boneSet = mainShaderPool->CreateSet(shader::vert);
       boneSet->addUniformBuffer(0, sizeof(shaderStructs::Bones), 1, MAX_ANIMATIONS_PER_FRAME);
 
@@ -517,7 +516,7 @@ void RenderVk::_begin(RenderState state) {
 	_store3DsetData();
     if(_current2DInstanceIndex == 0 && state == RenderState::Draw2D)
 	_store2DsetData();
-    Pipeline* pipeline = nullptr;
+    PipelineOld* pipeline = nullptr;
     switch(state) {
     case RenderState::Draw2D:
 	pipeline = &_pipeline2D;

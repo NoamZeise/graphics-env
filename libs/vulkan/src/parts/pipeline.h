@@ -22,7 +22,7 @@ namespace part {
     };
     
     void GraphicsPipeline(VkDevice device,
-			  Pipeline* pipeline,
+			  PipelineOld* pipeline,
 			  VkRenderPass renderPass,
 			  std::vector<SetVk*> newSets,
 			  std::vector<VkPushConstantRange> pushConstantsRanges,

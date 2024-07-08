@@ -21,7 +21,7 @@ namespace create
   VkShaderModule _loadShaderModule(VkDevice device, std::string file);
 
   void GraphicsPipeline(
-	  VkDevice device, Pipeline *pipeline,
+	  VkDevice device, PipelineOld *pipeline,
 	  VkRenderPass renderPass,
 	  std::vector<SetVk*> newSets,
 	  std::vector<VkPushConstantRange> pushConstantsRanges,
@@ -154,7 +154,7 @@ namespace create
 				    &vkpipeline) != VK_SUCCESS)
 	  throw std::runtime_error("failed to create graphics pipelines!");
 
-      *pipeline = Pipeline(layout, vkpipeline, newSets);
+      *pipeline = PipelineOld(layout, vkpipeline, newSets);
   
       // destory shader modules
       vkDestroyShaderModule(device, vertexShaderModule, nullptr);

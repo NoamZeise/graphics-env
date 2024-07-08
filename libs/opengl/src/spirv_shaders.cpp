@@ -28,7 +28,7 @@ SpirvShaders::SpirvShaders(shader::PipelineSetup spirvShaders){
 		    bind->name <<
 		    " type: " <<
 		    Binding::to_string(bind->type) <<
-		    " count: " << bind->arrayCount);		
+		    " count: " << bind->arrayCount);
 	    }
 	}
 	for(int sb = 0; sb < s.combinedSamplers.size(); sb++) {

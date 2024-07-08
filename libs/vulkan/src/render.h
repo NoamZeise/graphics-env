@@ -117,10 +117,10 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
       RenderPass* finalRenderPass = nullptr;
       bool usingFinalRenderPass = false;
 
-      Pipeline _pipeline3D;
-      Pipeline _pipelineAnim3D;
-      Pipeline _pipeline2D;
-      Pipeline _pipelineFinal;
+      PipelineOld _pipeline3D;
+      PipelineOld _pipelineAnim3D;
+      PipelineOld _pipeline2D;
+      PipelineOld _pipelineFinal;
       
       ShaderPool* mainShaderPool;      
       ShaderSet* perFrame2DSet;

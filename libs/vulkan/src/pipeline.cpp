@@ -42,7 +42,7 @@ std::vector<VkVertexInputAttributeDescription> getAttribDesc(uint32_t bindingInd
 }
 
 
-Pipeline::Pipeline(
+PipelineOld::PipelineOld(
 	VkPipelineLayout layout, VkPipeline pipeline,
 	std::vector<SetVk*> newSets) {
     this->layout = layout;
@@ -57,7 +57,7 @@ Pipeline::Pipeline(
     }
 }
 
-void Pipeline::begin(VkCommandBuffer cmdBuff, size_t frameIndex) {
+void PipelineOld::begin(VkCommandBuffer cmdBuff, size_t frameIndex) {
     //bind non dynamic descriptor sets
     int bindOffset = 0;
     for (size_t i = 0; i < newSets.size(); i++) {
@@ -72,7 +72,7 @@ void Pipeline::begin(VkCommandBuffer cmdBuff, size_t frameIndex) {
     vkCmdBindPipeline(cmdBuff, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 }
 
-void Pipeline::bindDynamicDSNew(
+void PipelineOld::bindDynamicDSNew(
 	VkCommandBuffer cmdBuff, size_t frameIndex, size_t offsetIndex, size_t setIndex,
 				size_t bindingIndex) {
     if(setIndex >= this->newSets.size())
@@ -90,7 +90,7 @@ void Pipeline::bindDynamicDSNew(
 			    
 }
 
-void Pipeline::destroy(VkDevice device) {
+void PipelineOld::destroy(VkDevice device) {
     vkDestroyPipeline(device, pipeline, nullptr);
     vkDestroyPipelineLayout(device, layout, nullptr);
 }

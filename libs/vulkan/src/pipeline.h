@@ -10,6 +10,7 @@
 #include "shader_buffers.h"
 
 
+
 VkVertexInputBindingDescription getBindingDesc(uint32_t bindingIndex,
 					       PipelineInput in);
 VkVertexInputAttributeDescription getAttrib(uint32_t bindingIndex,
@@ -18,10 +19,10 @@ VkVertexInputAttributeDescription getAttrib(uint32_t bindingIndex,
 std::vector<VkVertexInputAttributeDescription> getAttribDesc(uint32_t bindingIndex,
 							     PipelineInput in);
 
-class Pipeline {
+class PipelineOld {
 public:
-    Pipeline() {};
-    Pipeline(VkPipelineLayout layout, VkPipeline pipeline,
+    PipelineOld() {};
+    PipelineOld(VkPipelineLayout layout, VkPipeline pipeline,
 	     std::vector<SetVk*> newSets);
     void begin(VkCommandBuffer cmdBuff, size_t frameIndex);
     void bindDynamicDSNew(
