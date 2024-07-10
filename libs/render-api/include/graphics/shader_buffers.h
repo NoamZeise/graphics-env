@@ -113,6 +113,12 @@ public:
             void updateTextures(size_t index, size_t arrayIndex,
 			       Resource::Texture texture) {
 		updateTextures(index, arrayIndex, std::vector<Resource::Texture>{texture});}
+
+
+    /// ------ Check State ------
+
+    // return true if set reasources are active
+    virtual bool Created() = 0;
 };
 
 #endif /* GRAPHICS_API_SHADER_BUFFERS_H */

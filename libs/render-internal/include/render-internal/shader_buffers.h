@@ -92,6 +92,8 @@ class InternalSet : public ShaderSet {
 
     size_t nextFreeIndex();
 
+    bool setCreated() { return gpuResourcesCreated; }
+
  protected:
 
     virtual Binding* getBinding(size_t index) = 0;    
