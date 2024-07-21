@@ -50,6 +50,12 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
       // Shader Pools
       ShaderPool* CreateShaderPool();
       void DestroyShaderPool(ShaderPool* pool);
+
+      // Pipeline
+      Pipeline* CreatePipeline(
+	      PipelineInput input,
+	      std::vector<char> vertexCode,
+	      std::vector<char> fragmentCode);
       
       void UseLoadedResources() override;
 

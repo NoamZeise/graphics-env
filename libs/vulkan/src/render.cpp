@@ -52,7 +52,6 @@ VkFormat getDepthBufferFormat(VkPhysicalDevice physicalDevice) {
     features.sampleRateShading = renderConf.sample_shading;
     features.manuallyChosePhysicalDevice = renderConf.manuallyChoseGpu;
     manager = new VulkanManager(window, features);
-    offscreenDepthFormat = getDepthBufferFormat(manager->deviceState.physicalDevice);
     
     frames = new Frame*[MAX_CONCURRENT_FRAMES];
     for(int i = 0; i < MAX_CONCURRENT_FRAMES; i++)
@@ -61,7 +60,8 @@ VkFormat getDepthBufferFormat(VkPhysicalDevice physicalDevice) {
     pools = new PoolManagerVk;
     defaultResourcePool = CreateResourcePool()->id();
     framebufferResourcePool = (ResourcePoolVk*)CreateResourcePool();
-    framebufferResourcePool->useModelLoader = false;    
+    framebufferResourcePool->useModelLoader = false;
+    offscreenDepthFormat = getDepthBufferFormat(manager->deviceState.physicalDevice);
 }
   
 RenderVk::~RenderVk() {
@@ -286,6 +286,32 @@ bool swapchainRecreationRequired(VkResult result) {
       pipelineConf.msaaSamples = sampleCount;
       pipelineConf.useSampleShading = manager->deviceState.features.sampleRateShading;
       pipelineConf.useDepthTest = renderConf.useDepthTest;
+
+
+      // new pipelines testing
+      PipelineVk pipeline3D(manager->deviceState.device,
+			    vertex::v3D.input,
+                            Pipeline::ReadShaderCode(
+				    pipelineSetup.getPath(
+					    shader::pipeline::_3D,
+					    shader::stage::vert)),
+			    Pipeline::ReadShaderCode(
+				    pipelineSetup.getPath(
+					    shader::pipeline::_3D,
+					    shader::stage::frag)));
+      
+      pipeline3D.addPushConstant(shader::Stage::frag, sizeof(fragPushConstants));      
+      pipeline3D.addShaderSet(0, vp3dSet);
+      pipeline3D.addShaderSet(1, perFrame3dSet);
+      pipeline3D.addShaderSet(2, emptySet); // make sure not needed!
+      pipeline3D.addShaderSet(3, textureSet);
+      pipeline3D.addShaderSet(4, lightingSet);
+
+      pipeline3D.CreatePipeline(offscreenRenderPass);
+      pipeline3D.DestroyPipeline();
+
+      
+      // old pipelines
 	  
       part::create::GraphicsPipeline(
 	      manager->deviceState.device, &_pipeline3D,
@@ -801,7 +827,16 @@ void RenderVk::DestroyShaderPool(ShaderPool* pool) {
 	}
     LOG_ERROR("Tried to destory shader pool but it was not "
 	      "found in the list of created shader pools");
-} 
+}
+
+
+  Pipeline* RenderVk::CreatePipeline(
+	  PipelineInput input,
+	  std::vector<char> vertexCode,
+	  std::vector<char> fragmentCode) {
+      throw std::runtime_error("not implemeneted");
+  }
+
 
 void RenderVk::set3DViewMat(glm::mat4 view, glm::vec4 camPos) {
     VP3DData.view = view;

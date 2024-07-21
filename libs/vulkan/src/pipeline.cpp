@@ -1,5 +1,7 @@
 #include "pipeline.h"
 
+#include "parts/pipeline.h"
+
 VkVertexInputBindingDescription getBindingDesc(uint32_t bindingIndex,
 					       PipelineInput in) {
     VkVertexInputBindingDescription binding;
@@ -40,6 +42,40 @@ std::vector<VkVertexInputAttributeDescription> getAttribDesc(uint32_t bindingInd
 	attribs[i] = getAttrib(bindingIndex, i, in.entries[i]);
     return attribs;
 }
+
+
+/// ---- PipelineVk ----
+
+void PipelineVk::CreatePipeline(void* renderpass) {
+    Pipeline::CreatePipeline(renderpass);
+    RenderPass* rp = (RenderPass*)renderpass;
+
+    std::vector<VkPushConstantRange> pcs;
+    for(auto& pc: pushConstants) {
+	VkPushConstantRange range;
+	range.size = pc.dataSize;
+	range.offset = pc.offset;
+	range.stageFlags = convertToVkFlags(pc.stageFlags);
+	pcs.push_back(range);
+    }
+
+    std::vector<SetVk*> shaderSets(this->sets.size());
+    for(int i = 0; i < this->sets.size(); i++) {
+	shaderSets[i] = (SetVk*)this->sets[i];
+    }
+
+    this->layout = part::create::PipelineLayout(this->device, pcs, shaderSets);
+}
+
+void PipelineVk::DestroyPipeline() {
+    vkDestroyPipelineLayout(device, layout, nullptr);
+    Pipeline::DestroyPipeline();
+}
+
+
+
+
+/// ---- Pipeline Old ----
 
 
 PipelineOld::PipelineOld(

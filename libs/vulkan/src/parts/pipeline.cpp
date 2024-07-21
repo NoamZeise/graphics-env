@@ -9,11 +9,6 @@ namespace part
 {
 namespace create
 {
-  
-  VkPipelineLayout createPipelineLayout(
-	  VkDevice device,
-	  std::vector<VkPushConstantRange> &pushConsts,
-	  std::vector<SetVk*> &newSets);
 
   VkPipelineShaderStageCreateInfo shaderStageInfo(
 	  VkShaderModule module, VkShaderStageFlagBits stage);
@@ -32,7 +27,7 @@ namespace create
 	  PipelineConfig config) {
 
       // load shader modules
-      VkPipelineLayout layout = createPipelineLayout(
+      VkPipelineLayout layout = PipelineLayout(
 	      device, pushConstantsRanges, newSets);
 
       // config input assemby
@@ -165,14 +160,15 @@ namespace create
   
   // --- HELPERS ---
 
-    VkPipelineLayout createPipelineLayout(
+  VkPipelineLayout PipelineLayout(
 	  VkDevice device,
 	  std::vector<VkPushConstantRange> &pushConsts,
 	  std::vector<SetVk*> &newSets) {
       std::vector<VkDescriptorSetLayout> dslayout(newSets.size());
       for(int i = 0; i < newSets.size(); i++) {
 	  if(newSets[i] == nullptr)
-	      throw std::runtime_error("New Descriptor Set was null in createPipelineLayout");
+	      throw std::runtime_error(
+	            "Create Pipeline: New Descriptor Set was null (PipelineLayout)");
 	  dslayout[i] = newSets[i]->getLayout();
       }
   

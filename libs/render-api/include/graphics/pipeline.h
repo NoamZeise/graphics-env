@@ -7,34 +7,46 @@
 #include <string>
 #include <vector>
 
+// class RenderPass{};
 
 class Pipeline {
 public:
 
-    static std::vector<char> ReadShaderCode(std::string path);
+    struct Config {
+	bool useDepthTest = true;	
+    };
     
-    Pipeline(PipelineInput input,
-	     std::vector<char> vertexCode,
-	     std::vector<char> fragmentCode);
+
+    static std::vector<char> ReadShaderCode(std::string path);
 
     void addShaderSet(int setIndex, ShaderSet* set);
 
     void addPushConstant(shader::Stage stageFlags, size_t dataSize);
 
-    void CreatePipeline();
+    // Null pointer for now
+    virtual void CreatePipeline(void* renderpass);
 
-    void DestroyPipeline();
+    virtual void DestroyPipeline();
+    
 protected:
+
+    Pipeline(PipelineInput input,
+	     std::vector<char> vertexShader,
+	     std::vector<char> fragmentShader);
+    
     struct PushConstant {
 	shader::Stage stageFlags;
-	int dataSize;
+	size_t dataSize;
+	size_t offset;
+	PushConstant(shader::Stage stage, size_t dataSize, size_t offset);
     };
     
     PipelineInput input;
     std::vector<char> vertexShader;
     std::vector<char> fragmentShader;
-    std::vector<bool> sets;  
+    std::vector<ShaderSet*> sets;
     std::vector<PushConstant> pushConstants;
+    bool created = false;
 };
 
 #endif /* GRAPHICS_API_PIPELINE_H */

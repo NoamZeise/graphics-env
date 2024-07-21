@@ -9,6 +9,8 @@
 #include "resources/resource_pool.h"
 #include "device_state.h"
 
+VkShaderStageFlags convertToVkFlags(shader::Stage stageFlags);
+
 struct BindingVk : public Binding {
     BindingVk() {}
     BindingVk(Binding binding) {

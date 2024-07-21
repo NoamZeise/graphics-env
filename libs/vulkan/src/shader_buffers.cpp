@@ -12,6 +12,15 @@
 VkDescriptorType bindingTypeVk(Binding::type type);
 VkShaderStageFlags shaderFlagsVk(shader::Stage flags);
 
+VkShaderStageFlags convertToVkFlags(shader::Stage stageFlags) {
+    VkShaderStageFlags f = 0;
+    if((stageFlags & shader::Stage::vert) != 0)
+	f |= VK_SHADER_STAGE_VERTEX_BIT;
+    if((stageFlags & shader::Stage::frag) != 0)
+	f |= VK_SHADER_STAGE_FRAGMENT_BIT;
+    return f;
+}
+
 
 /// ----------- Shader Set -----------
 

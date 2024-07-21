@@ -118,7 +118,7 @@ public:
     /// ------ Check State ------
 
     // return true if set reasources are active
-    virtual bool Created() = 0;
+    //virtual bool Created() = 0;
 };
 
 #endif /* GRAPHICS_API_SHADER_BUFFERS_H */

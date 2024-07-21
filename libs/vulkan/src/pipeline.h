@@ -7,17 +7,36 @@
 
 #include <graphics/pipeline.h>
 
+#include "renderpass.h"
 #include "shader_buffers.h"
-
-
 
 VkVertexInputBindingDescription getBindingDesc(uint32_t bindingIndex,
 					       PipelineInput in);
-VkVertexInputAttributeDescription getAttrib(uint32_t bindingIndex,
-					    uint32_t location,
-					    PipelineInput::Entry entry);
-std::vector<VkVertexInputAttributeDescription> getAttribDesc(uint32_t bindingIndex,
-							     PipelineInput in);
+std::vector<VkVertexInputAttributeDescription>
+getAttribDesc(uint32_t bindingIndex, PipelineInput in);
+
+
+class PipelineVk : public Pipeline {
+public:
+    PipelineVk(VkDevice device,
+	       PipelineInput input,
+	       std::vector<char> vertexShader,
+	       std::vector<char> fragmentShader)
+	: Pipeline(input, vertexShader, fragmentShader) {
+	this->device = device;
+    }
+
+    void CreatePipeline(void* renderpass) override;
+    void DestroyPipeline() override;
+private:
+    VkDevice device;
+    VkPipelineLayout layout;
+};
+
+
+
+/// ---- Old ----
+
 
 class PipelineOld {
 public:

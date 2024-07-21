@@ -20,6 +20,11 @@ namespace part {
 	VkCullModeFlags cullMode = VK_CULL_MODE_BACK_BIT;
 	VkBlendOp blendOp = VK_BLEND_OP_ADD;
     };
+
+    VkPipelineLayout PipelineLayout(
+	  VkDevice device,
+	  std::vector<VkPushConstantRange> &pushConsts,
+	  std::vector<SetVk*> &newSets);
     
     void GraphicsPipeline(VkDevice device,
 			  PipelineOld* pipeline,
