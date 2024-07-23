@@ -79,7 +79,7 @@ namespace create
 	  }
       } else {
 	  multisampleInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-      }
+      }	
 
       // config depthStencil
       VkPipelineDepthStencilStateCreateInfo depthStencilInfo{
@@ -106,10 +106,10 @@ namespace create
 	  blendAttachment.blendEnable = VK_FALSE;
       blendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
       blendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-      blendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+      blendAttachment.colorBlendOp = config.blendOp;
       blendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
       blendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-      blendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+      blendAttachment.alphaBlendOp = config.blendOp;
       // config colour blend state
       VkPipelineColorBlendStateCreateInfo blendInfo{
 	  VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO};

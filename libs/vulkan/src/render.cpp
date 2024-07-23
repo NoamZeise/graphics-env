@@ -39,13 +39,6 @@ void checkVolk() {
     }
 }
 
-VkFormat getDepthBufferFormat(VkPhysicalDevice physicalDevice) {
-    return vkhelper::findSupportedFormat(
-	    physicalDevice,
-	    {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
-	    VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
-}
-
   RenderVk::RenderVk(GLFWwindow *window, RenderConfig renderConf, shader::PipelineSetup pipelineSetup) : Render(window, renderConf, pipelineSetup) {
     checkVolk();
     EnabledDeviceFeatures features;
@@ -61,8 +54,14 @@ VkFormat getDepthBufferFormat(VkPhysicalDevice physicalDevice) {
     defaultResourcePool = CreateResourcePool()->id();
     framebufferResourcePool = (ResourcePoolVk*)CreateResourcePool();
     framebufferResourcePool->useModelLoader = false;
-    offscreenDepthFormat = getDepthBufferFormat(manager->deviceState.physicalDevice);
-}
+    offscreenDepthFormat = vkhelper::findSupportedFormat(
+	    manager->deviceState.physicalDevice, {
+		VK_FORMAT_D32_SFLOAT,
+		VK_FORMAT_D32_SFLOAT_S8_UINT,
+		VK_FORMAT_D24_UNORM_S8_UINT},
+	    VK_IMAGE_TILING_OPTIMAL,
+	    VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+  }
   
 RenderVk::~RenderVk() {
     vkDeviceWaitIdle(manager->deviceState.device);
@@ -141,9 +140,7 @@ bool swapchainRecreationRequired(VkResult result) {
       LOG("Creating Render Passes");
 
       VkFormat swapchainFormat = swapchain->getFormat();
-      VkSampleCountFlagBits sampleCount = vkhelper::getMaxSupportedMsaaSamples(
-	      manager->deviceState.device,
-	      manager->deviceState.physicalDevice);
+      VkSampleCountFlagBits sampleCount = manager->deviceState.limits.maxMsaaSamples;
       if(!renderConf.multisampling)
 	  sampleCount = VK_SAMPLE_COUNT_1_BIT;
       
@@ -287,18 +284,22 @@ bool swapchainRecreationRequired(VkResult result) {
       pipelineConf.useSampleShading = manager->deviceState.features.sampleRateShading;
       pipelineConf.useDepthTest = renderConf.useDepthTest;
 
-
+      
       // new pipelines testing
-      PipelineVk pipeline3D(manager->deviceState.device,
-			    vertex::v3D.input,
-                            Pipeline::ReadShaderCode(
-				    pipelineSetup.getPath(
-					    shader::pipeline::_3D,
-					    shader::stage::vert)),
-			    Pipeline::ReadShaderCode(
-				    pipelineSetup.getPath(
-					    shader::pipeline::_3D,
-					    shader::stage::frag)));
+      std::vector<char> vertShaderCode = Pipeline::ReadShaderCode(
+	      pipelineSetup.getPath(
+		      shader::pipeline::_3D,
+		      shader::stage::vert));
+      std::vector<char> fragShaderCode = Pipeline::ReadShaderCode(
+	      pipelineSetup.getPath(
+		      shader::pipeline::_3D,
+		      shader::stage::frag));
+      PipelineVk pipeline3D(
+	      manager->deviceState,
+	      Pipeline::Config{},
+	      vertex::v3D.input,
+	      vertShaderCode,
+	      fragShaderCode);
       
       pipeline3D.addPushConstant(shader::Stage::frag, sizeof(fragPushConstants));      
       pipeline3D.addShaderSet(0, vp3dSet);

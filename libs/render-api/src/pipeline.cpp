@@ -31,7 +31,7 @@ void Pipeline::addShaderSet(int setIndex, ShaderSet* set) {
 Pipeline::PushConstant::PushConstant(shader::Stage stage, size_t dataSize, size_t offset) {
     this->stageFlags = stage;
     this->dataSize = dataSize;
-    this->offset = offset;
+    this->offset = offset;    
 }
 
 void Pipeline::addPushConstant(shader::Stage stageFlags, size_t dataSize) {
@@ -59,9 +59,11 @@ void Pipeline::DestroyPipeline() { created = false; }
 /// ---- protected fns ----
 
 
-Pipeline::Pipeline(PipelineInput input,
+Pipeline::Pipeline(Config config,
+		   PipelineInput input,
 		   std::vector<char> vertexShader,
 		   std::vector<char> fragmentShader) {
+    this->config = config;
     this->input = input;
     this->vertexShader = vertexShader;
     this->fragmentShader = fragmentShader;

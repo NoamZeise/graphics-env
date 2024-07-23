@@ -27,9 +27,6 @@ namespace vkhelper {
 			       const std::vector<VkFormat>& formats, VkImageTiling tiling,
 			       VkFormatFeatureFlags features);
   
-  VkSampleCountFlagBits getMaxSupportedMsaaSamples(VkDevice device,
-						   VkPhysicalDevice physicalDevice);
-  
   VkResult submitQueue(VkQueue queue, VkSubmitInfo* info, std::mutex* queueMut, VkFence fence);
   
   VkResult submitCmdBuffAndWait(VkDevice device, VkQueue queue,

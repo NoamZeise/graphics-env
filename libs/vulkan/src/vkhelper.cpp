@@ -82,23 +82,6 @@ namespace vkhelper {
       return VK_FORMAT_UNDEFINED;
   }
 
-  VkSampleCountFlagBits getMaxSupportedMsaaSamples(
-	  VkDevice device, VkPhysicalDevice physicalDevice) {
-      VkSampleCountFlagBits maxMsaaSamples = VK_SAMPLE_COUNT_1_BIT;
-      VkPhysicalDeviceProperties props;
-      vkGetPhysicalDeviceProperties(physicalDevice, &props);
-      VkSampleCountFlags samplesSupported =
-	  props.limits.framebufferColorSampleCounts
-	  & props.limits.framebufferDepthSampleCounts;
-      if     (samplesSupported & VK_SAMPLE_COUNT_64_BIT) maxMsaaSamples = VK_SAMPLE_COUNT_64_BIT;
-      else if(samplesSupported & VK_SAMPLE_COUNT_32_BIT) maxMsaaSamples = VK_SAMPLE_COUNT_32_BIT;
-      else if(samplesSupported & VK_SAMPLE_COUNT_16_BIT) maxMsaaSamples = VK_SAMPLE_COUNT_16_BIT;
-      else if(samplesSupported & VK_SAMPLE_COUNT_8_BIT)  maxMsaaSamples = VK_SAMPLE_COUNT_8_BIT;
-      else if(samplesSupported & VK_SAMPLE_COUNT_4_BIT)  maxMsaaSamples = VK_SAMPLE_COUNT_4_BIT;
-      else if(samplesSupported & VK_SAMPLE_COUNT_2_BIT)  maxMsaaSamples = VK_SAMPLE_COUNT_2_BIT;
-      return maxMsaaSamples;
-  }
-
   VkResult submitQueue(VkQueue queue, VkSubmitInfo* info, std::mutex* queueMut, VkFence fence) {
       if(queueMut != nullptr)
 	  queueMut->lock();

@@ -3,6 +3,7 @@
 
 #include "shader_buffers.h"
 #include "pipeline_input.h"
+#include "render_pass.h"
 
 #include <string>
 #include <vector>
@@ -10,10 +11,30 @@
 // class RenderPass{};
 
 class Pipeline {
-public:
+public:    
 
+    enum class BlendOp {
+	NoBlend,
+	Add,
+	Subtract,
+	ReverseSubtract,
+	Min,
+	Max
+    };
+    
+    enum class CullMode {
+	None,
+	Front,
+	Back,
+	Both,
+    };
+    
     struct Config {
-	bool useDepthTest = true;	
+	bool depthTest = true;
+	bool sampleShading = true;
+	BlendOp blendOp;
+	MsaaSample samples = MsaaSample::CountMax;
+	CullMode cullMode = CullMode::Front;
     };
     
 
@@ -30,7 +51,8 @@ public:
     
 protected:
 
-    Pipeline(PipelineInput input,
+    Pipeline(Config config,
+	     PipelineInput input,
 	     std::vector<char> vertexShader,
 	     std::vector<char> fragmentShader);
     
@@ -40,7 +62,8 @@ protected:
 	size_t offset;
 	PushConstant(shader::Stage stage, size_t dataSize, size_t offset);
     };
-    
+
+    Config config;
     PipelineInput input;
     std::vector<char> vertexShader;
     std::vector<char> fragmentShader;

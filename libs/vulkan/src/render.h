@@ -109,7 +109,7 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
       VulkanManager* manager = nullptr;
       uint32_t frameIndex = 0;
       const uint32_t MAX_CONCURRENT_FRAMES = 2;
-      Frame** frames;
+      Frame** frames;      
 
       VkFormat offscreenDepthFormat;
       VkFormat prevSwapchainFormat = VK_FORMAT_UNDEFINED;

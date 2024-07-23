@@ -15,22 +15,25 @@ VkVertexInputBindingDescription getBindingDesc(uint32_t bindingIndex,
 std::vector<VkVertexInputAttributeDescription>
 getAttribDesc(uint32_t bindingIndex, PipelineInput in);
 
-
 class PipelineVk : public Pipeline {
 public:
-    PipelineVk(VkDevice device,
+    PipelineVk(DeviceState& state,
+	       Config config,
 	       PipelineInput input,
 	       std::vector<char> vertexShader,
-	       std::vector<char> fragmentShader)
-	: Pipeline(input, vertexShader, fragmentShader) {
-	this->device = device;
-    }
+	       std::vector<char> fragmentShader);
+    ~PipelineVk();
 
     void CreatePipeline(void* renderpass) override;
     void DestroyPipeline() override;
 private:
     VkDevice device;
+    VkSampleCountFlagBits maxSamples;
+    VkShaderModule vertexShaderModule;
+    VkShaderModule fragmentShaderModule;
+    
     VkPipelineLayout layout;
+    VkPipeline pipeline;
 };
 
 

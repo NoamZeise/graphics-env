@@ -9,6 +9,23 @@ std::mutex graphicsPresentMutex;
   if (result_expr != VK_SUCCESS)                                               \
     throw std::runtime_error(error_message);
 
+VkSampleCountFlagBits getMaxSupportedMsaaSamples(
+	VkDevice device, VkPhysicalDevice physicalDevice) {
+    VkSampleCountFlagBits maxMsaaSamples = VK_SAMPLE_COUNT_1_BIT;
+    VkPhysicalDeviceProperties props;
+    vkGetPhysicalDeviceProperties(physicalDevice, &props);
+    VkSampleCountFlags samplesSupported =
+	props.limits.framebufferColorSampleCounts
+	& props.limits.framebufferDepthSampleCounts;
+    if     (samplesSupported & VK_SAMPLE_COUNT_64_BIT) maxMsaaSamples = VK_SAMPLE_COUNT_64_BIT;
+    else if(samplesSupported & VK_SAMPLE_COUNT_32_BIT) maxMsaaSamples = VK_SAMPLE_COUNT_32_BIT;
+    else if(samplesSupported & VK_SAMPLE_COUNT_16_BIT) maxMsaaSamples = VK_SAMPLE_COUNT_16_BIT;
+    else if(samplesSupported & VK_SAMPLE_COUNT_8_BIT)  maxMsaaSamples = VK_SAMPLE_COUNT_8_BIT;
+    else if(samplesSupported & VK_SAMPLE_COUNT_4_BIT)  maxMsaaSamples = VK_SAMPLE_COUNT_4_BIT;
+    else if(samplesSupported & VK_SAMPLE_COUNT_2_BIT)  maxMsaaSamples = VK_SAMPLE_COUNT_2_BIT;
+    return maxMsaaSamples;
+}
+
 VulkanManager::VulkanManager(GLFWwindow *window, EnabledDeviceFeatures featuresToEnable) {
     throwOnErr(part::create::Instance(&instance),
 	       "Failed to create Vulkan Instance");
@@ -27,6 +44,9 @@ VulkanManager::VulkanManager(GLFWwindow *window, EnabledDeviceFeatures featuresT
 		       &generalCommandBuffer,
 		       deviceState.queue.graphicsPresentFamilyIndex, 0),
 	       "Failed to create command pool and buffer");
+    deviceState.limits.maxMsaaSamples = getMaxSupportedMsaaSamples(
+	    deviceState.device,
+	    deviceState.physicalDevice);
 }
 
 

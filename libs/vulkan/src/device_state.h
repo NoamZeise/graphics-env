@@ -25,6 +25,11 @@ struct DeviceState {
     VkDevice device;
     QueueFamilies queue;
     EnabledDeviceFeatures features;
+
+    struct Limits {    
+	VkSampleCountFlagBits maxMsaaSamples;
+    };
+    Limits limits;
 };
 
 #endif
