@@ -48,7 +48,7 @@ std::vector<VkVertexInputAttributeDescription> getAttribDesc(uint32_t bindingInd
 /// ---- PipelineVk ----
 
 
-VkShaderModule createShaderModule(VkDevice device, std::vector<char> &shaderCode);
+VkShaderModule createShaderModule(VkDevice device, std::vector<char>* shaderCode);
 
 PipelineVk::PipelineVk(DeviceState& state,
 		       Config config,
@@ -56,8 +56,10 @@ PipelineVk::PipelineVk(DeviceState& state,
 		       std::vector<char> vertexShader,
 		       std::vector<char> fragmentShader)
     : Pipeline(config, input, vertexShader, fragmentShader) {
-    vertexShaderModule = createShaderModule(device, vertexShader);
-    fragmentShaderModule = createShaderModule(device, fragmentShader);
+    this->device = state.device;
+    this->maxSamples = state.limits.maxMsaaSamples;
+    vertexShaderModule = createShaderModule(device, &vertexShader);
+    fragmentShaderModule = createShaderModule(device, &fragmentShader);
 }
 
 PipelineVk::~PipelineVk() {
@@ -78,8 +80,9 @@ VkPipelineViewportStateCreateInfo viewportState(VkViewport* viewport, VkRect2D* 
 
 VkPipelineRasterizationStateCreateInfo rasterisationInfo(Pipeline::CullMode cullMode);
 
-VkPipelineMultisampleStateCreateInfo multisampleInfo(
-	Pipeline::Config &config, VkSampleCountFlagBits maxSamples);
+VkPipelineMultisampleStateCreateInfo multisampleInfo(Pipeline::Config config,
+						     VkSampleCountFlagBits samples,
+						     VkSampleCountFlagBits maxSamples);
 
 VkPipelineDepthStencilStateCreateInfo depthStencilInfo(Pipeline::Config &config);
 
@@ -105,15 +108,16 @@ void PipelineVk::CreatePipeline(void* renderpass) {
     for(int i = 0; i < this->sets.size(); i++) {
 	shaderSets[i] = (SetVk*)this->sets[i];
     }
-
+    
     this->layout = part::create::PipelineLayout(this->device, pcs, shaderSets);
-
-    VkGraphicsPipelineCreateInfo pipelineInfo;
+    
+    VkGraphicsPipelineCreateInfo pipelineInfo { VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO };
     pipelineInfo.layout = layout;
     pipelineInfo.renderPass = rp->getRenderPass();
-    
+
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo = inputAssembly();
     pipelineInfo.pInputAssemblyState = &inputAssemblyInfo;
+
 
     std::vector<VkVertexInputAttributeDescription> attribDesc = getAttribDesc(0, input);
     std::vector<VkVertexInputBindingDescription> bindDesc = {getBindingDesc(0, input)};
@@ -133,7 +137,8 @@ void PipelineVk::CreatePipeline(void* renderpass) {
     VkPipelineRasterizationStateCreateInfo rasterisationinfo = rasterisationInfo(config.cullMode);
     pipelineInfo.pRasterizationState = &rasterisationinfo;
 
-    VkPipelineMultisampleStateCreateInfo multisampleinfo = multisampleInfo(config, maxSamples);
+    VkPipelineMultisampleStateCreateInfo multisampleinfo = multisampleInfo(
+	    config, rp->msaaSamples(), maxSamples);
     pipelineInfo.pMultisampleState = &multisampleinfo;
 
     VkPipelineDepthStencilStateCreateInfo depthstencilinfo = depthStencilInfo(config);
@@ -151,8 +156,8 @@ void PipelineVk::CreatePipeline(void* renderpass) {
 	VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO};
     dynamicStateInfo.dynamicStateCount = 0;
     dynamicStateInfo.pDynamicStates = nullptr;
-    pipelineInfo.pDynamicState = &dynamicStateInfo;
-
+    pipelineInfo.pDynamicState = &dynamicStateInfo;    
+    
     VkPipelineShaderStageCreateInfo stages[2] = {
 	shaderStageInfo(vertexShaderModule, VK_SHADER_STAGE_VERTEX_BIT),
 	shaderStageInfo(fragmentShaderModule, VK_SHADER_STAGE_FRAGMENT_BIT),
@@ -173,15 +178,14 @@ void PipelineVk::DestroyPipeline() {
 
 /// ---- Helpers ----
 
-VkShaderModule createShaderModule(VkDevice device, std::vector<char> &shaderCode) {
+VkShaderModule createShaderModule(VkDevice device, std::vector<char>* shaderCode) {
     VkShaderModule shader;
+    
     VkShaderModuleCreateInfo info { VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO };
-    info.codeSize = shaderCode.size();
-    info.pCode = reinterpret_cast<const uint32_t*>(shaderCode.data());
-    LOG("here");
+    info.codeSize = shaderCode->size();
+    info.pCode = reinterpret_cast<const uint32_t*>(shaderCode->data());
     checkResultAndThrow(vkCreateShaderModule(device, &info, nullptr, &shader),
-			"Failed to compile shader");
-    LOG("after");
+      			"Failed to compile shader");
     return shader;
 }
 
@@ -244,37 +248,14 @@ VkPipelineRasterizationStateCreateInfo rasterisationInfo(Pipeline::CullMode cull
     return rasterizationInfo;
 }
 
-VkSampleCountFlagBits convertToVkFlags(MsaaSample samples) {
-    switch(samples) {
-    case MsaaSample::Count1:
-	return VK_SAMPLE_COUNT_1_BIT;
-    case MsaaSample::Count2:
-	return VK_SAMPLE_COUNT_2_BIT;
-    case MsaaSample::Count4:
-	return VK_SAMPLE_COUNT_4_BIT;
-    case MsaaSample::Count8:
-	return VK_SAMPLE_COUNT_8_BIT;
-    case MsaaSample::Count16:
-	return VK_SAMPLE_COUNT_16_BIT;
-    case MsaaSample::Count32:
-	return VK_SAMPLE_COUNT_32_BIT;
-    case MsaaSample::Count64:
-    case MsaaSample::CountMax:
-	return VK_SAMPLE_COUNT_64_BIT;	
-    }
-    throw std::runtime_error("Vulkan: Unrecognised sample count");
-}
-
-VkPipelineMultisampleStateCreateInfo multisampleInfo(Pipeline::Config &config,
+VkPipelineMultisampleStateCreateInfo multisampleInfo(Pipeline::Config config,
+						     VkSampleCountFlagBits samples,
 						     VkSampleCountFlagBits maxSamples) {
     VkPipelineMultisampleStateCreateInfo multisampleInfo{
 	VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO};
     
-    if (config.samples != MsaaSample::Count1) {
-	VkSampleCountFlagBits chosenSamples = convertToVkFlags(config.samples);
-	if(chosenSamples > maxSamples)
-	    chosenSamples = maxSamples;
-	multisampleInfo.rasterizationSamples = chosenSamples;
+    if (samples != VK_SAMPLE_COUNT_1_BIT) {
+	multisampleInfo.rasterizationSamples = samples;
 	if (config.sampleShading) {
 	    multisampleInfo.minSampleShading = 1.0f;
 	    multisampleInfo.sampleShadingEnable = VK_TRUE;

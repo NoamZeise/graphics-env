@@ -31,9 +31,8 @@ public:
     
     struct Config {
 	bool depthTest = true;
-	bool sampleShading = true;
-	BlendOp blendOp;
-	MsaaSample samples = MsaaSample::CountMax;
+	bool sampleShading = false;
+	BlendOp blendOp = BlendOp::Add;
 	CullMode cullMode = CullMode::Front;
     };
     

@@ -77,6 +77,7 @@ class RenderPass {
     
     VkExtent2D getExtent() { return this->framebufferExtent; }
     VkRenderPass getRenderPass() { return this->renderpass; }
+    VkSampleCountFlagBits msaaSamples() { return this->samples; }
 
  private:
     VkDevice device;
@@ -88,6 +89,7 @@ class RenderPass {
     std::vector<Framebuffer> framebuffers;
 
     VkOffset2D offset = {0, 0};
+    VkSampleCountFlagBits samples;
 };
 
 #endif

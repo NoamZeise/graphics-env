@@ -294,6 +294,7 @@ bool swapchainRecreationRequired(VkResult result) {
 	      pipelineSetup.getPath(
 		      shader::pipeline::_3D,
 		      shader::stage::frag));
+      
       PipelineVk pipeline3D(
 	      manager->deviceState,
 	      Pipeline::Config{},
@@ -307,7 +308,7 @@ bool swapchainRecreationRequired(VkResult result) {
       pipeline3D.addShaderSet(2, emptySet); // make sure not needed!
       pipeline3D.addShaderSet(3, textureSet);
       pipeline3D.addShaderSet(4, lightingSet);
-
+      
       pipeline3D.CreatePipeline(offscreenRenderPass);
       pipeline3D.DestroyPipeline();
 

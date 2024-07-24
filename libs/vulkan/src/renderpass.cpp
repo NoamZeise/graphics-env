@@ -4,6 +4,26 @@
 #include "logger.h"
 #include "parts/images.h"
 
+VkSampleCountFlagBits convertToVkFlags(MsaaSample samples) {
+    switch(samples) {
+    case MsaaSample::Count1:
+	return VK_SAMPLE_COUNT_1_BIT;
+    case MsaaSample::Count2:
+	return VK_SAMPLE_COUNT_2_BIT;
+    case MsaaSample::Count4:
+	return VK_SAMPLE_COUNT_4_BIT;
+    case MsaaSample::Count8:
+	return VK_SAMPLE_COUNT_8_BIT;
+    case MsaaSample::Count16:
+	return VK_SAMPLE_COUNT_16_BIT;
+    case MsaaSample::Count32:
+	return VK_SAMPLE_COUNT_32_BIT;
+    case MsaaSample::Count64:
+    case MsaaSample::CountMax:
+	return VK_SAMPLE_COUNT_64_BIT;	
+    }
+    throw std::runtime_error("Vulkan: Unrecognised sample count");
+}
 
 /// ----- Internal Attachment Image -----
 
@@ -11,12 +31,9 @@ class AttachmentImage {
 public:
     AttachmentImage(AttachmentDesc &desc);
     void Destroy(VkDevice device);
-    VkResult LoadImage(VkDevice device,
-			 VkExtent2D extent,
-			 TexLoaderVk* texloader);
+    VkResult LoadImage(VkDevice device, VkExtent2D extent, TexLoaderVk* texloader);
     void AddImage(VkImage);
-    VkResult GetImageView(TexLoaderVk* texloader,
-			     VkDevice device);
+    VkResult GetImageView(TexLoaderVk* texloader, VkDevice device);
     void AddImageView(VkImageView);
     VkImageView getView();
     Resource::Texture getTexture() { return texture; }
@@ -69,7 +86,7 @@ RenderPass::RenderPass(VkDevice device,
     hasDepth = hasResolve = hasShaderReadAttachment = false;
     VkAttachmentReference depthRef, resolveRef;
     std::vector<VkAttachmentReference> colourRefs;
-    
+    samples = VK_SAMPLE_COUNT_1_BIT;
     attachmentClears.resize(attachments.size());
     for(int i = 0; i < attachments.size(); i++) {
 	int attachIndex = attachments[i].getIndex();
@@ -84,6 +101,9 @@ RenderPass::RenderPass(VkDevice device,
 
 	if(attachments[i].getUse() == AttachmentUse::ShaderRead)
 	    hasShaderReadAttachment = true;
+
+	if(attachments[i].getImageInfo().samples > samples)
+	    samples = attachments[i].getImageInfo().samples;
 
 	attachmentClears[attachIndex] = getClearValueAndSetRef(
 		attachments[i], clearColour, colourRefs,
