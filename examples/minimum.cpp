@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
     state.windowTitle = "minimum example";
     parseArgs(argc, argv, &state);
     Manager manager(state);
-    
+       
     ResourcePool* pool = manager.render->pool();
     // load resources to cpu
     Resource::Texture tex = pool->tex()->load("textures/tile.png");

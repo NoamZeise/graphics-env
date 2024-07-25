@@ -102,9 +102,10 @@ public:
 
     void updateTextures(size_t index, size_t arrayIndex,
 			std::vector<Resource::Texture> textures) override;
+
+    VkDescriptorSetLayout getLayout();
     
     // for temp pipeline changes
-    VkDescriptorSetLayout getLayout() { return layout; }
     VkDescriptorSet* getSet(size_t index) {
 	if(index >= setHandles.size())
 	    throw std::runtime_error("out of range descriptor set index");

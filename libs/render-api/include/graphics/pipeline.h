@@ -39,7 +39,7 @@ public:
 
     static std::vector<char> ReadShaderCode(std::string path);
 
-    void addShaderSet(int setIndex, ShaderSet* set);
+    void addShaderLayout(int setIndex, ShaderSet* set);
 
     void addPushConstant(shader::Stage stageFlags, size_t dataSize);
 
@@ -47,6 +47,7 @@ public:
     virtual void CreatePipeline(void* renderpass);
 
     virtual void DestroyPipeline();
+    
     
 protected:
 

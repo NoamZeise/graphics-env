@@ -26,6 +26,8 @@ public:
 
     void CreatePipeline(void* renderpass) override;
     void DestroyPipeline() override;
+
+    void BindShaderSet(VkCommandBuffer cmdBuff, size_t frameIndex);
 private:
     VkDevice device;
     VkSampleCountFlagBits maxSamples;

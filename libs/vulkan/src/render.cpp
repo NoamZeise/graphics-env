@@ -285,29 +285,26 @@ bool swapchainRecreationRequired(VkResult result) {
       pipelineConf.useDepthTest = renderConf.useDepthTest;
 
       
-      // new pipelines testing
-      std::vector<char> vertShaderCode = Pipeline::ReadShaderCode(
-	      pipelineSetup.getPath(
-		      shader::pipeline::_3D,
-		      shader::stage::vert));
-      std::vector<char> fragShaderCode = Pipeline::ReadShaderCode(
-	      pipelineSetup.getPath(
-		      shader::pipeline::_3D,
-		      shader::stage::frag));
-      
+      // new pipelines testing      
       PipelineVk pipeline3D(
 	      manager->deviceState,
 	      Pipeline::Config{},
 	      vertex::v3D.input,
-	      vertShaderCode,
-	      fragShaderCode);
+	      Pipeline::ReadShaderCode(
+		      pipelineSetup.getPath(
+			      shader::pipeline::_3D,
+			      shader::stage::vert)),
+	      Pipeline::ReadShaderCode(
+		      pipelineSetup.getPath(
+			      shader::pipeline::_3D,
+			      shader::stage::frag)));
       
       pipeline3D.addPushConstant(shader::Stage::frag, sizeof(fragPushConstants));      
-      pipeline3D.addShaderSet(0, vp3dSet);
-      pipeline3D.addShaderSet(1, perFrame3dSet);
-      pipeline3D.addShaderSet(2, emptySet); // make sure not needed!
-      pipeline3D.addShaderSet(3, textureSet);
-      pipeline3D.addShaderSet(4, lightingSet);
+      pipeline3D.addShaderLayout(0, vp3dSet);
+      pipeline3D.addShaderLayout(1, perFrame3dSet);
+      pipeline3D.addShaderLayout(2, emptySet); // make sure not needed!
+      pipeline3D.addShaderLayout(3, textureSet);
+      pipeline3D.addShaderLayout(4, lightingSet);
       
       pipeline3D.CreatePipeline(offscreenRenderPass);
       pipeline3D.DestroyPipeline();

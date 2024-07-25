@@ -226,6 +226,16 @@ void SetVk::setHandleIndex(size_t handleIndex) {
     }
 }
 
+VkDescriptorSetLayout SetVk::getLayout() {
+    if(!layoutCreated)
+	// in future maybe create the layout here and pass ownership to pipeline
+	throw std::runtime_error(
+		"Set does not have it's layout created. "
+		"Call shader_pool->CreateGpuResources() "
+		"before passing a shader set to a Pipeline.");
+    return layout;
+}
+
 
 /// ----------- Shader Pool -----------
 

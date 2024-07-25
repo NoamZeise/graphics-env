@@ -16,7 +16,7 @@ std::vector<char> Pipeline::ReadShaderCode(std::string path) {
     return shaderCode;
 }
 
-void Pipeline::addShaderSet(int setIndex, ShaderSet* set) {
+void Pipeline::addShaderLayout(int setIndex, ShaderSet* set) {
     /// create desc layouts in vulkan override and destroy in destructor
 
     if(sets.size() <= setIndex)

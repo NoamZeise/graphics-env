@@ -377,8 +377,8 @@ void PipelineOld::bindDynamicDSNew(
     vkCmdBindDescriptorSets(cmdBuff, VK_PIPELINE_BIND_POINT_GRAPHICS, layout,
 			    (uint32_t)(setIndex),
 			    1, newSets[newindex]->getSet(frameIndex),
-			    dynOffs[newindex].size(), dynOffs[newindex].data());
-			    
+			    dynOffs[newindex].size(),
+			    dynOffs[newindex].data());
 }
 
 void PipelineOld::destroy(VkDevice device) {
