@@ -7,7 +7,6 @@
 
 #include <graphics/pipeline.h>
 
-#include "renderpass.h"
 #include "shader_buffers.h"
 
 VkVertexInputBindingDescription getBindingDesc(uint32_t bindingIndex,
@@ -28,6 +27,8 @@ public:
     void DestroyPipeline() override;
 
     void BindShaderSet(VkCommandBuffer cmdBuff, size_t frameIndex);
+
+    void BindPipeline(VkCommandBuffer cmdBuff);
 private:
     VkDevice device;
     VkSampleCountFlagBits maxSamples;

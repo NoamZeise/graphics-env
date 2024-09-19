@@ -1,6 +1,7 @@
 #include "pipeline.h"
 
 #include "parts/pipeline.h"
+#include "renderpass.h"
 #include "logger.h"
 
 VkVertexInputBindingDescription getBindingDesc(uint32_t bindingIndex,
@@ -69,6 +70,11 @@ PipelineVk::~PipelineVk() {
 	DestroyPipeline();
 }
 
+void PipelineVk::BindPipeline(VkCommandBuffer cmdBuff) {
+    vkCmdBindPipeline(cmdBuff, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+}
+
+/// ---- PipelineVk Helpers ----
 
 VkPipelineInputAssemblyStateCreateInfo inputAssembly();
 

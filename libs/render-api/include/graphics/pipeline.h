@@ -48,7 +48,6 @@ public:
 
     virtual void DestroyPipeline();
     
-    
 protected:
 
     Pipeline(Config config,
