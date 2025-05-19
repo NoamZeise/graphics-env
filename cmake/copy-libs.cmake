@@ -32,10 +32,10 @@ if(NOT GRAPHICS_STATIC)
     $<TARGET_FILE_DIR:glfw>
     $<TARGET_FILE_DIR:${exec-name}>)
   # GLM
-  add_custom_command(TARGET ${exec-name} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-    $<TARGET_FILE_DIR:glm>
-    $<TARGET_FILE_DIR:${exec-name}>)
+  #add_custom_command(TARGET ${exec-name} POST_BUILD
+  #  COMMAND ${CMAKE_COMMAND} -E copy_directory
+  #  $<TARGET_FILE_DIR:glm>
+  #  $<TARGET_FILE_DIR:${exec-name}>)
   # Freetype
   if(NOT NO_FREETYPE)
     add_custom_command(TARGET ${exec-name} POST_BUILD
