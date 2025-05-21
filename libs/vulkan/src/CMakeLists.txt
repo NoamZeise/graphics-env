@@ -6,7 +6,7 @@ file(GLOB VK_RENDER_SOURCES
 )
 add_library(vulkan-env ${VK_RENDER_SOURCES})
 	  
-add_dependencies(vulkan-env render-internal render-api glfw volk)
+add_dependencies(vulkan-env render-internal render-api)
 #target_link_libraries(vulkan-env PRIVATE render-internal)
 target_link_libraries(vulkan-env PUBLIC render-internal render-api glfw volk)
 

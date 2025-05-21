@@ -11,9 +11,8 @@ add_library(graphics-env
   random.cpp
 )
 
-add_dependencies(graphics-env glm glfw render-api)
-target_link_libraries(graphics-env PUBLIC
-  glm glfw render-api)
+add_dependencies(graphics-env render-api)
+target_link_libraries(graphics-env PUBLIC render-api glfw)
 
 if(NOT NO_VULKAN)
   add_dependencies(graphics-env vulkan-env)

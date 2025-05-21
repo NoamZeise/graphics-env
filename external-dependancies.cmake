@@ -1,7 +1,9 @@
 # external dependancy versions
 
 cmake_policy(SET CMP0077 NEW) # override external lib options with vars
-cmake_policy(SET CMP0135 NEW) # fetchcontent timestamps are extract time
+if(POLICY CMP0135)
+  cmake_policy(SET CMP0135 NEW) # fetchcontent timestamps are extract time
+endif()
 
 include(FetchContent)
 
@@ -9,7 +11,7 @@ set(graphics_assimp_url
   https://github.com/assimp/assimp/archive/refs/tags/v5.4.3.zip)
 
 set(graphics_audio_commit
-  449347dfc68dd7e7dab16343061b9707ff06e0f5) # 
+  449347dfc68dd7e7dab16343061b9707ff06e0f5)
 
 set(graphics_freetype_url
   https://download.savannah.gnu.org/releases/freetype/freetype-2.13.3.tar.xz)
@@ -41,14 +43,14 @@ endif()
 # glfw setup
 FetchContent_Declare(glfw
   GIT_REPOSITORY https://github.com/glfw/glfw.git
-  GIT_TAG master
+  GIT_TAG ${graphics_glfw_commit}
+  FIND_PACKAGE_ARGS NAMES glfw3
 )
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "")
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "")
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "")
 set(GLFW_INSTALL OFF CACHE BOOL "")
 FetchContent_MakeAvailable(glfw)
-#add_subdirectory(glfw)
 
 # assimp setup
 if(NOT NO_ASSIMP)
@@ -67,27 +69,32 @@ if(NOT NO_ASSIMP)
   FetchContent_Declare(
     assimp
     URL ${graphics_assimp_url}
+    FIND_PACKAGE_ARGS
   )
   FetchContent_MakeAvailable(assimp)
 endif()
 
 # freetype setup
 if(NOT NO_FREETYPE)
+  FetchContent_Declare(freetype
+    URL ${graphics_freetype_url}
+    FIND_PACKAGE_ARGS NAMES Freetype
+  )
   # disable freetype optional dependancies
   set(FT_DISABLE_ZLIB ON CACHE BOOL "")
   set(FT_DISABLE_BZIP2 ON CACHE BOOL "")
   set(FT_DISABLE_PNG ON CACHE BOOL "")
   set(FT_DISABLE_HARFBUZZ ON CACHE BOOL "")
   set(FT_DISABLE_BROTLI ON CACHE BOOL "")
-  FetchContent_Declare(
-    freetype
-    URL ${graphics_freetype_url}
-  )
   FetchContent_MakeAvailable(freetype)
 endif()
 
 # spirv-cross setup 
 # static only works for me with gcc?
+FetchContent_Declare(spirv_cross
+  GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Cross.git
+  GIT_TAG ${graphics_spirv_cross_commit}  
+)
 set(SPIRV_CROSS_STATIC ON CACHE BOOL "")
 set(SPIRV_CROSS_SHARED OFF CACHE BOOL "")
 set(SPIRV_CROSS_CLI OFF CACHE BOOL "")
@@ -97,23 +104,18 @@ set(SPIRV_CROSS_ENABLE_HLSL OFF CACHE BOOL "")
 set(SPIRV_CROSS_ENABLE_MSL OFF CACHE BOOL "")
 set(SPIRV_CROSS_ENABLE_CPP OFF CACHE BOOL "")
 set(SPIRV_CROSS_ENABLE_REFLECT OFF CACHE BOOL "")
-FetchContent_Declare(
-  spirv_cross
-  GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Cross.git
-  GIT_TAG ${graphics_spirv_cross_commit}
-)
 FetchContent_MakeAvailable(spirv_cross)
 
 # dont want shared lib version of glm, volk, audio
-
 set(BUILD_SHARED_LIBS OFF)
+
 FetchContent_Declare(glm
   GIT_REPOSITORY https://github.com/g-truc/glm.git
   GIT_TAG ${graphics_glm_commit}
+  FIND_PACKAGE_ARGS
 )
 
-FetchContent_Declare(
-  volk
+FetchContent_Declare(volk
   GIT_REPOSITORY https://github.com/zeux/volk.git
   GIT_TAG ${graphics_volk_commit}
 )
@@ -121,8 +123,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(glm volk)
 
 if(NOT NO_AUDIO)
-  FetchContent_Declare(
-    audio
+  FetchContent_Declare(audio
     GIT_REPOSITORY https://github.com/NoamZeise/audio.git
     GIT_TAG ${graphics_audio_commit}
   )

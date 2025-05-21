@@ -9,8 +9,8 @@ add_library(render-internal
 target_sources(render-internal PRIVATE font_loader.cpp)
 
 if(NOT NO_FREETYPE)
-  add_dependencies(render-internal freetype)
   target_link_libraries(render-internal PRIVATE freetype)
+  target_include_directories(render-internal PRIVATE ${FREETYPE_INCLUDE_DIRS})
 endif()
 if(NOT NO_ASSIMP)
   target_link_libraries(render-internal PUBLIC assimp)

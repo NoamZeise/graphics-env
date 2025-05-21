@@ -20,34 +20,34 @@ elseif(MSVC)
     target_link_options(${exec-name} PRIVATE "/ENTRY:mainCRTStartup")
   endif()
 endif()
-
+ 
 # Copy any shared libs built by this project
 # Into the same folder as the built executable
 # when built dynamically
 
 if(NOT GRAPHICS_STATIC)
   # GLFW
-  add_custom_command(TARGET ${exec-name} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-    $<TARGET_FILE_DIR:glfw>
-    $<TARGET_FILE_DIR:${exec-name}>)
-  # GLM
-  #add_custom_command(TARGET ${exec-name} POST_BUILD
-  #  COMMAND ${CMAKE_COMMAND} -E copy_directory
-  #  $<TARGET_FILE_DIR:glm>
-  #  $<TARGET_FILE_DIR:${exec-name}>)
-  # Freetype
-  if(NOT NO_FREETYPE)
-    add_custom_command(TARGET ${exec-name} POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy_directory
-      $<TARGET_FILE_DIR:freetype>
-      $<TARGET_FILE_DIR:${exec-name}>)
-  endif()
-  # Assimp
-  if(NOT NO_ASSIMP)
-    add_custom_command(TARGET ${exec-name} POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy_directory
-      $<TARGET_FILE_DIR:assimp>
-      $<TARGET_FILE_DIR:${exec-name}>)
-  endif()
+  # add_custom_command(TARGET ${exec-name} POST_BUILD
+  #   COMMAND ${CMAKE_COMMAND} -E copy_directory
+  #   $<TARGET_FILE_DIR:glfw>
+  #   $<TARGET_FILE_DIR:${exec-name}>)
+  # # GLM
+  # add_custom_command(TARGET ${exec-name} POST_BUILD
+  #   COMMAND ${CMAKE_COMMAND} -E copy_directory
+  #   $<TARGET_FILE_DIR:glm>
+  #   $<TARGET_FILE_DIR:${exec-name}>)
+  # # Freetype
+  # if(NOT NO_FREETYPE)
+  #   add_custom_command(TARGET ${exec-name} POST_BUILD
+  #     COMMAND ${CMAKE_COMMAND} -E copy_directory
+  #     $<TARGET_FILE_DIR:freetype>
+  #     $<TARGET_FILE_DIR:${exec-name}>)
+  # endif()
+  # # Assimp
+  # if(NOT NO_ASSIMP)
+  #   add_custom_command(TARGET ${exec-name} POST_BUILD
+  #     COMMAND ${CMAKE_COMMAND} -E copy_directory
+  #     $<TARGET_FILE_DIR:assimp>
+  #     $<TARGET_FILE_DIR:${exec-name}>)
+  # endif()
 endif()

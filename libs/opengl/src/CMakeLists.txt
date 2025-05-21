@@ -5,7 +5,7 @@ file(GLOB OGL_RENDER_SOURCES
 )
 add_library(opengl-env ${OGL_RENDER_SOURCES})
 
-add_dependencies(opengl-env render-internal render-api glfw)
+add_dependencies(opengl-env render-internal render-api)
 target_link_libraries(opengl-env PRIVATE render-internal spirv-cross-c)
 target_link_libraries(opengl-env PUBLIC render-api glfw)
 
