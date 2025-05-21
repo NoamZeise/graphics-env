@@ -27,27 +27,31 @@ endif()
 
 if(NOT GRAPHICS_STATIC)
   # GLFW
-  # add_custom_command(TARGET ${exec-name} POST_BUILD
-  #   COMMAND ${CMAKE_COMMAND} -E copy_directory
-  #   $<TARGET_FILE_DIR:glfw>
-  #   $<TARGET_FILE_DIR:${exec-name}>)
-  # # GLM
-  # add_custom_command(TARGET ${exec-name} POST_BUILD
-  #   COMMAND ${CMAKE_COMMAND} -E copy_directory
-  #   $<TARGET_FILE_DIR:glm>
-  #   $<TARGET_FILE_DIR:${exec-name}>)
-  # # Freetype
-  # if(NOT NO_FREETYPE)
-  #   add_custom_command(TARGET ${exec-name} POST_BUILD
-  #     COMMAND ${CMAKE_COMMAND} -E copy_directory
-  #     $<TARGET_FILE_DIR:freetype>
-  #     $<TARGET_FILE_DIR:${exec-name}>)
-  # endif()
-  # # Assimp
-  # if(NOT NO_ASSIMP)
-  #   add_custom_command(TARGET ${exec-name} POST_BUILD
-  #     COMMAND ${CMAKE_COMMAND} -E copy_directory
-  #     $<TARGET_FILE_DIR:assimp>
-  #     $<TARGET_FILE_DIR:${exec-name}>)
-  # endif()
+  if(NOT ${glfw_FOUND})
+    add_custom_command(TARGET ${exec-name} POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_directory
+      $<TARGET_FILE_DIR:glfw>
+      $<TARGET_FILE_DIR:${exec-name}>)
+  endif()
+  # GLM
+  if(NOT ${glm_FOUND})
+    add_custom_command(TARGET ${exec-name} POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_directory
+      $<TARGET_FILE_DIR:glm>
+      $<TARGET_FILE_DIR:${exec-name}>)
+  endif()
+  # Freetype
+  if((NOT NO_FREETYPE) AND (NOT ${freetype_FOUND}))
+    add_custom_command(TARGET ${exec-name} POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_directory
+      $<TARGET_FILE_DIR:freetype>
+      $<TARGET_FILE_DIR:${exec-name}>)
+  endif()
+  # Assimp
+  if((NOT NO_ASSIMP) AND (NOT ${assimp_FOUND}))
+    add_custom_command(TARGET ${exec-name} POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_directory
+      $<TARGET_FILE_DIR:assimp>
+      $<TARGET_FILE_DIR:${exec-name}>)
+  endif()
 endif()

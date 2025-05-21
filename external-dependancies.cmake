@@ -72,13 +72,16 @@ if(NOT NO_ASSIMP)
     FIND_PACKAGE_ARGS
   )
   FetchContent_MakeAvailable(assimp)
+  if(NOT ${assimp_FOUND})
+    message(STATUS "Assimp not installed, building from source")
+  endif()
 endif()
 
 # freetype setup
 if(NOT NO_FREETYPE)
-  FetchContent_Declare(freetype
+  FetchContent_Declare(Freetype
     URL ${graphics_freetype_url}
-    FIND_PACKAGE_ARGS NAMES Freetype
+    FIND_PACKAGE_ARGS
   )
   # disable freetype optional dependancies
   set(FT_DISABLE_ZLIB ON CACHE BOOL "")
@@ -86,7 +89,7 @@ if(NOT NO_FREETYPE)
   set(FT_DISABLE_PNG ON CACHE BOOL "")
   set(FT_DISABLE_HARFBUZZ ON CACHE BOOL "")
   set(FT_DISABLE_BROTLI ON CACHE BOOL "")
-  FetchContent_MakeAvailable(freetype)
+  FetchContent_MakeAvailable(Freetype)
 endif()
 
 # spirv-cross setup 

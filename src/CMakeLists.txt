@@ -13,6 +13,7 @@ add_library(graphics-env
 
 add_dependencies(graphics-env render-api)
 target_link_libraries(graphics-env PUBLIC render-api glfw)
+target_include_directories(graphics-env PUBLIC ${GLFW_INCLUDE_DIRS})
 
 if(NOT NO_VULKAN)
   add_dependencies(graphics-env vulkan-env)
