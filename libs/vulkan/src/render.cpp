@@ -286,7 +286,7 @@ bool swapchainRecreationRequired(VkResult result) {
 
       
       // new pipelines testing      
-      PipelineVk pipeline3D(
+      pipeline3D = new PipelineVk(
 	      manager->deviceState,
 	      Pipeline::Config{},
 	      vertex::v3D.input,
@@ -299,17 +299,14 @@ bool swapchainRecreationRequired(VkResult result) {
 			      shader::pipeline::_3D,
 			      shader::stage::frag)));
       
-      pipeline3D.addPushConstant(shader::Stage::frag, sizeof(fragPushConstants));      
-      pipeline3D.addShaderLayout(0, vp3dSet);
-      pipeline3D.addShaderLayout(1, perFrame3dSet);
-      pipeline3D.addShaderLayout(2, emptySet); // make sure not needed!
-      pipeline3D.addShaderLayout(3, textureSet);
-      pipeline3D.addShaderLayout(4, lightingSet);
-      
-      pipeline3D.CreatePipeline(offscreenRenderPass);
-      pipeline3D.DestroyPipeline();
+      pipeline3D->addPushConstant(shader::Stage::frag, sizeof(fragPushConstants));      
+      pipeline3D->addShaderLayout(0, vp3dSet);
+      pipeline3D->addShaderLayout(1, perFrame3dSet);
+      pipeline3D->addShaderLayout(2, emptySet); // make sure not needed!
+      pipeline3D->addShaderLayout(3, textureSet);
+      pipeline3D->addShaderLayout(4, lightingSet);
+      pipeline3D->CreatePipeline(offscreenRenderPass);
 
-      
       // old pipelines
 	  
       part::create::GraphicsPipeline(
@@ -387,6 +384,11 @@ bool swapchainRecreationRequired(VkResult result) {
       DestroyShaderPool(mainShaderPool);
       
       LOG("    destroying Pipelines");
+
+      pipeline3D->DestroyPipeline();
+      delete pipeline3D;
+      
+      //Old Pipelines
       _pipeline3D.destroy(manager->deviceState.device);
       _pipelineAnim3D.destroy(manager->deviceState.device);
       _pipeline2D.destroy(manager->deviceState.device);

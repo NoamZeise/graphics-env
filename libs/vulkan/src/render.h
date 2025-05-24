@@ -101,8 +101,7 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
       bool _poolInUse(Resource::Pool pool);
       void _throwIfPoolInvaid(Resource::Pool pool);
       std::vector<Resource::Texture> getActiveTextures(float* getMinMipmap);
-      
-      
+            
       bool _framebufferResized = false;
       bool _frameResourcesCreated = false;     
   
@@ -122,6 +121,8 @@ const size_t MAX_ANIMATIONS_PER_FRAME = 10;
       RenderPass* offscreenRenderPass = nullptr;
       RenderPass* finalRenderPass = nullptr;
       bool usingFinalRenderPass = false;
+
+      PipelineVk* pipeline3D;
 
       PipelineOld _pipeline3D;
       PipelineOld _pipelineAnim3D;

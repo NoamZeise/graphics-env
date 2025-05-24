@@ -481,9 +481,11 @@ void BindingVk::writeTextures(size_t updateIndex, size_t updateCount,
 			      std::vector<VkWriteDescriptorSet> &writes,
 			      std::vector<std::vector<VkDescriptorImageInfo>> &images,
 			      std::vector<VkDescriptorSet> &sets) {
+    bool updateAllTextures = false;
     if(updateIndex == SIZE_MAX) {
 	updateIndex = 0;
 	updateCount = textureViews.size();
+	updateAllTextures = true;
     }
     if(updateCount == 0)
 	return;
@@ -501,7 +503,16 @@ void BindingVk::writeTextures(size_t updateIndex, size_t updateCount,
 	    info.imageLayout = textureLayouts[arrayIndex];
 	    ims->push_back(info);
 	}
-	VkWriteDescriptorSet write = dsWrite(updateIndex, updateCount, sets[i]);
+	if(updateAllTextures) {
+	    if(ims->size() == 0)
+		throw std::runtime_error("Shader Buffers: No dummy textures to fill descriptor sets with, in BindingVk::writeTextures");
+	    VkDescriptorImageInfo info = ims->back();
+	    for(int arrayIndex = updateIndex + updateCount; arrayIndex < arrayCount; arrayIndex++) {
+		ims->push_back(info);
+	    }
+	}
+	VkWriteDescriptorSet write = dsWrite(
+		updateIndex, updateAllTextures ? arrayCount : updateCount, sets[i]);
 	write.pImageInfo = ims->data();
 	writes.push_back(write);
     }

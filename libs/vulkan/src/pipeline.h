@@ -40,9 +40,7 @@ private:
 };
 
 
-
 /// ---- Old ----
-
 
 class PipelineOld {
 public:
